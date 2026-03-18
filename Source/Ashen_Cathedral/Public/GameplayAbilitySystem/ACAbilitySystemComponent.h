@@ -13,5 +13,8 @@ UCLASS()
 class ASHEN_CATHEDRAL_API UACAbilitySystemComponent : public UAbilitySystemComponent
 {
 	GENERATED_BODY()
-	
+
+public:
+	void OnAbilityInputPressed(const FGameplayTag& InputTag);
+	void OnAbilityInputReleased(const FGameplayTag& InputTag);
 };

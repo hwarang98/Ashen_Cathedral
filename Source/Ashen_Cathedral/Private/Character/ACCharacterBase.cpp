@@ -3,6 +3,7 @@
 
 #include "Character/ACCharacterBase.h"
 
+#include "Components/Input/ACInputComponent.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 #include "GameplayAbilitySystem/ACAttributeSet.h"
 

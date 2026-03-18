@@ -24,7 +24,7 @@ class ASHEN_CATHEDRAL_API UCADataAsset_InputConfig : public UDataAsset
 {
 	GENERATED_BODY()
 
-public:
+public: 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
 

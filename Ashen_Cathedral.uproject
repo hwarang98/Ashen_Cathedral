@@ -11,7 +11,8 @@
 			"AdditionalDependencies": [
 				"Engine",
 				"GameplayAbilities",
-				"EnhancedInput"
+				"EnhancedInput",
+				"CoreUObject"
 			]
 		}
 	],
@@ -25,6 +26,18 @@
 		},
 		{
 			"Name": "GameplayAbilities",
+			"Enabled": true
+		},
+		{
+			"Name": "Chooser",
+			"Enabled": true
+		},
+		{
+			"Name": "RawInput",
+			"Enabled": true
+		},
+		{
+			"Name": "WindowsDualsense_ds5w",
 			"Enabled": true
 		}
 	]

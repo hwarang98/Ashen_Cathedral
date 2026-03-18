@@ -1,0 +1,41 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "AnimInstance/ACAnimInstanceBase.h"
+#include "ACPlayerAnimInstance.generated.h"
+
+class AACPlayerCharacter;
+class AACCharacterBase;
+class UCharacterMovementComponent;
+
+/**
+ * @class UACPlayerAnimInstance
+ * @brief 플레이어 캐릭터의 애니메이션 로직을 처리하는 애니메이션 인스턴스 클래스.
+ *
+ * UCMAnimInstanceBase를 상속받아 구현되며, Crimson Moon 프로젝트의 플레이어 캐릭터와 관련된 애니메이션 로직을 정의하는 데 사용
+ * 각종 상태 및 동작과 관련된 애니메이션 데이터를 관리하거나, 이를 기반으로 애니메이션 블루프린트 내의 다양한 동작을 처리할 수 있음
+ */
+UCLASS()
+class ASHEN_CATHEDRAL_API UACPlayerAnimInstance : public UACAnimInstanceBase
+{
+	GENERATED_BODY()
+
+public:
+	virtual void NativeInitializeAnimation() override;
+	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
+
+protected:
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Character")
+	TObjectPtr<AACPlayerCharacter> OwningPlayerCharacter;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Locomotion")
+	bool IsCrouching = false;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Locomotion")
+	bool IsSprinting = false;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Locomotion")
+	float MoveDirection = 0.f;
+};
