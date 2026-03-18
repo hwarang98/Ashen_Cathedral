@@ -27,12 +27,6 @@ public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
-	UFUNCTION(BlueprintCallable, meta=(BlueprintThreadSafe))
-	FORCEINLINE bool GetIsJumping() const { return IsFalling; }
-
-	UFUNCTION(BlueprintCallable, meta=(BlueprintThreadSafe))
-	FORCEINLINE bool GetIsOnGround() const { return !IsFalling; }
-
 protected:
 	UFUNCTION(BlueprintPure, Category = "AnimData|Character", meta = (BlueprintThreadSafe))
 	bool DoesOwnerHaveTag(const FGameplayTag TagToCheck) const;
@@ -51,4 +45,7 @@ protected:
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Locomotion")
 	bool bHasAcceleration = false;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Locomotion")
+	FVector Velocity = FVector::ZeroVector;
 };

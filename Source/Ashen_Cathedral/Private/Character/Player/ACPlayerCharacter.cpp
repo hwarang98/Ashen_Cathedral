@@ -2,11 +2,13 @@
 
 
 #include "Character/Player/ACPlayerCharacter.h"
+#include "AnimInstance/Player/ACPlayerAnimInstance.h"
 #include "Components/Input/ACInputComponent.h"
 #include "GameFramework/GameplayCameraComponent.h"
 #include "ACGameplayTags.h"
 #include "EnhancedInputSubsystems.h"
 #include "Camera/CameraComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -17,7 +19,7 @@ AACPlayerCharacter::AACPlayerCharacter()
 	PrimaryActorTick.bCanEverTick = false;
 
 	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = false;
+	bUseControllerRotationYaw = true;   // 소울라이크: 캐릭터가 카메라 방향 고정
 	bUseControllerRotationRoll = false;
 
 	// GameplayCameraComponent = CreateDefaultSubobject<UGameplayCameraComponent>("Gameplay Camera Component");
@@ -31,9 +33,8 @@ AACPlayerCharacter::AACPlayerCharacter()
 
 	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("View Camera"));
 	ViewCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-	// ViewCamera->bAutoActivate = true;
 
-	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->bOrientRotationToMovement = false; // 소울라이크: 이동 방향으로 회전 안 함
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 720.f, 0.f);
 }
 
@@ -68,8 +69,8 @@ void AACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		return;
 	}
 
-	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Move, ETriggerEvent::Triggered,  this, &ThisClass::Input_Move);
-	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Move, ETriggerEvent::Completed,  this, &ThisClass::StopSprint);
+	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Move, ETriggerEvent::Triggered, this, &ThisClass::Input_Move);
+	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Move, ETriggerEvent::Completed, this, &ThisClass::StopSprint);
 	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Look, ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
 	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_MouseLook, ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
 	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Jump, ETriggerEvent::Triggered, this, &ThisClass::Jump);
@@ -82,6 +83,16 @@ void AACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 void AACPlayerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
+}
+
+void AACPlayerCharacter::OnJumped_Implementation()
+{
+	Super::OnJumped_Implementation();
+
+	if (UACPlayerAnimInstance* PlayerAnimInst = Cast<UACPlayerAnimInstance>(GetMesh()->GetAnimInstance()))
+	{
+		PlayerAnimInst->OnOwnerJumped();
+	}
 }
 
 void AACPlayerCharacter::StartSprint()

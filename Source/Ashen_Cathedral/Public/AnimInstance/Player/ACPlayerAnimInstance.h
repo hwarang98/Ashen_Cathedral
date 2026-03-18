@@ -26,6 +26,9 @@ public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
 
+	// ACPlayerCharacter::OnJumped_Implementation()에서 호출
+	void OnOwnerJumped();
+
 protected:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Character")
 	TObjectPtr<AACPlayerCharacter> OwningPlayerCharacter;
@@ -38,4 +41,12 @@ protected:
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Locomotion")
 	float MoveDirection = 0.f;
+
+	// 점프 입력 직후 true, 착지 시 false — Jump Start 상태 진입용
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Locomotion")
+	bool bJumpTriggered = false;
+
+	// 점프 순간 스냅샷 — 공중에서 방향이 바뀌어도 Jump 애니메이션은 이 값을 사용
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Locomotion")
+	float JumpDirection = 0.f;
 };

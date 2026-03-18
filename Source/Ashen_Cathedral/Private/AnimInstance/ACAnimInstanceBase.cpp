@@ -33,6 +33,7 @@ void UACAnimInstanceBase::NativeUpdateAnimation(float DeltaSeconds)
 	IsFalling = OwningMovementComponent->IsFalling();
 
 	bHasAcceleration = OwningMovementComponent->GetCurrentAcceleration().SizeSquared() > KINDA_SMALL_NUMBER;
+	Velocity = OwningCharacter->GetVelocity();
 }
 
 bool UACAnimInstanceBase::DoesOwnerHaveTag(const FGameplayTag TagToCheck) const

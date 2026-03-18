@@ -24,15 +24,27 @@ void UACPlayerAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
 
 	IsCrouching = OwningMovementComponent->IsCrouching();
 
+	// 착지하면 bJumpTriggered 리셋
+	if (!IsFalling)
+	{
+		bJumpTriggered = false;
+	}
+
 	// 이동 방향 계산
 	if (GroundSpeed > KINDA_SMALL_NUMBER)
 	{
-		MoveDirection = UKismetAnimationLibrary::CalculateDirection(
-			OwningCharacter->GetVelocity(),
-			OwningCharacter->GetActorRotation());
+		MoveDirection = UKismetAnimationLibrary::CalculateDirection(OwningCharacter->GetVelocity(), OwningCharacter->GetActorRotation());
 	}
 	else
 	{
 		MoveDirection = 0.f; // 멈춰있으면 방향 없음
 	}
+}
+
+void UACPlayerAnimInstance::OnOwnerJumped()
+{
+	bJumpTriggered = true;
+
+	const FVector Vel = OwningCharacter->GetVelocity();
+	JumpDirection = Vel.SizeSquared2D() > KINDA_SMALL_NUMBER ? UKismetAnimationLibrary::CalculateDirection(Vel, OwningCharacter->GetActorRotation()) : 0.f;
 }

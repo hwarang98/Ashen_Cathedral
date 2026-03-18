@@ -22,8 +22,10 @@ public:
 	AACPlayerCharacter();
 
 	virtual void BeginPlay() override;
+	FORCEINLINE bool GetIsSprinting() const { return bIsSprinting; }
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnJumped_Implementation() override;
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CharacterData | DataAsset", meta = (AllowPrivateAccess = "true"))
