@@ -19,7 +19,7 @@ AACPlayerCharacter::AACPlayerCharacter()
 	PrimaryActorTick.bCanEverTick = false;
 
 	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = true;   // 소울라이크: 캐릭터가 카메라 방향 고정
+	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
 	// GameplayCameraComponent = CreateDefaultSubobject<UGameplayCameraComponent>("Gameplay Camera Component");
@@ -34,7 +34,7 @@ AACPlayerCharacter::AACPlayerCharacter()
 	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("View Camera"));
 	ViewCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 
-	GetCharacterMovement()->bOrientRotationToMovement = false; // 소울라이크: 이동 방향으로 회전 안 함
+	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 720.f, 0.f);
 }
 
