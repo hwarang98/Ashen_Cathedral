@@ -3,3 +3,5 @@
 #pragma once
 
 #include "GameplayTags/ACGameplayTags_Input.h"
+#include "GameplayTags/ACGameplayTags_Shared.h"
+#include "GameplayTags/ACGameplayTags_Player.h"

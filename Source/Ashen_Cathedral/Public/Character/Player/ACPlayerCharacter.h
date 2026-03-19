@@ -4,13 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "Character/ACCharacterBase.h"
+#include "Components/Combat/PlayerCombatComponent.h"
 #include "GameplayTagContainer.h"
 #include "InputActionValue.h"
 #include "ACPlayerCharacter.generated.h"
 
 class UCameraComponent;
 class USpringArmComponent;
-class UCADataAsset_InputConfig;
+class UACDataAsset_InputConfig;
 class UGameplayCameraComponent;
 
 UCLASS()
@@ -22,14 +23,16 @@ public:
 	AACPlayerCharacter();
 
 	virtual void BeginPlay() override;
-	FORCEINLINE bool GetIsSprinting() const { return bIsSprinting; }
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnJumped_Implementation() override;
+	virtual UPlayerCombatComponent* GetPawnCombatComponent() const override;
+
+	FORCEINLINE bool GetIsSprinting() const { return bIsSprinting; }
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CharacterData | DataAsset", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UCADataAsset_InputConfig> InputConfigDataAsset;
+	TObjectPtr<UACDataAsset_InputConfig> InputConfigDataAsset;
 
 	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	// TObjectPtr<UGameplayCameraComponent> GameplayCameraComponent;
@@ -39,6 +42,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> ViewCamera;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPlayerCombatComponent> PlayerCombatComponent;
 
 	#pragma region Sprint
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement | Sprint", meta = (AllowPrivateAccess = "true"))

@@ -29,6 +29,11 @@ public:
 	// ACPlayerCharacter::OnJumped_Implementation()에서 호출
 	void OnOwnerJumped();
 
+	#pragma region Blueprint API
+	UFUNCTION(BlueprintCallable, meta=(BlueprintThreadSafe))
+	FORCEINLINE bool GetIsJumping() const { return IsFalling; }
+	#pragma endregion
+
 protected:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Character")
 	TObjectPtr<AACPlayerCharacter> OwningPlayerCharacter;

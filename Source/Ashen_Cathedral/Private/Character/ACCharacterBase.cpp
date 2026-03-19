@@ -4,6 +4,7 @@
 #include "Character/ACCharacterBase.h"
 
 #include "Components/Input/ACInputComponent.h"
+#include "DataAssets/Startup/ACDataAsset_StartupDataBase.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 #include "GameplayAbilitySystem/ACAttributeSet.h"
 
@@ -29,9 +30,23 @@ void AACCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 void AACCharacterBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
+
+	if (!CharacterStartUpData.IsNull())
+	{
+		if (UACDataAsset_StartupDataBase* LoadedData = CharacterStartUpData.LoadSynchronous())
+		{
+			constexpr int32 ApplyLevel = 1;
+			LoadedData->GiveToAbilitySystemComponent(ACAbilitySystemComponent, ApplyLevel);
+		}
+	}
 }
 
 UAbilitySystemComponent* AACCharacterBase::GetAbilitySystemComponent() const
+{
+	return GetACAbilitySystemComponent();
+}
+
+UPawnCombatComponent* AACCharacterBase::GetPawnCombatComponent() const
 {
 	return nullptr;
 }

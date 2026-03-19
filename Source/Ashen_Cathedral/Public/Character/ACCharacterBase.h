@@ -5,13 +5,15 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
+#include "Interfaces/PawnCombatInterface.h"
 #include "ACCharacterBase.generated.h"
 
+class UACDataAsset_StartupDataBase;
 class UACAttributeSet;
 class UACAbilitySystemComponent;
 
-UCLASS()
-class ASHEN_CATHEDRAL_API AACCharacterBase : public ACharacter, public IAbilitySystemInterface
+UCLASS(Abstract)
+class ASHEN_CATHEDRAL_API AACCharacterBase : public ACharacter, public IAbilitySystemInterface, public IPawnCombatInterface
 {
 	GENERATED_BODY()
 
@@ -22,16 +24,22 @@ public:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	virtual UPawnCombatComponent* GetPawnCombatComponent() const override;
 
 	FORCEINLINE UACAbilitySystemComponent* GetACAbilitySystemComponent() const { return ACAbilitySystemComponent; }
 	FORCEINLINE UACAttributeSet* GetACAttributeSet() const { return ACAttributeSet; }
 
 protected:
-#pragma region GAS
+	#pragma region GAS
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
 	TObjectPtr<UACAbilitySystemComponent> ACAbilitySystemComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
 	TObjectPtr<UACAttributeSet> ACAttributeSet;
-#pragma endregion
+	#pragma endregion
+
+	#pragma region DataAssets
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CharacterData | DataAsset")
+	TSoftObjectPtr<UACDataAsset_StartupDataBase> CharacterStartUpData;
+	#pragma endregion
 };

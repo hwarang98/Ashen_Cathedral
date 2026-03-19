@@ -9,6 +9,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Camera/CameraComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/Combat/PlayerCombatComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -24,6 +25,8 @@ AACPlayerCharacter::AACPlayerCharacter()
 
 	// GameplayCameraComponent = CreateDefaultSubobject<UGameplayCameraComponent>("Gameplay Camera Component");
 	// GameplayCameraComponent->SetupAttachment(GetRootComponent());
+
+	PlayerCombatComponent = CreateDefaultSubobject<UPlayerCombatComponent>(TEXT("Player Combat Component"));
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("Camera Boom"));
 	CameraBoom->SetupAttachment(GetRootComponent());
@@ -51,6 +54,12 @@ void AACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	if (!InputConfigDataAsset)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[오류] InputConfigDataAsset이 비어있습니다! BP를 확인하세요."));
+		return;
+	}
+
 	UACInputComponent* ACInputComponent = CastChecked<UACInputComponent>(PlayerInputComponent);
 
 	if (const APlayerController* OwningPlayerController = GetController<APlayerController>())
@@ -61,12 +70,6 @@ void AACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 		PlayerSubsystem->RemoveMappingContext(InputConfigDataAsset->DefaultMappingContext);
 		PlayerSubsystem->AddMappingContext(InputConfigDataAsset->DefaultMappingContext, 0);
-	}
-
-	if (!InputConfigDataAsset)
-	{
-		UE_LOG(LogTemp, Error, TEXT("[오류] InputConfigDataAsset이 비어있습니다! BP를 확인하세요."));
-		return;
 	}
 
 	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Move, ETriggerEvent::Triggered, this, &ThisClass::Input_Move);
@@ -95,6 +98,11 @@ void AACPlayerCharacter::OnJumped_Implementation()
 	}
 }
 
+UPlayerCombatComponent* AACPlayerCharacter::GetPawnCombatComponent() const
+{
+	return PlayerCombatComponent;
+}
+
 void AACPlayerCharacter::StartSprint()
 {
 	// 이미 Sprint 중이면 L3 재클릭으로 해제
@@ -112,14 +120,12 @@ void AACPlayerCharacter::StartSprint()
 
 	bIsSprinting = true;
 	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("[Sprint] MaxWalkSpeed: %.1f"), GetCharacterMovement()->MaxWalkSpeed));
 }
 
 void AACPlayerCharacter::StopSprint()
 {
 	bIsSprinting = false;
 	GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, FString::Printf(TEXT("[Run] MaxWalkSpeed: %.1f"), GetCharacterMovement()->MaxWalkSpeed));
 }
 
 void AACPlayerCharacter::Input_AbilityInputPressed(const FGameplayTag InInputTag)

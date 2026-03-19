@@ -1,11 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "DataAssets/CADataAsset_InputConfig.h"
-
+#include "DataAssets/Input/ACDataAsset_InputConfig.h"
 #include "Structs/ACStructTypes.h"
 
-UInputAction* UCADataAsset_InputConfig::FindNativeInputActionByTag(const FGameplayTag& InputTag) const
+UInputAction* UACDataAsset_InputConfig::FindNativeInputActionByTag(const FGameplayTag& InputTag) const
 {
 	for (const FCAInputActionConfig& InputActionConfig : NativeInputActions)
 	{
@@ -18,7 +17,7 @@ UInputAction* UCADataAsset_InputConfig::FindNativeInputActionByTag(const FGamepl
 	return nullptr;
 }
 
-UInputAction* UCADataAsset_InputConfig::FindAbilityInputActionByTag(const FGameplayTag& InputTag) const
+UInputAction* UACDataAsset_InputConfig::FindAbilityInputActionByTag(const FGameplayTag& InputTag) const
 {
 	for (const FCAInputActionConfig& InputActionConfig : AbilityInputActions)
 	{

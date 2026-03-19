@@ -3,6 +3,7 @@
 
 #include "ACFunctionLibrary.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "GenericTeamAgentInterface.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 
 UACAbilitySystemComponent* UACFunctionLibrary::NativeAbilitySystemComponentFromActor(AActor* InActor)
@@ -26,4 +27,21 @@ bool UACFunctionLibrary::NativeDoesActorHaveTag(AActor* InActor, FGameplayTag Ta
 	UACAbilitySystemComponent* AbilitySystemComponent = NativeAbilitySystemComponentFromActor(InActor);
 
 	return AbilitySystemComponent->HasMatchingGameplayTag(TagToCheck);
+}
+
+bool UACFunctionLibrary::IsTargetPawnHostile(const APawn* QueryPawn, const APawn* TargetPawn)
+{
+	check(QueryPawn && TargetPawn);
+
+	const IGenericTeamAgentInterface* GenericTeamAgent = Cast<IGenericTeamAgentInterface>(QueryPawn->GetController());
+	const IGenericTeamAgentInterface* TargetTeamAgent = Cast<IGenericTeamAgentInterface>(TargetPawn->GetController());
+
+	if (GenericTeamAgent && TargetTeamAgent)
+	{
+		// 팀 ID가 다르면 적대 관계로 간주하여 true 반환
+		return GenericTeamAgent->GetGenericTeamId() != TargetTeamAgent->GetGenericTeamId();
+	}
+
+	// 팀 인터페이스를 구현하지 않은 경우 적대 관계로 간주하지 않음
+	return false;
 }

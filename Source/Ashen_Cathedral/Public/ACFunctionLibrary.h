@@ -31,7 +31,7 @@ public:
 	 * @param InActor 태그를 추가할 Actor
 	 * @param TagToAdd 추가하려는 GameplayTag
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Crimson Moon|FunctionLibrary")
+	UFUNCTION(BlueprintCallable, Category = "Ashen Cathdral|FunctionLibrary")
 	static void AddGameplayTagToActorIfNone(AActor* InActor, FGameplayTag TagToAdd);
 
 	/**
@@ -42,4 +42,17 @@ public:
 	 * @return Actor가 지정된 태그를 가지고 있다면 true를 반환하고, 그렇지 않으면 false를 반환
 	 */
 	static bool NativeDoesActorHaveTag(AActor* InActor, FGameplayTag TagToCheck);
+
+	/**
+	 * QueryPawn과 TargetPawn 간의 적대 관계를 확인
+	 *
+	 * @param QueryPawn 적대 관계를 확인하는 주체 Pawn
+	 * @param TargetPawn 적대 관계를 확인할 대상 Pawn
+	 * @return QueryPawn과 TargetPawn이 적대 관계라면 true를 반환, 그렇지 않으면 false를 반환
+	 *
+	 * @details 이 함수는 두 Pawn의 Controller가 IGenericTeamAgentInterface를 구현하고 있는지 확인하며, 팀 ID가 다를 경우 적대 관계로 간주한다.
+	 * 팀 인식이 없는 경우에는 적대 관계가 아니라고 판단한다.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Ashen Cathdral|FunctionLibrary")
+	static bool IsTargetPawnHostile(const APawn* QueryPawn, const APawn* TargetPawn);
 };

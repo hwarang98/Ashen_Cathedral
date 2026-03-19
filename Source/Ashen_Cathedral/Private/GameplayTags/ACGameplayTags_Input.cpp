@@ -10,4 +10,5 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_MouseLook, "InputTag.MouseLook")
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_Jump, "InputTag.Jump")
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_Sprint, "InputTag.Sprint")
+	UE_DEFINE_GAMEPLAY_TAG(InputTag_EquipWeapon, "InputTag.EquipWeapon")
 }

@@ -19,7 +19,9 @@ public class Ashen_Cathedral : ModuleRules
 			"GameplayTags",
 			"GameplayTasks",
 			"GameplayCameras",
-			"AnimGraphRuntime"
+			"AnimGraphRuntime",
+			"Niagara",
+			"AIModule"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });

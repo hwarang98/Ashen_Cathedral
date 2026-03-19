@@ -4,10 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "Character/ACCharacterBase.h"
+#include "Components/Combat/EnemyCombatComponent.h"
 #include "ACEnemyCharacter.generated.h"
 
 UCLASS()
 class ASHEN_CATHEDRAL_API AACEnemyCharacter : public AACCharacterBase
 {
 	GENERATED_BODY()
+
+public:
+	AACEnemyCharacter();
+
+	virtual UPawnCombatComponent* GetPawnCombatComponent() const override;
+
+private:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UEnemyCombatComponent> EnemyCombatComponent;
 };
