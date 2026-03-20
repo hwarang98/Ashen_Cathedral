@@ -3,13 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayEffectExecutionCalculation.h"
 #include "GameplayTagContainer.h"
 #include "InputAction.h"
+#include "GameplayAbilitySystem/ACAttributeSet.h"
 #include "ACStructTypes.generated.h"
 
 class AACWeaponBase;
 
-class UACPlayerGameplayAbility;
+class UACGameplayAbility;
 
 
 /**
@@ -61,7 +63,7 @@ struct FACPlayerAbilitySet
 	// FGameplayTag SlotTag;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TSubclassOf<UACPlayerGameplayAbility> AbilityToGrant;
+	TSubclassOf<UACGameplayAbility> AbilityToGrant;
 
 	// UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	// TSoftObjectPtr<UTexture2D> SoftAbilityIconMaterial;
@@ -83,4 +85,20 @@ struct FWeaponEntry
 
 	UPROPERTY()
 	TObjectPtr<AACWeaponBase> WeaponActor;
+};
+
+struct FCADamageCapture
+{
+	DECLARE_ATTRIBUTE_CAPTUREDEF(AttackPower)
+	DECLARE_ATTRIBUTE_CAPTUREDEF(DefensePower)
+	DECLARE_ATTRIBUTE_CAPTUREDEF(DamageTaken)
+	DECLARE_ATTRIBUTE_CAPTUREDEF(GroggyDamageTaken)
+
+	FCADamageCapture()
+	{
+		DEFINE_ATTRIBUTE_CAPTUREDEF(UACAttributeSet, AttackPower, Source, false);
+		DEFINE_ATTRIBUTE_CAPTUREDEF(UACAttributeSet, DefensePower, Target, false);
+		DEFINE_ATTRIBUTE_CAPTUREDEF(UACAttributeSet, DamageTaken, Target, false);
+		DEFINE_ATTRIBUTE_CAPTUREDEF(UACAttributeSet, GroggyDamageTaken, Target, false);
+	}
 };

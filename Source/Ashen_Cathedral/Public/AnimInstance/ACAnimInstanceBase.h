@@ -14,9 +14,9 @@ class AACCharacterBase;
  * @class UACAnimInstanceBase
  * @brief 애니메이션 인스턴스의 기본 클래스.
  *
- * UAnimInstance를 상속받은 Crimson Moon 프로젝트의 기본 애니메이션 인스턴스 클래스
+ * UAnimInstance를 상속받은 Ashen Cathedral 프로젝트의 기본 애니메이션 인스턴스 클래스
  * 이 클래스는 캐릭터의 상태 기반 애니메이션 기능을 확장하거나 커스터마이즈하는 데 사용
- * UCMPlayerAnimInstance 및 UCMPlayerLinkedAnimLayer와 같은 플레이어 관련 애니메이션 클래스의 기본 클래스 역할
+ * UACPlayerAnimInstance 및 UACPlayerLinkedAnimLayer와 같은 플레이어 관련 애니메이션 클래스의 기본 클래스 역할
  */
 UCLASS()
 class ASHEN_CATHEDRAL_API UACAnimInstanceBase : public UAnimInstance

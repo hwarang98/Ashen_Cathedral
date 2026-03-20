@@ -3,7 +3,7 @@
 
 #include "DataAssets/Startup/ACDataAsset_PlayerStartupData.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
-#include "GameplayAbilitySystem/Abilities/Player/ACPlayerGameplayAbility.h"
+#include "GameplayAbilitySystem/Abilities/ACGameplayAbility.h"
 
 void UACDataAsset_PlayerStartupData::GiveToAbilitySystemComponent(UACAbilitySystemComponent* InASCToGive, int32 ApplyLevel)
 {
@@ -24,4 +24,7 @@ void UACDataAsset_PlayerStartupData::GiveToAbilitySystemComponent(UACAbilitySyst
 
 		InASCToGive->GiveAbility(AbilitySpec);
 	}
+
+	// 스태미나 회복 딜레이 GE 레퍼런스를 ASC에 전달 (AttributeSet의 런타임 접근용)
+	InASCToGive->StaminaRegenDelayEffectClass = StaminaRegenDelayEffectClass;
 }

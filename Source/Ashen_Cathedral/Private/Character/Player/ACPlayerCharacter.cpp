@@ -13,6 +13,7 @@
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "ACGameplayTags.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 
 AACPlayerCharacter::AACPlayerCharacter()
@@ -77,8 +78,6 @@ void AACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Look, ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
 	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_MouseLook, ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
 	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Jump, ETriggerEvent::Triggered, this, &ThisClass::Jump);
-	// L3 클릭 한 번으로 Sprint 진입 — 해제는 Tick에서 속도 감지로 자동 처리
-	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Sprint, ETriggerEvent::Started, this, &ThisClass::StartSprint);
 
 	ACInputComponent->BindAbilityInputAction(InputConfigDataAsset, this, &ThisClass::Input_AbilityInputPressed, &ThisClass::Input_AbilityInputReleased);
 }
@@ -103,29 +102,15 @@ UPlayerCombatComponent* AACPlayerCharacter::GetPawnCombatComponent() const
 	return PlayerCombatComponent;
 }
 
-void AACPlayerCharacter::StartSprint()
-{
-	// 이미 Sprint 중이면 L3 재클릭으로 해제
-	if (bIsSprinting)
-	{
-		StopSprint();
-		return;
-	}
-
-	// 정지 상태에서 L3를 눌러도 Sprint 진입 불가
-	if (GetVelocity().SizeSquared2D() < SprintStopThreshold * SprintStopThreshold)
-	{
-		return;
-	}
-
-	bIsSprinting = true;
-	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
-}
-
 void AACPlayerCharacter::StopSprint()
 {
-	bIsSprinting = false;
-	GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
+	// 이동 입력 해제 시 Sprint 어빌리티를 태그로 취소
+	if (ACAbilitySystemComponent)
+	{
+		FGameplayTagContainer SprintTag;
+		SprintTag.AddTag(ACGameplayTags::Player_Ability_Sprint);
+		ACAbilitySystemComponent->CancelAbilities(&SprintTag);
+	}
 }
 
 void AACPlayerCharacter::Input_AbilityInputPressed(const FGameplayTag InInputTag)

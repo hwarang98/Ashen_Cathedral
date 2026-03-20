@@ -14,7 +14,7 @@ class UCharacterMovementComponent;
  * @class UACPlayerAnimInstance
  * @brief 플레이어 캐릭터의 애니메이션 로직을 처리하는 애니메이션 인스턴스 클래스.
  *
- * UCMAnimInstanceBase를 상속받아 구현되며, Crimson Moon 프로젝트의 플레이어 캐릭터와 관련된 애니메이션 로직을 정의하는 데 사용
+ * UACAnimInstanceBase를 상속받아 구현되며, Ashen Cathedral 프로젝트의 플레이어 캐릭터와 관련된 애니메이션 로직을 정의하는 데 사용
  * 각종 상태 및 동작과 관련된 애니메이션 데이터를 관리하거나, 이를 기반으로 애니메이션 블루프린트 내의 다양한 동작을 처리할 수 있음
  */
 UCLASS()

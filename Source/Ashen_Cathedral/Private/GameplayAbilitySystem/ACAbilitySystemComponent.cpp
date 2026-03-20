@@ -10,23 +10,22 @@ void UACAbilitySystemComponent::OnAbilityInputPressed(const FGameplayTag& InputT
 	{
 		return;
 	}
-	for (const FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
+	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
 	{
 		if (!AbilitySpec.GetDynamicSpecSourceTags().HasTagExact(InputTag))
 		{
 			continue;
 		}
 
-		TryActivateAbility(AbilitySpec.Handle);
-
-		// if (InputTag.MatchesTag(ACGameplayTags::InputTag_Toggleable) && AbilitySpec.IsActive())
-		// {
-		// 	CancelAbilityHandle(AbilitySpec.Handle);
-		// }
-		// else
-		// {
-		// 	TryActivateAbility(AbilitySpec.Handle);
-		// }
+		if (AbilitySpec.IsActive())
+		{
+			// 이미 활성 중이면 InputPressed 전달 — 토글 어빌리티가 스스로 종료 결정
+			AbilitySpecInputPressed(AbilitySpec);
+		}
+		else
+		{
+			TryActivateAbility(AbilitySpec.Handle);
+		}
 	}
 }
 

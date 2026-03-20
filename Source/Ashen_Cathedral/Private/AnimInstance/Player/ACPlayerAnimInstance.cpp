@@ -2,6 +2,7 @@
 
 
 #include "AnimInstance/Player/ACPlayerAnimInstance.h"
+#include "ACGameplayTags.h"
 #include "Character/Player/ACPlayerCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "KismetAnimationLibrary.h"
@@ -23,6 +24,7 @@ void UACPlayerAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
 	}
 
 	IsCrouching = OwningMovementComponent->IsCrouching();
+	IsSprinting = DoesOwnerHaveTag(ACGameplayTags::Shared_Status_Sprinting);
 
 	// 착지하면 bJumpTriggered 리셋
 	if (!IsFalling)

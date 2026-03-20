@@ -28,8 +28,6 @@ public:
 	virtual void OnJumped_Implementation() override;
 	virtual UPlayerCombatComponent* GetPawnCombatComponent() const override;
 
-	FORCEINLINE bool GetIsSprinting() const { return bIsSprinting; }
-
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CharacterData | DataAsset", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UACDataAsset_InputConfig> InputConfigDataAsset;
@@ -47,20 +45,11 @@ private:
 	TObjectPtr<UPlayerCombatComponent> PlayerCombatComponent;
 
 	#pragma region Sprint
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement | Sprint", meta = (AllowPrivateAccess = "true"))
-	float SprintSpeed = 500.f;
-
+	/** BeginPlay 에서 MaxWalkSpeed 초기값 설정에 사용 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement | Sprint", meta = (AllowPrivateAccess = "true"))
 	float RunSpeed = 400.f;
 
-	// 이 속도(XY 평면) 이하로 떨어지면 Sprint 자동 해제
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement | Sprint", meta = (AllowPrivateAccess = "true"))
-	float SprintStopThreshold = 50.f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement | Sprint", meta = (AllowPrivateAccess = "true"))
-	bool bIsSprinting = false;
-
-	void StartSprint();
+	/** 이동 입력 해제 시 Sprint 취소 */
 	void StopSprint();
 	#pragma endregion
 
