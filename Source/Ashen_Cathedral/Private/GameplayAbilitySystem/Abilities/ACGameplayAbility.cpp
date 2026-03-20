@@ -27,7 +27,7 @@ UACAbilitySystemComponent* UACGameplayAbility::GetACAbilitySystemComponentFromAc
 	return (CurrentActorInfo ? Cast<UACAbilitySystemComponent>(CurrentActorInfo->AbilitySystemComponent.Get()) : nullptr);
 }
 
-AACCharacterBase* UACGameplayAbility::GetCMCharacterFromActorInfo() const
+AACCharacterBase* UACGameplayAbility::GetACCharacterFromActorInfo() const
 {
 	return (CurrentActorInfo ? Cast<AACCharacterBase>(CurrentActorInfo->AvatarActor.Get()) : nullptr);
 }

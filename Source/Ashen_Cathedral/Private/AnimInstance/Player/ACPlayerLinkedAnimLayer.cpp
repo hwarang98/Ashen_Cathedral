@@ -2,8 +2,8 @@
 
 
 #include "AnimInstance/Player/ACPlayerLinkedAnimLayer.h"
-
 #include "AnimInstance/Player/ACPlayerAnimInstance.h"
+#include "Components/SkeletalMeshComponent.h"
 
 UACPlayerAnimInstance* UACPlayerLinkedAnimLayer::GetPlayerAnimInstance() const
 {

@@ -6,6 +6,7 @@
 #include "Components/Combat/PawnCombatComponent.h"
 #include "PlayerCombatComponent.generated.h"
 
+class AACWeapon;
 /**
  * 
  */
@@ -13,5 +14,9 @@ UCLASS()
 class ASHEN_CATHEDRAL_API UPlayerCombatComponent : public UPawnCombatComponent
 {
 	GENERATED_BODY()
-	
+
+public:
+	UPlayerCombatComponent();
+
+	AACWeapon* GetPlayerCarriedWeaponByTag(FGameplayTag InWeaponTag) const;
 };

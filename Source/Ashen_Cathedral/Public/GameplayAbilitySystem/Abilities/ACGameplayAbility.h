@@ -34,5 +34,5 @@ protected:
 
 	/** 액터 정보에서 ACMCharacterBase를 캐스팅하여 반환 */
 	UFUNCTION(BlueprintPure, Category = "Ashen Cathedral|Ability|Helpers")
-	AACCharacterBase* GetCMCharacterFromActorInfo() const;
+	AACCharacterBase* GetACCharacterFromActorInfo() const;
 };

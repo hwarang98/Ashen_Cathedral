@@ -2,4 +2,11 @@
 
 
 #include "Components/Combat/PlayerCombatComponent.h"
+#include "Items/Weapon/ACWeapon.h"
 
+UPlayerCombatComponent::UPlayerCombatComponent() {}
+
+AACWeapon* UPlayerCombatComponent::GetPlayerCarriedWeaponByTag(FGameplayTag InWeaponTag) const
+{
+	return Cast<AACWeapon>(GetCharacterCarriedWeaponByTag(InWeaponTag));
+}

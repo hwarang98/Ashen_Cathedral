@@ -17,7 +17,7 @@ void UUACAbility_SpawnWeapon::ActivateAbility(const FGameplayAbilitySpecHandle H
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
 	// 1. 유효성 검사
-	AACCharacterBase* OwnerCharacter = GetCMCharacterFromActorInfo();
+	AACCharacterBase* OwnerCharacter = GetACCharacterFromActorInfo();
 	if (!OwnerCharacter)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);

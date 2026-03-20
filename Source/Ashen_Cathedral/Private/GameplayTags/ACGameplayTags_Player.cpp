@@ -7,6 +7,7 @@ namespace ACGameplayTags
 {
 	#pragma region Player Ability Tags
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_EquipWeapon, "Player.Ability.EquipWeapon")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_UnEquipWeapon, "Player.Ability.UnEquipWeapon")
 	#pragma endregion
 
 	#pragma region Player Weapon Tags
@@ -19,5 +20,6 @@ namespace ACGameplayTags
 
 	#pragma region Player SendGameplayEvent Tags
 	UE_DEFINE_GAMEPLAY_TAG(Player_Event_EquipWeapon, "Player.Event.EquipWeapon")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Event_UnequipWeapon, "Player.Event.UnequipWeapon")
 	#pragma endregion
 }

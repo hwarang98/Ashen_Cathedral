@@ -8,6 +8,7 @@ namespace ACGameplayTags
 {
 	#pragma region Player Ability Tags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Ability_EquipWeapon);
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Ability_UnEquipWeapon);
 	#pragma endregion
 
 	#pragma region Player Weapon Tags
@@ -20,5 +21,6 @@ namespace ACGameplayTags
 
 	#pragma region Player SendGameplayEvent Tags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Event_EquipWeapon);
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Event_UnequipWeapon);
 	#pragma endregion
 }

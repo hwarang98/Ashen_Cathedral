@@ -7,7 +7,14 @@
 #include "UACPlayerAbility_EquipWeapon.generated.h"
 
 /**
- * 
+ * 플레이어가 무기를 장착하는 능력을 정의한 클래스이다.
+ *
+ * 이 클래스는 Unreal Engine의 Ability System과 통합되어 있으며,
+ * 무기 장착 동작을 관리하고 실행하기 위해 사용된다.
+ * 능력 활성화 시 입력된 데이터를 기반으로 적절한 무기를 플레이어에게 장착한다.
+ *
+ * 이 클래스는 Ability System Component와 협력하여 게임플레이 중 발생하는
+ * 여러 이벤트와 상호작용한다.
  */
 UCLASS()
 class ASHEN_CATHEDRAL_API UUACPlayerAbility_EquipWeapon : public UACPlayerGameplayAbility
