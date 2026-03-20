@@ -24,15 +24,15 @@ protected:
 	#pragma endregion
 
 	#pragma region Policy
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CMAbility")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ACAbility")
 	EACAbilityActivationPolicy AbilityActivationPolicy = EACAbilityActivationPolicy::OnTriggered;
 	#pragma endregion
 
-	/** 액터 정보에서 UCMAbilitySystemComponent를 캐스팅하여 반환 */
+	/** 액터 정보에서 UACAbilitySystemComponent를 캐스팅하여 반환 */
 	UFUNCTION(BlueprintPure, Category = "Ashen Cathedral|Ability|Helpers")
 	UACAbilitySystemComponent* GetACAbilitySystemComponentFromActorInfo() const;
 
-	/** 액터 정보에서 ACMCharacterBase를 캐스팅하여 반환 */
+	/** 액터 정보에서 AACCharacterBase를 캐스팅하여 반환 */
 	UFUNCTION(BlueprintPure, Category = "Ashen Cathedral|Ability|Helpers")
 	AACCharacterBase* GetACCharacterFromActorInfo() const;
 };

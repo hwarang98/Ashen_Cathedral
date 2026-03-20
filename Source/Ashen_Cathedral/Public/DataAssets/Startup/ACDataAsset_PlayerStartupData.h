@@ -11,7 +11,7 @@
  * @class UACDataAsset_PlayerStartupData
  * @brief 플레이어의 시작 데이터를 정의하는 데이터 에셋 클래스
  *
- * UCMDataAsset_PlayerStartupData 클래스는 UCMDataAsset_StartupDataBase를 상속하며, 플레이어가 시작할 때 필요한 데이터(예: 기본 능력, 시작 효과 등)를 정의
+ * UACDataAsset_PlayerStartupData 클래스는 UACDataAsset_StartupDataBase를 상속하며, 플레이어가 시작할 때 필요한 데이터(예: 기본 능력, 시작 효과 등)를 정의
  * 이 데이터는 플레이어 캐릭터가 생성되면서 자동으로 할당되며, 게임플레이 중 필요한 초기 설정을 제공.
  */
 UCLASS()
@@ -25,4 +25,8 @@ public:
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "StartUpData", meta = (TitleProperty = "InputTag"))
 	TArray<FACPlayerAbilitySet> PlayerStartUpAbilitySets;
+
+	/** 스태미나 소비 시 재적용할 회복 딜레이 GE. ASC에 전달되어 런타임에 사용됩니다. */
+	UPROPERTY(EditDefaultsOnly, Category = "StartUpData|Stamina")
+	TSubclassOf<UGameplayEffect> StaminaRegenDelayEffectClass;
 };

@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
+#include "GameplayEffect.h"
 #include "ACAbilitySystemComponent.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class ASHEN_CATHEDRAL_API UACAbilitySystemComponent : public UAbilitySystemComponent
@@ -17,4 +18,8 @@ class ASHEN_CATHEDRAL_API UACAbilitySystemComponent : public UAbilitySystemCompo
 public:
 	void OnAbilityInputPressed(const FGameplayTag& InputTag);
 	void OnAbilityInputReleased(const FGameplayTag& InputTag);
+
+	/** DA_PlayerStartup에서 GiveToAbilitySystemComponent 시점에 주입됩니다. 적은 nullptr. */
+	UPROPERTY()
+	TSubclassOf<UGameplayEffect> StaminaRegenDelayEffectClass;
 };
