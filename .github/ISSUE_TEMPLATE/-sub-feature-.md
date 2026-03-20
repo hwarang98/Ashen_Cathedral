@@ -1,8 +1,8 @@
 ---
 name: "[Sub-Feature]"
-about: Describe this issue template's purpose here.
+about: 상위 Feature 이슈를 작은 단위로 분리하여 구현, 테스트, 리뷰를 용이하게 하기 위한 하위 작업 템플릿
 title: ''
-labels: ''
+labels: Sub-Issue
 assignees: ''
 
 ---
