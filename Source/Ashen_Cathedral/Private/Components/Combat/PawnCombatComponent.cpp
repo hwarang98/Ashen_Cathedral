@@ -16,6 +16,7 @@
 #include "GameplayTags/ACGameplayTags_Shared.h"
 #include "Items/Weapon/ACWeapon.h"
 #include "Structs/ACStructTypes.h"
+#include "Components/BoxComponent.h"
 
 void UPawnCombatComponent::OnHitTargetActor(AActor* HitActor)
 {
@@ -118,6 +119,40 @@ AACCharacterBase* UPawnCombatComponent::GetOwnerCharacter() const
 	}
 
 	return nullptr;
+}
+
+void UPawnCombatComponent::ToggleWeaponCollision(bool bShouldEnable, EToggleDamageType ToggleDamageType)
+{
+	if (ToggleDamageType == EToggleDamageType::CurrentEquippedWeapon)
+	{
+		const AACWeaponBase* WeaponToToggle = GetCharacterCurrentEquippedWeapon();
+
+		check(WeaponToToggle);
+
+		WeaponToToggle->GetWeaponCollisionBox()->SetCollisionEnabled(bShouldEnable ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
+
+		if (!bShouldEnable)
+		{
+			OverlappedActors.Empty();
+		}
+	}
+}
+
+void UPawnCombatComponent::HandleToggleCollision(bool bShouldEnable, EToggleDamageType ToggleDamageType)
+{
+	if (ToggleDamageType == EToggleDamageType::CurrentEquippedWeapon)
+	{
+		const AACWeaponBase* WeaponToToggle = GetCharacterCurrentEquippedWeapon();
+
+		check(WeaponToToggle);
+
+		WeaponToToggle->GetWeaponCollisionBox()->SetCollisionEnabled(bShouldEnable ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
+
+		if (!bShouldEnable)
+		{
+			OverlappedActors.Empty();
+		}
+	}
 }
 
 void UPawnCombatComponent::HandleEquipEffects(const FGameplayTag& NewWeaponTag, const FGameplayTag& OldWeaponTag)

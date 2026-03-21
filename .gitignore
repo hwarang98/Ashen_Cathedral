@@ -120,3 +120,4 @@ Saved/
 !Config/**
 !Plugins/**
 /Ashen_Cathedral.sln.DotSettings.user
+/.claude/settings.local.json

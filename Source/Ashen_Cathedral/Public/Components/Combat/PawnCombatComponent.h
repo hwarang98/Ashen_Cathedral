@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Character/ACCharacterBase.h"
 #include "Components/PawnExtensionComponentBase.h"
+#include "Enums/ACEnums.h"
 #include "Structs/ACStructTypes.h"
 #include "PawnCombatComponent.generated.h"
 
@@ -45,14 +46,25 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Ashen Cathdral|Combat")
 	FGameplayTag CurrentEquippedWeaponTag;
 
+	#pragma region Collision
+	UFUNCTION(BlueprintCallable, Category = "Ashen Cathdral|Combat")
+	void ToggleWeaponCollision(bool bShouldEnable, EToggleDamageType ToggleDamageType);
+	#pragma endregion
+
 protected:
 	// 한 번의 공격 동안 이미 맞은 액터들을 기록하는 배열
 	UPROPERTY()
 	TArray<TObjectPtr<AActor>> OverlappedActors;
 
+	#pragma region Internal
+	virtual void HandleToggleCollision(bool bShouldEnable, EToggleDamageType ToggleDamageType);
+	#pragma endregion
+
 private:
+	#pragma region Weapon Data
 	UPROPERTY()
 	TArray<FWeaponEntry> CharacterCarriedWeaponList;
+	#pragma endregion
 
 	void HandleEquipEffects(const FGameplayTag& NewWeaponTag, const FGameplayTag& OldWeaponTag);
 
