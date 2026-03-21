@@ -127,7 +127,10 @@ void UPawnCombatComponent::ToggleWeaponCollision(bool bShouldEnable, EToggleDama
 	{
 		const AACWeaponBase* WeaponToToggle = GetCharacterCurrentEquippedWeapon();
 
-		check(WeaponToToggle);
+		if (!WeaponToToggle)
+		{
+			return;
+		}
 
 		WeaponToToggle->GetWeaponCollisionBox()->SetCollisionEnabled(bShouldEnable ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
 
@@ -144,7 +147,10 @@ void UPawnCombatComponent::HandleToggleCollision(bool bShouldEnable, EToggleDama
 	{
 		const AACWeaponBase* WeaponToToggle = GetCharacterCurrentEquippedWeapon();
 
-		check(WeaponToToggle);
+		if (!WeaponToToggle)
+		{
+			return;
+		}
 
 		WeaponToToggle->GetWeaponCollisionBox()->SetCollisionEnabled(bShouldEnable ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
 
