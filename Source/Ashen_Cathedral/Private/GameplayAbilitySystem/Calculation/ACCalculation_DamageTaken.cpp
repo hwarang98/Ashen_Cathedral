@@ -51,11 +51,11 @@ void UACCalculation_DamageTaken::Execute_Implementation(const FGameplayEffectCus
 		{
 			BaseDamage = MagnitudeValue;
 		}
-		if (TagMagnitude.Key.MatchesTagExact(ACGameplayTags::Player_SetByCaller_AttackType_Light))
+		if (TagMagnitude.Key.MatchesTagExact(ACGameplayTags::Shared_SetByCaller_AttackType_Light))
 		{
 			UsedLightAttackComboCount = MagnitudeValue;
 		}
-		if (TagMagnitude.Key.MatchesTagExact(ACGameplayTags::Player_SetByCaller_AttackType_Heavy))
+		if (TagMagnitude.Key.MatchesTagExact(ACGameplayTags::Shared_SetByCaller_AttackType_Heavy))
 		{
 			UsedHeavyAttackComboCount = MagnitudeValue;
 		}
@@ -78,14 +78,12 @@ void UACCalculation_DamageTaken::Execute_Implementation(const FGameplayEffectCus
 
 	if (UsedLightAttackComboCount != 0)
 	{
-		const float DamageIncreasePercentLightAttack = (UsedLightAttackComboCount - 1) * 0.05f + 1.f;
-		BaseDamage *= DamageIncreasePercentLightAttack;
+		BaseDamage *= (UsedLightAttackComboCount - 1) * 0.05f + 1.f;
 	}
 
 	if (UsedHeavyAttackComboCount != 0)
 	{
-		const float DamageIncreasePercentHeavyAttack = UsedHeavyAttackComboCount * 0.15f + 1.f;
-		BaseDamage *= DamageIncreasePercentHeavyAttack;
+		BaseDamage *= UsedHeavyAttackComboCount * 0.15f + 1.f;
 	}
 
 	// AttackPower와 DefensePower를 정규화된 값으로 해석
@@ -107,7 +105,7 @@ void UACCalculation_DamageTaken::Execute_Implementation(const FGameplayEffectCus
 	{
 		const FGameplayModifierEvaluatedData ModifierEvaluatedData = FGameplayModifierEvaluatedData(
 			GetDamageCapture().DamageTakenProperty,
-			EGameplayModOp::Additive, // Override
+			EGameplayModOp::Additive,
 			FinalDamageDone
 			);
 

@@ -4,7 +4,9 @@
 #include "ACFunctionLibrary.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "GenericTeamAgentInterface.h"
+#include "Enums/ACEnums.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
+#include "Interfaces/PawnCombatInterface.h"
 
 UACAbilitySystemComponent* UACFunctionLibrary::NativeAbilitySystemComponentFromActor(AActor* InActor)
 {
@@ -44,4 +46,23 @@ bool UACFunctionLibrary::IsTargetPawnHostile(const APawn* QueryPawn, const APawn
 
 	// 팀 인터페이스를 구현하지 않은 경우 적대 관계로 간주하지 않음
 	return false;
+}
+
+UPawnCombatComponent* UACFunctionLibrary::BP_GetPawnCombatComponentFromActor(AActor* InActor, EACValidType& OutValidType)
+{
+	UPawnCombatComponent* CombatComponent = NativeGetPawnCombatComponentFromActor(InActor);
+	OutValidType = CombatComponent ? EACValidType::Valid : EACValidType::Invalid;
+	return CombatComponent;
+}
+
+UPawnCombatComponent* UACFunctionLibrary::NativeGetPawnCombatComponentFromActor(AActor* InActor)
+{
+	check(InActor);
+
+	if (const IPawnCombatInterface* PawnCombatInterface = Cast<IPawnCombatInterface>(InActor))
+	{
+		return PawnCombatInterface->GetPawnCombatComponent();
+	}
+
+	return nullptr;
 }

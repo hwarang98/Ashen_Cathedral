@@ -21,3 +21,10 @@ enum class EToggleDamageType : uint8
 	LeftHand,
 	RightHand
 };
+
+UENUM()
+enum class EACValidType : uint8
+{
+	Valid,
+	Invalid,
+};

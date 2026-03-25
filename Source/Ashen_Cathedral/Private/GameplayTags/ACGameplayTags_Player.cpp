@@ -9,6 +9,7 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_EquipWeapon, "Player.Ability.EquipWeapon")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_UnEquipWeapon, "Player.Ability.UnEquipWeapon")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Sprint, "Player.Ability.Sprint")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Attack_Light, "Player.Ability.Attack.Light")
 	#pragma endregion
 
 	#pragma region Player Weapon Tags
@@ -26,8 +27,6 @@ namespace ACGameplayTags
 	#pragma endregion
 
 	#pragma region Player SetByCaller Tags
-	UE_DEFINE_GAMEPLAY_TAG(Player_SetByCaller_AttackType_Light, "Player.SetByCaller.AttackType.Light")
-	UE_DEFINE_GAMEPLAY_TAG(Player_SetByCaller_AttackType_Heavy, "Player.SetByCaller.AttackType.Heavy")
 	UE_DEFINE_GAMEPLAY_TAG(Player_SetByCaller_StaminaCost, "Player.SetByCaller.StaminaCost")
 	#pragma endregion
 }
