@@ -43,6 +43,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Ashen Cathdral|Combat")
 	AACCharacterBase* GetOwnerCharacter() const;
 
+	/** 현재 장착 무기의 기본 데미지를 반환. 자식 클래스에서 무기 데이터에 맞게 override한다. */
+	virtual float GetCurrentWeaponBaseDamage() const;
+	/** 현재 장착 무기의 강공격 그로기 데미지를 반환. */
+	virtual float GetCurrentWeaponHeavyAttackGroggyDamage() const;
+	/** 현재 장착 무기의 카운터 그로기 데미지를 반환. */
+	virtual float GetCurrentWeaponCounterAttackGroggyDamage() const;
+	/** 현재 장착 무기의 공격 속도(몽타주 재생 배율)를 반환. */
+	virtual float GetCurrentWeaponAttackSpeed() const;
+
 	UPROPERTY(BlueprintReadWrite, Category = "Ashen Cathdral|Combat")
 	FGameplayTag CurrentEquippedWeaponTag;
 

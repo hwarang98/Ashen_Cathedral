@@ -6,6 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "ACFunctionLibrary.generated.h"
 
+class UPawnCombatComponent;
 class UACAbilitySystemComponent;
 struct FGameplayTag;
 /**
@@ -55,4 +56,11 @@ public:
 	 */
 	UFUNCTION(BlueprintPure, Category = "Ashen Cathdral|FunctionLibrary")
 	static bool IsTargetPawnHostile(const APawn* QueryPawn, const APawn* TargetPawn);
+
+	/* 액터에서 PawnCombatComponent를 가져옴 */
+	UFUNCTION(BlueprintCallable, Category = "Ashen Cathdral|FunctionLibrary", meta = (DisplayName = "Get Pawn Combat Component From Actor", ExpandEnumAsExecs = "OutValidType"))
+	static UPawnCombatComponent* BP_GetPawnCombatComponentFromActor(AActor* InActor, EACValidType& OutValidType);
+
+	/* 내부적으로 PawnCombatComponent를 직접 검색 */
+	static UPawnCombatComponent* NativeGetPawnCombatComponentFromActor(AActor* InActor);
 };

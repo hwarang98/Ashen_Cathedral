@@ -268,6 +268,11 @@ void UPawnCombatComponent::HandleEquipEffects(const FGameplayTag& NewWeaponTag, 
 	}
 }
 
+float UPawnCombatComponent::GetCurrentWeaponBaseDamage() const { return 0.f; }
+float UPawnCombatComponent::GetCurrentWeaponHeavyAttackGroggyDamage() const { return 0.f; }
+float UPawnCombatComponent::GetCurrentWeaponCounterAttackGroggyDamage() const { return 0.f; }
+float UPawnCombatComponent::GetCurrentWeaponAttackSpeed() const { return 1.f; }
+
 void UPawnCombatComponent::PreloadSkillParticles(const UACDataAsset_WeaponData* WeaponData)
 {
 	if (!WeaponData || WeaponData->SkillParticleSystems.IsEmpty())

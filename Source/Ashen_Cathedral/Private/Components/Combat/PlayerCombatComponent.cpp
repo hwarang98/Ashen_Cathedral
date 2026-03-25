@@ -67,3 +67,27 @@ float UPlayerCombatComponent::GetPlayerCurrentWeaponCounterGroggyDamage() const
 	}
 	return 0.f;
 }
+
+float UPlayerCombatComponent::GetCurrentWeaponBaseDamage() const
+{
+	return GetPlayerCurrentEquippedWeaponDamageAtLevel();
+}
+
+float UPlayerCombatComponent::GetCurrentWeaponHeavyAttackGroggyDamage() const
+{
+	return GetPlayerCurrentWeaponHeavyGroggyDamage();
+}
+
+float UPlayerCombatComponent::GetCurrentWeaponCounterAttackGroggyDamage() const
+{
+	return GetPlayerCurrentWeaponCounterGroggyDamage();
+}
+
+float UPlayerCombatComponent::GetCurrentWeaponAttackSpeed() const
+{
+	if (const FACWeaponStatRow* Row = GetCurrentWeaponStatRow())
+	{
+		return Row->AttackSpeed;
+	}
+	return 1.f;
+}
