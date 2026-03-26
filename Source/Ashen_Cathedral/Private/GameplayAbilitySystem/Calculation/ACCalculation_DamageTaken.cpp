@@ -100,6 +100,23 @@ void UACCalculation_DamageTaken::Execute_Implementation(const FGameplayEffectCus
 		FinalDamageDone *= CounterAttackBonus;
 	}
 
+	if (GEngine)
+	{
+		const FString DebugMsg = FString::Printf(
+			TEXT("[ 데미지 계산 ]\n경량 콤보: %d회 | 중량 콤보: %d회\n플레이어 기본 데미지: %.1f | 플레이어 공격력: %.2f | 적 방어율: %.0f%%\n플레이어 카운터 보너스: %.2fx\n─────────────────\n최종 적에게 입힌 데미지 데미지: %.1f\n─────────────────\n"),
+			UsedLightAttackComboCount,
+			UsedHeavyAttackComboCount,
+			BaseDamage,
+			AttackMultiplier,
+			DefenseMultiplier * 100.f,
+			CounterAttackBonus > 0.f ? CounterAttackBonus : 1.f,
+			FinalDamageDone
+			);
+
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Yellow, DebugMsg);
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *DebugMsg);
+	}
+
 	// 계산된 데미지를 출력(Output)으로 설정
 	if (FinalDamageDone > 0.f)
 	{
