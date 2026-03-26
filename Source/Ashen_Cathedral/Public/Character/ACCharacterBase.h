@@ -28,6 +28,7 @@ public:
 
 	FORCEINLINE UACAbilitySystemComponent* GetACAbilitySystemComponent() const { return ACAbilitySystemComponent; }
 	FORCEINLINE UACAttributeSet* GetACAttributeSet() const { return ACAttributeSet; }
+	FORCEINLINE TSoftObjectPtr<UACDataAsset_StartupDataBase> GetCharacterStartUpData() const { return CharacterStartUpData; }
 
 protected:
 	#pragma region GAS

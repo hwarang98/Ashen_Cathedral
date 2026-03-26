@@ -31,6 +31,11 @@ void AACCharacterBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
+	if (ACAbilitySystemComponent)
+	{
+		ACAbilitySystemComponent->InitAbilityActorInfo(this, this);
+	}
+
 	if (!CharacterStartUpData.IsNull())
 	{
 		if (UACDataAsset_StartupDataBase* LoadedData = CharacterStartUpData.LoadSynchronous())
