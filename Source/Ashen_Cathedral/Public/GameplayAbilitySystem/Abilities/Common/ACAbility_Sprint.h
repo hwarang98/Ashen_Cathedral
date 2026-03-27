@@ -11,8 +11,8 @@
 /**
  * UACAbility_Sprint 클래스는 Sprint 기능을 구현한 능력(Ability)이다.
  * 캐릭터의 이동 속도를 증가시키고, 스태미나 소모와 같은 추가적인 게임플레이 효과를 제공한다.
- * - Input Press -> ActivateAbility (MaxWalkSpeed 증가, 드레인 GE 적용)
- * - Input Release -> EndAbility (MaxWalkSpeed 복원, 드레인 GE 제거)
+ * - Input Press -> ActivateAbility (SprintSpeed 값으로 Dynamic GE 생성·적용 → MoveSpeed 어트리뷰트 Override → MaxWalkSpeed 자동 동기화, 드레인 GE 적용)
+ * - Input Release -> EndAbility (SprintSpeedEffectClass GE 제거 → MoveSpeed 복원 → MaxWalkSpeed 자동 동기화, 드레인 GE 제거)
  * - Stamina 소진 -> EndAbility 자동 호출
  * - AnimInstance: ActivationOwnedTags 에 Shared.Status.Sprinting 부여 -> IsSprinting 갱신
  */
@@ -52,7 +52,7 @@ protected:
 		const FGameplayAbilityActivationInfo ActivationInfo) override;
 
 private:
-	/** Sprint 중 적용할 MaxWalkSpeed */
+	/** Sprint 중 적용할 MoveSpeed Override 값. 런타임 Dynamic GE 로 어트리뷰트에 전달. */
 	UPROPERTY(EditDefaultsOnly, Category = "Sprint")
 	float SprintSpeed = 500.f;
 
@@ -68,9 +68,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Sprint")
 	TSubclassOf<UGameplayEffect> SprintStaminaDrainEffectClass;
 
-	/** ActivateAbility 시점의 MaxWalkSpeed 저장 -> EndAbility 에서 복원 */
-	float CachedRunSpeed = 0.f;
-
+	FActiveGameplayEffectHandle SprintSpeedEffectHandle;
 	FActiveGameplayEffectHandle DrainEffectHandle;
 	FDelegateHandle StaminaDelegateHandle;
 
