@@ -97,8 +97,6 @@ void UPawnCombatComponent::SetCurrentEquippedWeaponTag(const FGameplayTag& NewWe
 
 	//2. 서버(Listen)에서 즉시 시각적/물리적 상태를 적용
 	HandleEquipEffects(CurrentEquippedWeaponTag, OldWeaponTag);
-
-	// 3. 원격 클라이언트들은 OnRep_CurrentEquippedWeaponTag를 통해 HandleClientSideEquipEffects가 정상적으로 호출
 }
 
 AACWeaponBase* UPawnCombatComponent::GetCharacterCurrentEquippedWeapon() const
@@ -175,6 +173,7 @@ void UPawnCombatComponent::HandleEquipEffects(const FGameplayTag& NewWeaponTag, 
 		{
 			if (const UACDataAsset_WeaponData* WeaponData = OldWeapon->WeaponData)
 			{
+				// TODO: UI 작업시 주석해제
 				// if (UPawnUIComponent* PawnUIComp = OwnerCharacter->GetPawnUIComponent())
 				// {
 				// 	for (const FCMPlayerAbilitySet& AbilitySet : WeaponData->DefaultWeaponAbilities)
