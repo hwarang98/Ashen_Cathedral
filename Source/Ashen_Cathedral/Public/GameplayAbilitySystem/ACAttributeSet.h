@@ -41,6 +41,11 @@ public:
 	virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
 
 	#pragma region Core - 생명력 & 스태미나
+	/** 기본 이동 속도. CharacterMovement 의 MaxWalkSpeed 와 동기화됩니다. */
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute|Movement")
+	FGameplayAttributeData MoveSpeed;
+	ATTRIBUTE_ACCESSORS(UACAttributeSet, MoveSpeed);
+
 	/** 현재 체력. 0이 되면 사망 처리됩니다. */
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute|Combat")
 	FGameplayAttributeData Health;
