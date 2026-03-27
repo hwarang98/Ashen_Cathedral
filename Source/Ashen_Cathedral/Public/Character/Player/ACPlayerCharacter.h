@@ -45,10 +45,6 @@ private:
 	TObjectPtr<UPlayerCombatComponent> PlayerCombatComponent;
 
 	#pragma region Sprint
-	/** BeginPlay 에서 MaxWalkSpeed 초기값 설정에 사용 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement | Sprint", meta = (AllowPrivateAccess = "true"))
-	float RunSpeed = 400.f;
-
 	/** 이동 입력 해제 시 Sprint 취소 */
 	void StopSprint();
 	#pragma endregion

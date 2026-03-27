@@ -13,8 +13,8 @@
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "ACGameplayTags.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
+#include "GameplayAbilitySystem/ACAttributeSet.h"
 
 AACPlayerCharacter::AACPlayerCharacter()
 {
@@ -46,8 +46,10 @@ void AACPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 생성자 시점엔 BP EditDefaultsOnly 값이 미적용 -> BeginPlay에서 초기화
-	GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
+	if (ACAttributeSet)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = ACAttributeSet->GetMoveSpeed();
+	}
 }
 
 

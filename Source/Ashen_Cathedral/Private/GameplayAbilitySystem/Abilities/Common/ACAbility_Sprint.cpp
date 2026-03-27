@@ -3,7 +3,8 @@
 #include "GameplayAbilitySystem/Abilities/Common/ACAbility_Sprint.h"
 #include "ACGameplayTags.h"
 #include "Character/ACCharacterBase.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include "GameplayEffect.h"
+#include "ScalableFloat.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 #include "GameplayAbilitySystem/ACAttributeSet.h"
 
@@ -74,25 +75,26 @@ void UACAbility_Sprint::ActivateAbility(
 		return;
 	}
 
-	const AACCharacterBase* CharacterBase = GetACCharacterFromActorInfo();
 	UACAbilitySystemComponent* ASC = GetACAbilitySystemComponentFromActorInfo();
 
-	if (!CharacterBase || !ASC)
+	if (!ASC)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
-	UCharacterMovementComponent* CharacterMovementComponent = CharacterBase->GetCharacterMovement();
-	if (!CharacterMovementComponent)
+	// SprintSpeed 값으로 Dynamic GE 생성 — MoveSpeed 를 Override -> PostAttributeChange 에서 MaxWalkSpeed 자동 동기화
 	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-		return;
-	}
+		UGameplayEffect* DynamicGE = NewObject<UGameplayEffect>(GetTransientPackage(), TEXT("SprintSpeed_DynamicGE"));
+		DynamicGE->DurationPolicy = EGameplayEffectDurationType::Infinite;
 
-	// 현재 속도 저장 후 Sprint 속도 적용
-	CachedRunSpeed = CharacterMovementComponent->MaxWalkSpeed;
-	CharacterMovementComponent->MaxWalkSpeed = SprintSpeed;
+		FGameplayModifierInfo& ModInfo = DynamicGE->Modifiers.AddDefaulted_GetRef();
+		ModInfo.Attribute = UACAttributeSet::GetMoveSpeedAttribute();
+		ModInfo.ModifierOp = EGameplayModOp::Override;
+		ModInfo.ModifierMagnitude = FGameplayEffectModifierMagnitude(FScalableFloat(SprintSpeed));
+
+		SprintSpeedEffectHandle = ASC->ApplyGameplayEffectToSelf(DynamicGE, 1.f, ASC->MakeEffectContext());
+	}
 
 	// 스태미나 드레인 GE 적용 — 적(Enemy)은 nullptr 이므로 건너뜀
 	// 드레인 GE 가 있을 때만 소진 감시 델리게이트도 등록
@@ -112,17 +114,11 @@ void UACAbility_Sprint::EndAbility(
 	bool bReplicateEndAbility,
 	bool bWasCancelled)
 {
-	// MaxWalkSpeed 복원
-	if (const AACCharacterBase* CharacterBase = GetACCharacterFromActorInfo())
-	{
-		if (UCharacterMovementComponent* Movement = CharacterBase->GetCharacterMovement())
-		{
-			Movement->MaxWalkSpeed = CachedRunSpeed;
-		}
-	}
-
 	if (UACAbilitySystemComponent* ASC = GetACAbilitySystemComponentFromActorInfo())
 	{
+		// Sprint 속도 GE 제거 — MoveSpeed 복원 → PostAttributeChange 에서 MaxWalkSpeed 자동 동기화
+		ASC->RemoveActiveGameplayEffect(SprintSpeedEffectHandle);
+
 		// 드레인 GE 제거
 		ASC->RemoveActiveGameplayEffect(DrainEffectHandle);
 
@@ -137,6 +133,7 @@ void UACAbility_Sprint::EndAbility(
 		}
 	}
 
+	SprintSpeedEffectHandle.Invalidate();
 	DrainEffectHandle.Invalidate();
 	StaminaDelegateHandle.Reset();
 

@@ -7,10 +7,13 @@
 #include "ACGameplayTags.h"
 #include "GameplayEffectExtension.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UACAttributeSet::UACAttributeSet()
 {
 	//Core
+	InitMoveSpeed(400.f);
 	InitHealth(1.f);
 	InitMaxHealth(1.f);
 	InitStamina(1.f);
@@ -35,8 +38,13 @@ void UACAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, fl
 {
 	Super::PreAttributeChange(Attribute, NewValue);
 
+	if (Attribute == GetMoveSpeedAttribute())
+	{
+		NewValue = FMath::Max(NewValue, 0.f);
+	}
+
 	// Core — 현재값은 0과 최대값 사이로 클램프
-	if (Attribute == GetHealthAttribute())
+	else if (Attribute == GetHealthAttribute())
 	{
 		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxHealth());
 	}
@@ -101,6 +109,22 @@ void UACAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 	}
 }
 
+
+void UACAttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
+{
+	Super::PostAttributeChange(Attribute, OldValue, NewValue);
+
+	if (Attribute == GetMoveSpeedAttribute())
+	{
+		if (ACharacter* Character = Cast<ACharacter>(GetOwningActor()))
+		{
+			if (UCharacterMovementComponent* Movement = Character->GetCharacterMovement())
+			{
+				Movement->MaxWalkSpeed = NewValue;
+			}
+		}
+	}
+}
 
 void UACAttributeSet::HandleGroggyDamage(const FGameplayEffectModCallbackData& Data)
 {
