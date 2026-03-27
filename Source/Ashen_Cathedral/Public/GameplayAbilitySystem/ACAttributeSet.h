@@ -37,6 +37,8 @@ public:
 	UACAttributeSet();
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
+	/** MoveSpeed 변경(GE 적용·제거 모두) 시 CharacterMovement 와 동기화 */
+	virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
 
 	#pragma region Core - 생명력 & 스태미나
 	/** 현재 체력. 0이 되면 사망 처리됩니다. */

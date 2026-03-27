@@ -7,6 +7,8 @@
 #include "ACGameplayTags.h"
 #include "GameplayEffectExtension.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UACAttributeSet::UACAttributeSet()
 {
@@ -101,6 +103,22 @@ void UACAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 	}
 }
 
+
+void UACAttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
+{
+	Super::PostAttributeChange(Attribute, OldValue, NewValue);
+
+	if (Attribute == GetMoveSpeedAttribute())
+	{
+		if (ACharacter* Character = Cast<ACharacter>(GetOwningActor()))
+		{
+			if (UCharacterMovementComponent* Movement = Character->GetCharacterMovement())
+			{
+				Movement->MaxWalkSpeed = NewValue;
+			}
+		}
+	}
+}
 
 void UACAttributeSet::HandleGroggyDamage(const FGameplayEffectModCallbackData& Data)
 {
