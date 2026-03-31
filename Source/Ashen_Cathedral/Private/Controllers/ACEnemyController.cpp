@@ -23,13 +23,13 @@ AACEnemyController::AACEnemyController()
 	EnemyPerceptionComponent->ConfigureSense(*AISenseConfig_Sight);
 	EnemyPerceptionComponent->SetDominantSense(UAISenseConfig_Sight::StaticClass());
 	EnemyPerceptionComponent->OnTargetPerceptionUpdated.AddUniqueDynamic(this, &ThisClass::OnEnemyPerceptionUpdated);
-	SetGenericTeamId(FGenericTeamId(1));
 }
 
 
 void AACEnemyController::BeginPlay()
 {
 	Super::BeginPlay();
+	SetGenericTeamId(FGenericTeamId(1));
 }
 
 void AACEnemyController::OnPossess(APawn* InPawn)
