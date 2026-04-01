@@ -3,9 +3,9 @@
 
 #include "Controllers/ACEnemyController.h"
 
+#include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/Enemy/ACEnemyCharacter.h"
-#include "DataAssets/Startup/ACDataAsset_EnemyStartupData.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 
@@ -37,21 +37,6 @@ void AACEnemyController::OnPossess(APawn* InPawn)
 	Super::OnPossess(InPawn);
 
 	CachedEnemyCharacter = Cast<AACEnemyCharacter>(InPawn);
-	if (!CachedEnemyCharacter)
-	{
-		return;
-	}
-
-	if (CachedEnemyCharacter->GetCharacterStartUpData().IsNull())
-	{
-		return;
-	}
-
-	const UACDataAsset_EnemyStartupData* EnemyData = Cast<UACDataAsset_EnemyStartupData>(CachedEnemyCharacter->GetCharacterStartUpData().LoadSynchronous());
-	if (EnemyData && EnemyData->GetBehaviorTreeAsset())
-	{
-		RunBehaviorTree(EnemyData->GetBehaviorTreeAsset());
-	}
 }
 
 ETeamAttitude::Type AACEnemyController::GetTeamAttitudeTowards(const AActor& Other) const
