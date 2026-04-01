@@ -36,6 +36,17 @@ public:
 	static void AddGameplayTagToActorIfNone(AActor* InActor, FGameplayTag TagToAdd);
 
 	/**
+	 * Actor에서 특정 GameplayTag를 제거
+	 *
+	 * @param InActor 태그를 제거할 Actor
+	 * @param TagToRemove 제거하려는 GameplayTag
+	 *
+	 * @details Actor에 연결된 AbilitySystemComponent를 이용하여 주어진 태그가 존재하면 해당 태그를 제거한다.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Ashen Cathdral|FunctionLibrary")
+	static void RemoveGameplayTagFromActorIfFound(AActor* InActor, FGameplayTag TagToRemove);
+
+	/**
 	 * 주어진 Actor가 특정 GameplayTag를 가지고 있는지 확인
 	 *
 	 * @param InActor 검사 대상 Actor

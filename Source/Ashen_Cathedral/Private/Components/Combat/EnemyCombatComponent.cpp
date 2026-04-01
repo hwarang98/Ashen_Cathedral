@@ -3,14 +3,14 @@
 
 #include "Components/Combat/EnemyCombatComponent.h"
 #include "DataTable/Item/Weapon/ACDataTable_Weapon.h"
-#include "DataAssets/Items/Weapon/ACDataAsset_WeaponData.h"
-#include "Items/Weapon/ACWeapon.h"
+#include "DataAssets/Items/Weapon/ACDataAsse_EnemyWeaponData.h"
+#include "Items/Weapon/ACEnemyWeapon.h"
 
 const FACWeaponStatRow* UEnemyCombatComponent::GetCurrentWeaponStatRow() const
 {
-	if (const AACWeapon* Weapon = Cast<AACWeapon>(GetCharacterCurrentEquippedWeapon()))
+	if (const AACEnemyWeapon* Weapon = Cast<AACEnemyWeapon>(GetCharacterCurrentEquippedWeapon()))
 	{
-		if (const UACDataAsset_WeaponData* WeaponData = Weapon->WeaponData)
+		if (const UACDataAsse_EnemyWeaponData* WeaponData = Weapon->WeaponData)
 		{
 			return WeaponData->WeaponStatRow.GetRow<FACWeaponStatRow>(TEXT("GetCurrentWeaponStatRow"));
 		}

@@ -9,7 +9,6 @@
 struct FAIStimulus;
 class UAISenseConfig_Sight;
 class AACEnemyCharacter;
-class UBehaviorTree;
 
 UCLASS()
 class ASHEN_CATHEDRAL_API AACEnemyController : public AAIController
