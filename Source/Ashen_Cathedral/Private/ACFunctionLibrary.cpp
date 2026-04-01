@@ -24,6 +24,16 @@ void UACFunctionLibrary::AddGameplayTagToActorIfNone(AActor* InActor, FGameplayT
 	}
 }
 
+void UACFunctionLibrary::RemoveGameplayTagFromActorIfFound(AActor* InActor, FGameplayTag TagToRemove)
+{
+	UACAbilitySystemComponent* AbilitySystemComponent = NativeAbilitySystemComponentFromActor(InActor);
+
+	if (AbilitySystemComponent->HasMatchingGameplayTag(TagToRemove))
+	{
+		AbilitySystemComponent->RemoveLooseGameplayTag(TagToRemove);
+	}
+}
+
 bool UACFunctionLibrary::NativeDoesActorHaveTag(AActor* InActor, FGameplayTag TagToCheck)
 {
 	UACAbilitySystemComponent* AbilitySystemComponent = NativeAbilitySystemComponentFromActor(InActor);
