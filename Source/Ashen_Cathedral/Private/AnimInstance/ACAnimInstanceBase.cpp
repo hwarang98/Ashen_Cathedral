@@ -5,6 +5,7 @@
 
 #include "ACFunctionLibrary.h"
 #include "GameplayTagContainer.h"
+#include "KismetAnimationLibrary.h"
 #include "Character/ACCharacterBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -29,11 +30,10 @@ void UACAnimInstanceBase::NativeUpdateAnimation(float DeltaSeconds)
 	}
 
 	GroundSpeed = OwningCharacter->GetVelocity().Size2D();
-
 	IsFalling = OwningMovementComponent->IsFalling();
-
 	bHasAcceleration = OwningMovementComponent->GetCurrentAcceleration().SizeSquared() > KINDA_SMALL_NUMBER;
 	Velocity = OwningCharacter->GetVelocity();
+	LocomotionDirection = UKismetAnimationLibrary::CalculateDirection(OwningCharacter->GetVelocity(), OwningCharacter->GetActorRotation());
 }
 
 bool UACAnimInstanceBase::DoesOwnerHaveTag(const FGameplayTag TagToCheck) const
