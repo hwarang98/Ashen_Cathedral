@@ -74,7 +74,7 @@ UPawnCombatComponent* UACFunctionLibrary::BP_GetPawnCombatComponentFromActor(AAc
 
 UPawnCombatComponent* UACFunctionLibrary::NativeGetPawnCombatComponentFromActor(AActor* InActor)
 {
-	check(InActor);
+	// check(InActor);
 
 	if (const IPawnCombatInterface* PawnCombatInterface = Cast<IPawnCombatInterface>(InActor))
 	{
