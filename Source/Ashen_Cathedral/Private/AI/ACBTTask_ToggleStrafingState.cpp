@@ -69,7 +69,9 @@ void UACBTTask_ToggleStrafingState::OnEnemyExecuteTask()
 				if (const UBlackboardComponent* Blackboard = EnemyController->GetBlackboardComponent())
 				{
 					const float DefaultMaxWalkSpeed = Blackboard->GetValueAsFloat(InDefaultMaxWalkSpeedKey.SelectedKeyName);
-					ASC->SetNumericAttributeBase(UACAttributeSet::GetMoveSpeedAttribute(), DefaultMaxWalkSpeed);
+					const float CurrentMoveSpeed = ASC->GetNumericAttribute(UACAttributeSet::GetMoveSpeedAttribute());
+					const float SpeedToRestore = FMath::IsNearlyEqual(CurrentMoveSpeed, MovementComponent->MaxWalkSpeed) ? DefaultMaxWalkSpeed : CurrentMoveSpeed;
+					ASC->SetNumericAttributeBase(UACAttributeSet::GetMoveSpeedAttribute(), SpeedToRestore);
 				}
 			}
 		}
