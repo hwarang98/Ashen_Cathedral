@@ -230,7 +230,7 @@ void UACAttributeSet::HandleDamageAndTriggerHitReact(const FGameplayEffectModCal
 		return;
 	}
 
-	// HitReact — 무적·슈퍼아머 보유 시 무효화
+	// HitReact — 무적, 슈퍼아머 보유 시 무효화
 	static FGameplayTagContainer HitReactImmunityTags;
 	if (HitReactImmunityTags.IsEmpty())
 	{
@@ -238,6 +238,7 @@ void UACAttributeSet::HandleDamageAndTriggerHitReact(const FGameplayEffectModCal
 		HitReactImmunityTags.AddTag(ACGameplayTags::Shared_Status_SuperArmor);
 	}
 
+	//  HitReact 차단
 	if (TargetASC && !TargetASC->HasAnyMatchingGameplayTags(HitReactImmunityTags))
 	{
 		FGameplayEventData HitPayload;

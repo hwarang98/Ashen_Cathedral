@@ -11,6 +11,7 @@
 class UACDataAsset_StartupDataBase;
 class UACAttributeSet;
 class UACAbilitySystemComponent;
+class UMotionWarpingComponent;
 
 UCLASS(Abstract)
 class ASHEN_CATHEDRAL_API AACCharacterBase : public ACharacter, public IAbilitySystemInterface, public IPawnCombatInterface
@@ -43,4 +44,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CharacterData | DataAsset")
 	TSoftObjectPtr<UACDataAsset_StartupDataBase> CharacterStartUpData;
 	#pragma endregion
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MotionWarping")
+	TObjectPtr<UMotionWarpingComponent> MotionWarpingComponent;
 };

@@ -28,3 +28,10 @@ enum class EACValidType : uint8
 	Valid,
 	Invalid,
 };
+
+UENUM()
+enum class EACConfirmType : uint8
+{
+	Yes,
+	No
+};

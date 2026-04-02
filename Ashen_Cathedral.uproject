@@ -40,6 +40,10 @@
 		{
 			"Name": "WindowsDualsense_ds5w",
 			"Enabled": true
+		},
+		{
+			"Name": "MotionWarping",
+			"Enabled": true
 		}
 	]
 }

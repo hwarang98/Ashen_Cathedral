@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Enums/ACEnums.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "ACFunctionLibrary.generated.h"
 
@@ -55,6 +56,9 @@ public:
 	 */
 	static bool NativeDoesActorHaveTag(AActor* InActor, FGameplayTag TagToCheck);
 
+	UFUNCTION(BlueprintCallable, Category = "Ashen Cathdral|FunctionLibrary", meta = (DisplayName = "Does Actor Have Tag", ExpandEnumAsExecs = "OutConfirmType"))
+	static void BP_DoesActorHaveTag(AActor* InActor, FGameplayTag TagToCheck, EACConfirmType& OutConfirmType);
+
 	/**
 	 * QueryPawn과 TargetPawn 간의 적대 관계를 확인
 	 *
@@ -74,4 +78,12 @@ public:
 
 	/* 내부적으로 PawnCombatComponent를 직접 검색 */
 	static UPawnCombatComponent* NativeGetPawnCombatComponentFromActor(AActor* InActor);
+
+	/* 캐릭터가 맞은 위치 별 태그 반환 */
+	UFUNCTION(BlueprintPure, Category = "Ashen Cathdral|FunctionLibrary")
+	static FGameplayTag ComputeHitReactDirectionTag(const AActor* InAttacker, const AActor* InVictim, float& OutAngleDifference);
+
+private:
+	/* 주어진 각도 차이를 바탕으로 히트 반응 태그를 결정 */
+	static FGameplayTag DetermineHitReactionTag(const float& OutAngleDifference);
 };

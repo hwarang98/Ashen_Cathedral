@@ -7,6 +7,8 @@
 #include "Enums/ACEnums.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 #include "Interfaces/PawnCombatInterface.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "ACGameplayTags.h"
 
 UACAbilitySystemComponent* UACFunctionLibrary::NativeAbilitySystemComponentFromActor(AActor* InActor)
 {
@@ -39,6 +41,11 @@ bool UACFunctionLibrary::NativeDoesActorHaveTag(AActor* InActor, FGameplayTag Ta
 	UACAbilitySystemComponent* AbilitySystemComponent = NativeAbilitySystemComponentFromActor(InActor);
 
 	return AbilitySystemComponent->HasMatchingGameplayTag(TagToCheck);
+}
+
+void UACFunctionLibrary::BP_DoesActorHaveTag(AActor* InActor, FGameplayTag TagToCheck, EACConfirmType& OutConfirmType)
+{
+	OutConfirmType = NativeDoesActorHaveTag(InActor, TagToCheck) ? EACConfirmType::Yes : EACConfirmType::No;
 }
 
 bool UACFunctionLibrary::IsTargetPawnHostile(const APawn* QueryPawn, const APawn* TargetPawn)
@@ -75,4 +82,50 @@ UPawnCombatComponent* UACFunctionLibrary::NativeGetPawnCombatComponentFromActor(
 	}
 
 	return nullptr;
+}
+
+FGameplayTag UACFunctionLibrary::ComputeHitReactDirectionTag(const AActor* InAttacker, const AActor* InVictim, float& OutAngleDifference)
+{
+	check(InAttacker && InVictim);
+
+	const FVector VictimForward = InVictim->GetActorForwardVector();
+	const FVector VictimToAttackerNormalized = (InAttacker->GetActorLocation() - InVictim->GetActorLocation()).GetSafeNormal();
+
+	// 두 벡터의 내적 결과 (코사인 값)를 구함
+	const float DotResult = FVector::DotProduct(VictimForward, VictimToAttackerNormalized);
+	const FVector CrossResult = FVector::CrossProduct(VictimForward, VictimToAttackerNormalized);
+
+	OutAngleDifference = UKismetMathLibrary::DegAcos(DotResult);
+
+	// 외적 결과의 Z 값이 음수이면 오른쪽에서 공격 -> 각도 부호를 음수로 바꿈
+	if (CrossResult.Z < 0.f)
+	{
+		OutAngleDifference *= -1.f;
+	}
+	return DetermineHitReactionTag(OutAngleDifference);
+}
+
+FGameplayTag UACFunctionLibrary::DetermineHitReactionTag(const float& OutAngleDifference)
+{
+	// -45 ~ 45도 = 정면
+	if (OutAngleDifference >= -45.f && OutAngleDifference <= 45.f)
+	{
+		return ACGameplayTags::Shared_Status_HitReact_Front;
+	}
+	// -135 ~ -45도 = 왼쪽
+	if (OutAngleDifference < -45.f && OutAngleDifference >= -135.f)
+	{
+		return ACGameplayTags::Shared_Status_HitReact_Left;
+	}
+	// - 135보다 작거나 135보다 크면 = 오른쪽
+	if (OutAngleDifference < -135.f || OutAngleDifference > 135.f)
+	{
+		return ACGameplayTags::Shared_Status_HitReact_Back;
+	}
+	// 45 ~ 135도 = 뒤
+	if (OutAngleDifference > 45.f && OutAngleDifference <= 135.f)
+	{
+		return ACGameplayTags::Shared_Status_HitReact_Right;
+	}
+	return ACGameplayTags::Shared_Status_HitReact_Front;
 }

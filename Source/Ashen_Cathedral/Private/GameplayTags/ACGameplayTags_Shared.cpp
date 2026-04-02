@@ -18,6 +18,10 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Status_SuperArmor, "Shared.Status.SuperArmor")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Status_Sprinting, "Shared.Status.Sprinting")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Status_CanCounterAttack, "Shared.Status.CanCounterAttack")
+	UE_DEFINE_GAMEPLAY_TAG(Shared_Status_HitReact_Front, "Shared.Status.HitReact.Front")
+	UE_DEFINE_GAMEPLAY_TAG(Shared_Status_HitReact_Left, "Shared.Status.HitReact.Left")
+	UE_DEFINE_GAMEPLAY_TAG(Shared_Status_HitReact_Back, "Shared.Status.HitReact.Back")
+	UE_DEFINE_GAMEPLAY_TAG(Shared_Status_HitReact_Right, "Shared.Status.HitReact.Right")
 	#pragma endregion
 
 	#pragma region Shared SetByCaller Tags
@@ -26,5 +30,9 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_GroggyDamage, "Shared.SetByCaller.GroggyDamage")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_AttackType_Light, "Shared.SetByCaller.AttackType.Light")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_AttackType_Heavy, "Shared.SetByCaller.AttackType.Heavy")
+	#pragma endregion
+
+	#pragma region Shared Abilies Tags
+	UE_DEFINE_GAMEPLAY_TAG(Shared_Ability_HitReact, "Shared.Ability.HitReact")
 	#pragma endregion
 }

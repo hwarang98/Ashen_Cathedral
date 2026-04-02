@@ -2,11 +2,11 @@
 
 
 #include "Character/ACCharacterBase.h"
-
 #include "Components/Input/ACInputComponent.h"
 #include "DataAssets/Startup/ACDataAsset_StartupDataBase.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 #include "GameplayAbilitySystem/ACAttributeSet.h"
+#include "MotionWarpingComponent.h"
 
 AACCharacterBase::AACCharacterBase()
 {
@@ -14,6 +14,7 @@ AACCharacterBase::AACCharacterBase()
 
 	ACAbilitySystemComponent = CreateDefaultSubobject<UACAbilitySystemComponent>("Ability System Component");
 	ACAttributeSet = CreateDefaultSubobject<UACAttributeSet>("Attribute Set");
+	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>("MotionWarpingComponent");
 }
 
 void AACCharacterBase::BeginPlay()

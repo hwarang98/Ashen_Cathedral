@@ -21,7 +21,8 @@ public class Ashen_Cathedral : ModuleRules
 			"GameplayCameras",
 			"AnimGraphRuntime",
 			"Niagara",
-			"AIModule"
+			"AIModule",
+			"MotionWarping"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
