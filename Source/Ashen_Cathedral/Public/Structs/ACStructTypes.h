@@ -102,3 +102,20 @@ struct FCADamageCapture
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UACAttributeSet, GroggyDamageTaken, Target, false);
 	}
 };
+
+struct FRotateToFaceTargetTaskMemory
+{
+	TWeakObjectPtr<APawn> OwningPawn;
+	TWeakObjectPtr<AActor> TargetActor;
+
+	bool IsValid() const
+	{
+		return OwningPawn.IsValid() && TargetActor.IsValid();
+	}
+
+	void Reset()
+	{
+		OwningPawn.Reset();
+		TargetActor.Reset();
+	}
+};
