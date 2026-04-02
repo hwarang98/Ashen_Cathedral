@@ -62,12 +62,15 @@ void UACBTTask_ToggleStrafingState::OnEnemyExecuteTask()
 		}
 
 		// Blackboard에서 기본 이동 속도를 읽어와 Attribute 복원
-		if (const AACEnemyController* EnemyController = Cast<AACEnemyController>(OwningEnemyCharacter->GetController()))
+		if (ShouldChangeMaxWalkSpeed)
 		{
-			if (const UBlackboardComponent* Blackboard = EnemyController->GetBlackboardComponent())
+			if (const AACEnemyController* EnemyController = Cast<AACEnemyController>(OwningEnemyCharacter->GetController()))
 			{
-				const float DefaultMaxWalkSpeed = Blackboard->GetValueAsFloat(InDefaultMaxWalkSpeedKey.SelectedKeyName);
-				ASC->SetNumericAttributeBase(UACAttributeSet::GetMoveSpeedAttribute(), DefaultMaxWalkSpeed);
+				if (const UBlackboardComponent* Blackboard = EnemyController->GetBlackboardComponent())
+				{
+					const float DefaultMaxWalkSpeed = Blackboard->GetValueAsFloat(InDefaultMaxWalkSpeedKey.SelectedKeyName);
+					ASC->SetNumericAttributeBase(UACAttributeSet::GetMoveSpeedAttribute(), DefaultMaxWalkSpeed);
+				}
 			}
 		}
 
