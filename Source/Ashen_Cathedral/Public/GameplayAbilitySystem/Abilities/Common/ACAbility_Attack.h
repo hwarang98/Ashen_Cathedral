@@ -7,6 +7,8 @@
 #include "ACGameplayTags.h"
 #include "ACAbility_Attack.generated.h"
 
+class UCameraShakeBase;
+
 /**
  * 
  */
@@ -64,6 +66,13 @@ private:
 	/** 카운터 어택 성공 시 데미지에 곱해지는 배율 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combo|Attack", meta = (AllowPrivateAccess = "true"))
 	float CounterAttackDamageMultiplier = 1.5f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameplayCue", meta = (AllowPrivateAccess = "true"))
+	FGameplayTag MeleeAttackSoundCueTag;
+
+	/** 공격이 타겟에 적중했을 때 재생할 카메라 셰이크 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CameraShake", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UCameraShakeBase> HitCameraShakeClass;
 
 	/** 몽타주 재생이 정상적으로 완료/블렌드아웃되었을 때 호출 */
 	UFUNCTION()
