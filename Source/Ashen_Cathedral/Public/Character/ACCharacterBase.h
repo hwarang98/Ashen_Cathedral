@@ -8,6 +8,15 @@
 #include "Interfaces/PawnCombatInterface.h"
 #include "ACCharacterBase.generated.h"
 
+// AACCharacterBase를 델리게이트 인자로 사용하기 위한 전방 선언
+class AACCharacterBase;
+
+/**
+ * 캐릭터 사망 시 외부 시스템(UI, GameMode, 퀘스트 등)에 알리기 위한 델리게이트.
+ * 사망한 캐릭터를 인자로 넘겨주므로 수신자가 누가 죽었는지 파악할 수 있음.
+ */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCharacterDeath, AACCharacterBase*, DeadCharacter);
+
 class UACDataAsset_StartupDataBase;
 class UACAttributeSet;
 class UACAbilitySystemComponent;
@@ -30,6 +39,14 @@ public:
 	FORCEINLINE UACAbilitySystemComponent* GetACAbilitySystemComponent() const { return ACAbilitySystemComponent; }
 	FORCEINLINE UACAttributeSet* GetACAttributeSet() const { return ACAttributeSet; }
 	FORCEINLINE TSoftObjectPtr<UACDataAsset_StartupDataBase> GetCharacterStartUpData() const { return CharacterStartUpData; }
+
+	/**
+	 * 캐릭터 사망 브로드캐스트 델리게이트.
+	 * 사망 어빌리티에서 Broadcast() 호출 시 바인딩된 모든 리스너에게 전달됨.
+	 * 외부 시스템(UI, GameMode, 퀘스트 등)에서 OnDeathDelegate.AddDynamic()으로 구독할 것.
+	 */
+	UPROPERTY(BlueprintAssignable, Category = "Death")
+	FOnCharacterDeath OnDeathDelegate;
 
 protected:
 	#pragma region GAS

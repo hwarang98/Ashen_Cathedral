@@ -5,9 +5,12 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "ACGameplayTags.h"
+#include "Camera/CameraShakeBase.h"
 #include "Character/ACCharacterBase.h"
 #include "Components/Combat/PawnCombatComponent.h"
+#include "GameFramework/PlayerController.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
+#include "Items/Weapon/ACWeaponBase.h"
 
 UACAbility_Attack::UACAbility_Attack()
 {
@@ -174,7 +177,7 @@ void UACAbility_Attack::OnMontageCancelled()
 void UACAbility_Attack::OnHitTarget(FGameplayEventData Payload)
 {
 	const AActor* HitActor = Payload.Target.Get();
-	const AACCharacterBase* OwnerCharacter = GetACCharacterFromActorInfo();
+	AACCharacterBase* OwnerCharacter = GetACCharacterFromActorInfo();
 
 	if (!OwnerCharacter || !HitActor || !DamageEffect)
 	{
@@ -237,6 +240,23 @@ void UACAbility_Attack::OnHitTarget(FGameplayEventData Payload)
 	//           → ACAttributeSet::PostGameplayEffectExecute (DamageTaken → Health 차감, GroggyGauge 증가)
 	if (UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(const_cast<AActor*>(HitActor)))
 	{
+		FGameplayCueParameters CueParams;
+		CueParams.Instigator = OwnerCharacter;
+		CueParams.EffectCauser = OwnerCharacter;
+		CueParams.SourceObject = Cast<AACWeaponBase>(CombatComponent->GetCharacterCurrentEquippedWeapon()); // Player/Enemy 모두 사용 가능한 PawnCombatComponent 함수 사용
+		CueParams.TargetAttachComponent = HitActor->GetRootComponent();
+		CueParams.Location = HitActor->GetActorLocation();
+		CueParams.Normal = (OwnerCharacter->GetActorLocation() - HitActor->GetActorLocation()).GetSafeNormal();
+
+		ASC->ExecuteGameplayCue(MeleeAttackSoundCueTag, CueParams);
 		ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
+	}
+
+	if (HitCameraShakeClass)
+	{
+		if (APlayerController* PlayerController = Cast<APlayerController>(CurrentActorInfo->PlayerController.Get()))
+		{
+			PlayerController->ClientStartCameraShake(HitCameraShakeClass);
+		}
 	}
 }

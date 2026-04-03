@@ -7,6 +7,7 @@
 #include "Enums/ACEnums.h"
 #include "ACGameplayAbility.generated.h"
 
+class UPawnCombatComponent;
 class UACAbilitySystemComponent;
 class AACCharacterBase;
 /**
@@ -35,4 +36,7 @@ protected:
 	/** 액터 정보에서 AACCharacterBase를 캐스팅하여 반환 */
 	UFUNCTION(BlueprintPure, Category = "Ashen Cathedral|Ability|Helpers")
 	AACCharacterBase* GetACCharacterFromActorInfo() const;
+
+	UFUNCTION(BlueprintPure, Category = "Ashen Cathedral|Helpers")
+	UPawnCombatComponent* GetPawnCombatComponentFromActorInfo() const;
 };

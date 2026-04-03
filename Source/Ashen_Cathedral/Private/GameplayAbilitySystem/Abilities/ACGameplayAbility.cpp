@@ -31,3 +31,13 @@ AACCharacterBase* UACGameplayAbility::GetACCharacterFromActorInfo() const
 {
 	return (CurrentActorInfo ? Cast<AACCharacterBase>(CurrentActorInfo->AvatarActor.Get()) : nullptr);
 }
+
+UPawnCombatComponent* UACGameplayAbility::GetPawnCombatComponentFromActorInfo() const
+{
+	if (const AACCharacterBase* CharacterBase = GetACCharacterFromActorInfo())
+	{
+		return CharacterBase->GetPawnCombatComponent();
+	}
+
+	return nullptr;
+}
