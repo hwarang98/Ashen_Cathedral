@@ -36,5 +36,6 @@ namespace ACGameplayTags
 
 	#pragma region Shared Abilies Tags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Ability_HitReact);
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Ability_Death);
 	#pragma endregion
 }
