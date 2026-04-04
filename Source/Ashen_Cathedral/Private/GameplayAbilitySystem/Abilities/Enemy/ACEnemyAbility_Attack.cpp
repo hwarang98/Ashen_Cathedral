@@ -2,6 +2,12 @@
 
 #include "GameplayAbilitySystem/Abilities/Enemy/ACEnemyAbility_Attack.h"
 
+UACEnemyAbility_Attack::UACEnemyAbility_Attack()
+{
+	// 적은 콤보 횟수에 따른 데미지 증가 없음
+	bApplyComboDamageBonus = false;
+}
+
 void UACEnemyAbility_Attack::HandleComboComplete()
 {
 	// BT가 공격 타이밍을 제어하므로 콤보 카운트 리셋을 하지 않는다.
