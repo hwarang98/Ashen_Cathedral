@@ -16,6 +16,11 @@ class ASHEN_CATHEDRAL_API UACEnemyAbility_Attack : public UACAbility_Attack
 	GENERATED_BODY()
 
 public:
+	UACEnemyAbility_Attack();
+
 	/** BT가 다음 공격을 결정하므로 콤보 완료 시 아무것도 하지 않는다. */
 	virtual void HandleComboComplete() override;
+
+	/** AttackMontages 배열에서 무작위로 몽타주를 선택해 반환한다. */
+	virtual UAnimMontage* SelectAttackMontage() override;
 };

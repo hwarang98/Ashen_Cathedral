@@ -69,12 +69,7 @@ void UACAbility_Attack::ActivateAbility(
 	}
 	else
 	{
-		// 일반 콤보: 배열 끝에 도달하면 처음으로 순환
-		if (CurrentComboCount >= AttackMontages.Num())
-		{
-			CurrentComboCount = 0;
-		}
-		MontageToPlay = AttackMontages[CurrentComboCount];
+		MontageToPlay = SelectAttackMontage();
 	}
 
 	if (!MontageToPlay)
@@ -139,6 +134,15 @@ bool UACAbility_Attack::CanActivateAbility(
 }
 
 void UACAbility_Attack::HandleComboComplete() {}
+
+UAnimMontage* UACAbility_Attack::SelectAttackMontage()
+{
+	if (CurrentComboCount >= AttackMontages.Num())
+	{
+		CurrentComboCount = 0;
+	}
+	return AttackMontages[CurrentComboCount];
+}
 
 void UACAbility_Attack::HandleComboCancelled()
 {
@@ -217,8 +221,8 @@ void UACAbility_Attack::OnHitTarget(FGameplayEventData Payload)
 	// ACCalculation_DamageTaken에서 이 태그들을 키로 값을 꺼내 최종 데미지를 계산한다.
 	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, ACGameplayTags::Shared_SetByCaller_BaseDamage, BaseDamage);
 
-	// 콤보 횟수를 전달 -> 계산기에서 콤보 횟수에 비례한 데미지 보너스 적용
-	if (ComboAttackTypeTag.IsValid())
+	// 콤보 횟수를 전달 -> 계산기에서 콤보 횟수에 비례한 데미지 보너스 적용 (플레이어 전용)
+	if (bApplyComboDamageBonus && ComboAttackTypeTag.IsValid())
 	{
 		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, ComboAttackTypeTag, static_cast<float>(CurrentComboCount));
 	}

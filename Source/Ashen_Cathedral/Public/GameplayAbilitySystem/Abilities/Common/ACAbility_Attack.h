@@ -42,10 +42,20 @@ protected:
 	/** 콤보 카운트를 리셋한다. 자식 클래스에서 호출 가능. */
 	void ResetComboCount();
 
-private:
+	/**
+	 * true이면 OnHitTarget에서 콤보 횟수를 SetByCaller로 전달해 데미지 보너스를 적용한다.
+	 * 적 어빌리티는 false로 설정해 콤보 배율을 비활성화한다.
+	 */
+	bool bApplyComboDamageBonus = true;
+
+	/** 재생할 공격 몽타주를 선택해 반환한다. 기본 구현은 CurrentComboCount 기반 순차 선택. */
+	virtual UAnimMontage* SelectAttackMontage();
+
 	/** 순차적으로 재생할 공격 몽타주 배열 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Montage", meta = (AllowPrivateAccess = "true"))
 	TArray<TObjectPtr<UAnimMontage>> AttackMontages;
+
+private:
 
 	/** 카운터 어택 몽타주 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Montage", meta = (AllowPrivateAccess = "true"))
