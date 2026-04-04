@@ -69,12 +69,7 @@ void UACAbility_Attack::ActivateAbility(
 	}
 	else
 	{
-		// 일반 콤보: 배열 끝에 도달하면 처음으로 순환
-		if (CurrentComboCount >= AttackMontages.Num())
-		{
-			CurrentComboCount = 0;
-		}
-		MontageToPlay = AttackMontages[CurrentComboCount];
+		MontageToPlay = SelectAttackMontage();
 	}
 
 	if (!MontageToPlay)
@@ -139,6 +134,15 @@ bool UACAbility_Attack::CanActivateAbility(
 }
 
 void UACAbility_Attack::HandleComboComplete() {}
+
+UAnimMontage* UACAbility_Attack::SelectAttackMontage()
+{
+	if (CurrentComboCount >= AttackMontages.Num())
+	{
+		CurrentComboCount = 0;
+	}
+	return AttackMontages[CurrentComboCount];
+}
 
 void UACAbility_Attack::HandleComboCancelled()
 {

@@ -43,9 +43,14 @@ protected:
 	void ResetComboCount();
 
 private:
+	/** 재생할 공격 몽타주를 선택해 반환한다. 기본 구현은 CurrentComboCount 기반 순차 선택. */
+	virtual UAnimMontage* SelectAttackMontage();
+
 	/** 순차적으로 재생할 공격 몽타주 배열 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Montage", meta = (AllowPrivateAccess = "true"))
 	TArray<TObjectPtr<UAnimMontage>> AttackMontages;
+
+private:
 
 	/** 카운터 어택 몽타주 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Montage", meta = (AllowPrivateAccess = "true"))
