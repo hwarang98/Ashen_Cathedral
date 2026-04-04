@@ -35,15 +35,8 @@ void AACCharacterBase::PossessedBy(AController* NewController)
 	if (ACAbilitySystemComponent)
 	{
 		ACAbilitySystemComponent->InitAbilityActorInfo(this, this);
-	}
 
-	if (!CharacterStartUpData.IsNull())
-	{
-		if (UACDataAsset_StartupDataBase* LoadedData = CharacterStartUpData.LoadSynchronous())
-		{
-			constexpr int32 ApplyLevel = 1;
-			LoadedData->GiveToAbilitySystemComponent(ACAbilitySystemComponent, ApplyLevel);
-		}
+		ensureMsgf(!CharacterStartUpData.IsNull(), TEXT("Forgot to assign start up data to %s"), *GetName());
 	}
 }
 
