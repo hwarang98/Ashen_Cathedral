@@ -26,6 +26,9 @@ public:
 	/** 콤보 취소 시 타이머를 정리하고 즉시 리셋한다. */
 	virtual void HandleComboCancelled() override;
 
+	/** 스태미나가 0 이하면 공격을 차단한다. */
+	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const override;
+
 private:
 	/** 콤보 윈도우 유지 시간 (초). 이 시간 안에 입력이 없으면 콤보가 리셋된다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Combo", meta = (AllowPrivateAccess = "true"))

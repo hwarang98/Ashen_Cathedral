@@ -2,6 +2,9 @@
 
 #include "GameplayAbilitySystem/Abilities/Player/ACPlayerAbility_Attack.h"
 #include "ACGameplayTags.h"
+#include "Character/ACCharacterBase.h"
+#include "Character/Player/ACPlayerCharacter.h"
+#include "GameplayAbilitySystem/ACAttributeSet.h"
 
 UACPlayerAbility_Attack::UACPlayerAbility_Attack()
 {
@@ -18,6 +21,28 @@ UACPlayerAbility_Attack::UACPlayerAbility_Attack()
 
 	// 공격 시작 시 진행 중인 스프린트를 즉시 취소
 	CancelAbilitiesWithTag.AddTag(ACGameplayTags::Player_Ability_Sprint);
+}
+
+bool UACPlayerAbility_Attack::CanActivateAbility(
+	const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayTagContainer* SourceTags,
+	const FGameplayTagContainer* TargetTags,
+	FGameplayTagContainer* OptionalRelevantTags) const
+{
+	if (!Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags))
+	{
+		return false;
+	}
+
+	const AACPlayerCharacter* PlayerCharacter = ActorInfo ? Cast<AACPlayerCharacter>(ActorInfo->AvatarActor.Get()) : nullptr;
+	const UACAttributeSet* AttributeSet = PlayerCharacter ? PlayerCharacter->GetACAttributeSet() : nullptr;
+	if (AttributeSet && AttributeSet->GetStamina() <= 0.f)
+	{
+		return false;
+	}
+
+	return true;
 }
 
 void UACPlayerAbility_Attack::HandleComboComplete()
