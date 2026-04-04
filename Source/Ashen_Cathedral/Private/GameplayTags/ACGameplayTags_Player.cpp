@@ -25,8 +25,4 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_Event_EquipWeapon, "Player.Event.EquipWeapon")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Event_UnequipWeapon, "Player.Event.UnequipWeapon")
 	#pragma endregion
-
-	#pragma region Player SetByCaller Tags
-	UE_DEFINE_GAMEPLAY_TAG(Player_SetByCaller_StaminaCost, "Player.SetByCaller.StaminaCost")
-	#pragma endregion
 }
