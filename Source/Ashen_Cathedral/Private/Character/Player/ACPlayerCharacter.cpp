@@ -10,6 +10,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/Combat/PlayerCombatComponent.h"
+#include "DataAssets/Startup/ACDataAsset_StartupDataBase.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -87,6 +88,15 @@ void AACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 void AACPlayerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
+
+	if (!CharacterStartUpData.IsNull())
+	{
+		if (UACDataAsset_StartupDataBase* LoadedData = CharacterStartUpData.LoadSynchronous())
+		{
+			constexpr int32 ApplyLevel = 1;
+			LoadedData->GiveToAbilitySystemComponent(ACAbilitySystemComponent, ApplyLevel);
+		}
+	}
 }
 
 void AACPlayerCharacter::OnJumped_Implementation()

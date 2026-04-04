@@ -17,11 +17,11 @@ public:
 	AACEnemyCharacter();
 
 	virtual UPawnCombatComponent* GetPawnCombatComponent() const override;
-
-	// BTTask_ToggleStrafingState에서 ENABLE/DISABLE 노드 간 핸들 공유에 사용
-	FActiveGameplayEffectHandle StrafingSpeedEffectHandle;
+	virtual void PossessedBy(AController* NewController) override;
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UEnemyCombatComponent> EnemyCombatComponent;
+
+	void InitEnemyStartUpData();
 };
