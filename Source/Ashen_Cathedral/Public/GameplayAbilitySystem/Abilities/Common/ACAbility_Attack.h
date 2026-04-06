@@ -51,6 +51,26 @@ protected:
 	/** 재생할 공격 몽타주를 선택해 반환한다. 기본 구현은 CurrentComboCount 기반 순차 선택. */
 	virtual UAnimMontage* SelectAttackMontage();
 
+	/**
+	 * @brief DamageEffect Spec이 타겟에 적용되기 직전에 호출되는 확장 포인트.
+	 * 서브클래스는 이 함수를 오버라이드해 동일 Spec에 SetByCaller 값을 추가할 수 있다.
+	 *
+	 * @param SpecHandle  현재 빌드 중인 DamageEffect Spec 핸들
+	 * @param HitActor    적중된 대상 액터
+	 * @param BaseDamage  이 공격의 기본 데미지 값
+	 * @note GE 적용 전에 호출되므로 SetByCaller 삽입에 적합하다.
+	 */
+	virtual void ModifyDamageSpec(const FGameplayEffectSpecHandle& SpecHandle, const AActor* HitActor, float BaseDamage) {}
+
+	/**
+	 * @brief 타겟 적중 후 추가 효과를 적용하기 위한 확장 포인트. 기본 구현은 빈 함수.
+	 *
+	 * @param HitActor 적중된 대상 액터
+	 * @param Payload  Shared_Event_MeleeHit 이벤트 페이로드
+	 * @note GE 적용 완료 후의 후처리(VFX 스폰 등)에 사용한다.
+	 */
+	virtual void ApplyAdditionalHitEffects(const AActor* HitActor, const FGameplayEventData& Payload) {}
+
 	/** 순차적으로 재생할 공격 몽타주 배열 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Montage", meta = (AllowPrivateAccess = "true"))
 	TArray<TObjectPtr<UAnimMontage>> AttackMontages;
