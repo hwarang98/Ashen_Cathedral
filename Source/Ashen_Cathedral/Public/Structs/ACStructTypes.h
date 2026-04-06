@@ -6,6 +6,7 @@
 #include "GameplayEffectExecutionCalculation.h"
 #include "GameplayTagContainer.h"
 #include "InputAction.h"
+#include "NiagaraSystem.h"
 #include "GameplayAbilitySystem/ACAttributeSet.h"
 #include "ACStructTypes.generated.h"
 
@@ -118,4 +119,19 @@ struct FRotateToFaceTargetTaskMemory
 		OwningPawn.Reset();
 		TargetActor.Reset();
 	}
+};
+
+/** 소켓 이름과 Niagara 시스템을 쌍으로 묶어 복수 소켓에 이펙트를 부착할 때 사용합니다. */
+USTRUCT(BlueprintType)
+struct FACPhase2NiagaraAttachment
+{
+	GENERATED_BODY()
+
+	/** 이펙트를 부착할 소켓 또는 본 이름 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FName SocketName;
+
+	/** 부착할 Niagara 시스템 에셋 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UNiagaraSystem> NiagaraSystem;
 };
