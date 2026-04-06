@@ -32,6 +32,11 @@ UACAttributeSet::UACAttributeSet()
 	InitAttackSpeed(1.f);
 	InitDamageTaken(0.f);
 	InitStaminaCost(0.f);
+
+	// Burn
+	InitBurnGauge(0.f);
+	InitMaxBurnGauge(100.f);
+	InitBurnAccumulation(0.f);
 }
 
 void UACAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
@@ -65,6 +70,12 @@ void UACAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, fl
 	else if (Attribute == GetGroggyResistanceAttribute())
 	{
 		NewValue = FMath::Max(NewValue, 0.f);
+	}
+
+	// Burn — 게이지는 0과 최대값 사이로 클램프
+	else if (Attribute == GetBurnGaugeAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxBurnGauge());
 	}
 
 	// Combat — 음수 방지
@@ -106,6 +117,10 @@ void UACAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 	else if (Data.EvaluatedData.Attribute == GetStaminaCostAttribute())
 	{
 		HandleStaminaConsumption(Data);
+	}
+	else if (Data.EvaluatedData.Attribute == GetBurnAccumulationAttribute())
+	{
+		HandleBurnBuildUp(Data);
 	}
 }
 
@@ -278,4 +293,43 @@ void UACAttributeSet::HandleStaminaConsumption(const FGameplayEffectModCallbackD
 
 	const UGameplayEffect* DelayGE = ASC->StaminaRegenDelayEffectClass->GetDefaultObject<UGameplayEffect>();
 	ASC->ApplyGameplayEffectToSelf(DelayGE, 1, ASC->MakeEffectContext());
+}
+
+void UACAttributeSet::HandleBurnBuildUp(const FGameplayEffectModCallbackData& Data)
+{
+	const float BuildUp = GetBurnAccumulation();
+	SetBurnAccumulation(0.f);
+
+	if (BuildUp <= 0.f)
+	{
+		return;
+	}
+
+	UAbilitySystemComponent* TargetASC = GetOwningAbilitySystemComponent();
+
+	// 이미 사망 상태라면 화상 누적 불필요
+	if (TargetASC && TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Dead))
+	{
+		return;
+	}
+
+	const float NewBurnGauge = FMath::Clamp(GetBurnGauge() + BuildUp, 0.f, GetMaxBurnGauge());
+	SetBurnGauge(NewBurnGauge);
+
+	if (NewBurnGauge >= GetMaxBurnGauge())
+	{
+		// 화상 게이지 초기화 후 DoT 어빌리티 트리거
+		SetBurnGauge(0.f);
+
+		FGameplayEventData Payload;
+		Payload.EventTag = ACGameplayTags::Shared_Event_BurnTriggered;
+		Payload.Instigator = Data.EffectSpec.GetEffectContext().GetInstigator();
+		Payload.Target = Data.Target.GetAvatarActor();
+
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+			Data.Target.GetAvatarActor(),
+			ACGameplayTags::Shared_Event_BurnTriggered,
+			Payload
+			);
+	}
 }
