@@ -238,6 +238,9 @@ void UACAbility_Attack::OnHitTarget(FGameplayEventData Payload)
 		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, ACGameplayTags::Shared_SetByCaller_CounterAttackBonus, CounterAttackDamageMultiplier);
 	}
 
+	// GE 적용 직전: 서브클래스가 추가 SetByCaller 값을 동일 Spec에 주입할 수 있는 확장 포인트
+	ModifyDamageSpec(SpecHandle, HitActor, BaseDamage);
+
 	// Spec을 타겟 ASC에 적용한다.
 	// 적용 순서: ApplyGameplayEffectSpecToTarget
 	//           → ACCalculation_DamageTaken::Execute (SetByCaller 값으로 최종 데미지 계산)
@@ -263,4 +266,6 @@ void UACAbility_Attack::OnHitTarget(FGameplayEventData Payload)
 			PlayerController->ClientStartCameraShake(HitCameraShakeClass);
 		}
 	}
+
+	ApplyAdditionalHitEffects(HitActor, Payload);
 }

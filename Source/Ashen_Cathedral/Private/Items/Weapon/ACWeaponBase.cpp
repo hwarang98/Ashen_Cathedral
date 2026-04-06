@@ -5,6 +5,8 @@
 #include "NiagaraComponent.h"
 #include "ACFunctionLibrary.h"
 #include "Components/BoxComponent.h"
+#include "Components/MeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 
 // Sets default values
 AACWeaponBase::AACWeaponBase()
@@ -21,6 +23,15 @@ AACWeaponBase::AACWeaponBase()
 	WeaponCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WeaponCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnCollisionBoxBeginOverlap);
 	WeaponCollisionBox->OnComponentEndOverlap.AddUniqueDynamic(this, &ThisClass::OnCollisionBoxEndOverlap);
+}
+
+UMeshComponent* AACWeaponBase::GetWeaponMeshComponent() const
+{
+	if (USkeletalMeshComponent* SkelMesh = FindComponentByClass<USkeletalMeshComponent>())
+	{
+		return SkelMesh;
+	}
+	return WeaponMesh;
 }
 
 void AACWeaponBase::BeginPlay()
@@ -51,9 +62,9 @@ TArray<FActiveGameplayEffectHandle> AACWeaponBase::RemoveGrantedGameplayEffects(
 
 void AACWeaponBase::HideWeapon() const
 {
-	if (WeaponMesh)
+	if (UMeshComponent* Mesh = GetWeaponMeshComponent())
 	{
-		WeaponMesh->SetVisibility(false);
+		Mesh->SetVisibility(false);
 	}
 
 	// 모든 Niagara 컴포넌트 비활성화
@@ -71,9 +82,9 @@ void AACWeaponBase::HideWeapon() const
 
 void AACWeaponBase::ShowWeapon() const
 {
-	if (WeaponMesh)
+	if (UMeshComponent* Mesh = GetWeaponMeshComponent())
 	{
-		WeaponMesh->SetVisibility(true);
+		Mesh->SetVisibility(true);
 	}
 
 	// 모든 Niagara 컴포넌트 활성화

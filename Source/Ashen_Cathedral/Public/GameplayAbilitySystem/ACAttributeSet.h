@@ -122,8 +122,26 @@ public:
 	ATTRIBUTE_ACCESSORS(UACAttributeSet, StaminaCost);
 	#pragma endregion
 
+	#pragma region Burn - 화상 게이지
+	/** 현재 화상 누적 수치. 피격 시 증가하며 MaxBurnGauge에 도달하면 DoT가 발동됩니다. */
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute|Burn")
+	FGameplayAttributeData BurnGauge;
+	ATTRIBUTE_ACCESSORS(UACAttributeSet, BurnGauge);
+
+	/** 최대 화상 게이지. BurnGauge의 상한선이 됩니다. */
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute|Burn")
+	FGameplayAttributeData MaxBurnGauge;
+	ATTRIBUTE_ACCESSORS(UACAttributeSet, MaxBurnGauge);
+
+	/** 화상 축적량. PostGameplayEffectExecute에서 소비 후 초기화되는 메타 Attribute입니다. */
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute|Burn")
+	FGameplayAttributeData BurnAccumulation;
+	ATTRIBUTE_ACCESSORS(UACAttributeSet, BurnAccumulation);
+	#pragma endregion
+
 private:
 	void HandleGroggyDamage(const FGameplayEffectModCallbackData& Data);
 	void HandleDamageAndTriggerHitReact(const FGameplayEffectModCallbackData& Data);
 	void HandleStaminaConsumption(const FGameplayEffectModCallbackData& Data);
+	void HandleBurnBuildUp(const FGameplayEffectModCallbackData& Data);
 };

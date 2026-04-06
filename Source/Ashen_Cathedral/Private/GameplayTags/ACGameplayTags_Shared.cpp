@@ -30,10 +30,16 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_GroggyDamage, "Shared.SetByCaller.GroggyDamage")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_AttackType_Light, "Shared.SetByCaller.AttackType.Light")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_AttackType_Heavy, "Shared.SetByCaller.AttackType.Heavy")
+	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_FireBonusDamage, "Shared.SetByCaller.FireBonusDamage")
+	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_BurnBuildUp, "Shared.SetByCaller.BurnBuildUp")
 	#pragma endregion
 
 	#pragma region Shared Abilies Tags
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Ability_HitReact, "Shared.Ability.HitReact")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Ability_Death, "Shared.Ability.Death")
+	#pragma endregion
+
+	#pragma region Shared Event Tags - Burn
+	UE_DEFINE_GAMEPLAY_TAG(Shared_Event_BurnTriggered, "Shared.Event.BurnTriggered")
 	#pragma endregion
 }

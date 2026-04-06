@@ -8,6 +8,7 @@
 #include "ACWeaponBase.generated.h"
 
 class UBoxComponent;
+class UMeshComponent;
 
 DECLARE_DELEGATE_OneParam(FonTargetInteractedDelegate, AActor*)
 
@@ -44,6 +45,14 @@ public:
 	bool GetHideUntilEquipped() const { return bHideUntilEquipped; }
 
 	FORCEINLINE UBoxComponent* GetWeaponCollisionBox() const { return WeaponCollisionBox; }
+	FORCEINLINE UStaticMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
+
+	/**
+	 * @brief Static 또는 Skeletal 메시 컴포넌트를 UMeshComponent*로 반환한다.
+	 * Skeletal Mesh가 있으면 우선 반환하고, 없으면 Static Mesh를 반환한다.
+	 * BP에서 USkeletalMeshComponent를 추가한 무기에서도 정상 동작한다.
+	 */
+	UMeshComponent* GetWeaponMeshComponent() const;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapons")

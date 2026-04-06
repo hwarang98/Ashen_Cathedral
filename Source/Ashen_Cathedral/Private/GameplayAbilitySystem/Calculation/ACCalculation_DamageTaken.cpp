@@ -17,6 +17,7 @@ UACCalculation_DamageTaken::UACCalculation_DamageTaken()
 	RelevantAttributesToCapture.Add(GetDamageCapture().DefensePowerDef);
 	RelevantAttributesToCapture.Add(GetDamageCapture().DamageTakenDef);
 	RelevantAttributesToCapture.Add(GetDamageCapture().GroggyDamageTakenDef);
+	RelevantAttributesToCapture.Add(GetDamageCapture().BurnAccumulationDef);
 }
 
 void UACCalculation_DamageTaken::Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const
@@ -40,6 +41,8 @@ void UACCalculation_DamageTaken::Execute_Implementation(const FGameplayEffectCus
 	float BaseDamage = 0.f;
 	float BaseGroggyDamage = 0.f;
 	float CounterAttackBonus = 0.f; // 카운터 공격이 아니면 0
+	float FireBonusDamage = 0.f;
+	float BurnBuildUp = 0.f;
 	int32 UsedLightAttackComboCount = 0;
 	int32 UsedHeavyAttackComboCount = 0;
 
@@ -67,6 +70,14 @@ void UACCalculation_DamageTaken::Execute_Implementation(const FGameplayEffectCus
 		{
 			BaseGroggyDamage = MagnitudeValue;
 		}
+		if (TagMagnitude.Key.MatchesTagExact(ACGameplayTags::Shared_SetByCaller_FireBonusDamage))
+		{
+			FireBonusDamage = MagnitudeValue;
+		}
+		if (TagMagnitude.Key.MatchesTagExact(ACGameplayTags::Shared_SetByCaller_BurnBuildUp))
+		{
+			BurnBuildUp = MagnitudeValue;
+		}
 	}
 
 	float TargetDefensePower = 0.f;
@@ -92,7 +103,9 @@ void UACCalculation_DamageTaken::Execute_Implementation(const FGameplayEffectCus
 	// 최대 방어율은 95%로 제한
 	const float AttackMultiplier = SourceAttackPower;
 	const float DefenseMultiplier = FMath::Clamp(TargetDefensePower, 0.f, 0.95f);
-	float FinalDamageDone = BaseDamage * AttackMultiplier * (1.0f - DefenseMultiplier);
+
+	// FireBonusDamage는 BaseDamage에 합산 후 AttackMultiplier / Defense 계산 적용
+	float FinalDamageDone = (BaseDamage + FireBonusDamage) * AttackMultiplier * (1.0f - DefenseMultiplier);
 
 	// 카운터 공격 보너스 적용 (설정되어 있을 때만)
 	if (CounterAttackBonus > 0.f)
@@ -103,14 +116,16 @@ void UACCalculation_DamageTaken::Execute_Implementation(const FGameplayEffectCus
 	if (GEngine)
 	{
 		const FString DebugMsg = FString::Printf(
-			TEXT("[ 데미지 계산 ]\n경량 콤보: %d회 | 중량 콤보: %d회\n플레이어 기본 데미지: %.1f | 플레이어 공격력: %.2f | 적 방어율: %.0f%%\n플레이어 카운터 보너스: %.2fx\n─────────────────\n최종 적에게 입힌 데미지 데미지: %.1f\n─────────────────\n"),
+			TEXT("[ 데미지 계산 ]\n경량 콤보: %d회 | 중량 콤보: %d회\n기본 데미지: %.1f | 화염 추가: %.1f | 공격력: %.2f | 방어율: %.0f%%\n카운터 보너스: %.2fx\n─────────────────\n최종 데미지: %.1f | 화상 축적: %.2f\n─────────────────\n"),
 			UsedLightAttackComboCount,
 			UsedHeavyAttackComboCount,
 			BaseDamage,
+			FireBonusDamage,
 			AttackMultiplier,
 			DefenseMultiplier * 100.f,
 			CounterAttackBonus > 0.f ? CounterAttackBonus : 1.f,
-			FinalDamageDone
+			FinalDamageDone,
+			BurnBuildUp
 			);
 
 		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Yellow, DebugMsg);
@@ -140,5 +155,17 @@ void UACCalculation_DamageTaken::Execute_Implementation(const FGameplayEffectCus
 			);
 
 		OutExecutionOutput.AddOutputModifier(GroggyModifier);
+	}
+
+	// 화상 축적 — BurnAccumulation 메타 Attribute에 출력, PostGameplayEffectExecute에서 BurnGauge에 반영
+	if (BurnBuildUp > 0.f)
+	{
+		const FGameplayModifierEvaluatedData BurnModifier(
+			GetDamageCapture().BurnAccumulationProperty,
+			EGameplayModOp::Additive,
+			BurnBuildUp
+			);
+
+		OutExecutionOutput.AddOutputModifier(BurnModifier);
 	}
 }
