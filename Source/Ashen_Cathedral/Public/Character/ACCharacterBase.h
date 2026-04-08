@@ -39,6 +39,7 @@ public:
 	FORCEINLINE UACAbilitySystemComponent* GetACAbilitySystemComponent() const { return ACAbilitySystemComponent; }
 	FORCEINLINE UACAttributeSet* GetACAttributeSet() const { return ACAttributeSet; }
 	FORCEINLINE TSoftObjectPtr<UACDataAsset_StartupDataBase> GetCharacterStartUpData() const { return CharacterStartUpData; }
+	FORCEINLINE UMotionWarpingComponent* GetMotionWarpingComponent() const { return MotionWarpingComponent; }
 
 	/**
 	 * 캐릭터 사망 브로드캐스트 델리게이트.

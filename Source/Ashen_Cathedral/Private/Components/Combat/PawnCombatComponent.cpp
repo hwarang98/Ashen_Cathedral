@@ -32,22 +32,30 @@ void UPawnCombatComponent::OnHitTargetActor(AActor* HitActor)
 
 	const bool bIsPlayerBlocking = UACFunctionLibrary::NativeDoesActorHaveTag(HitActor, ACGameplayTags::Player_Status_Blocking);
 	const bool bIsMyAttackUnblockable = false;
+	bool bIsValidBlock = false;
 
 	// GAS 이벤트 전송 (공통 로직)
 	FGameplayEventData EventData;
 	EventData.Instigator = GetOwningPawn();
 	EventData.Target = HitActor;
 
-	if (bIsPlayerBlocking)
+	if (bIsPlayerBlocking && !bIsMyAttackUnblockable)
+	{
+		bIsValidBlock = UACFunctionLibrary::IsValidBlock(GetOwningPawn(), HitActor);
+	}
+
+	if (bIsValidBlock)
 	{
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(HitActor, ACGameplayTags::Player_Event_SuccessfulBlock, EventData);
 	}
-
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
-		GetOwningPawn(),
-		ACGameplayTags::Shared_Event_MeleeHit,
-		EventData
-		);
+	else
+	{
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+			GetOwningPawn(),
+			ACGameplayTags::Shared_Event_MeleeHit,
+			EventData
+			);
+	}
 
 	// 자식 클래스의 추가 로직 실행
 	OnHitTargetActorImpl(HitActor);

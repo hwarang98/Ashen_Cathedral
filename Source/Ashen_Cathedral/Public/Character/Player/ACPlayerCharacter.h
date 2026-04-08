@@ -28,6 +28,7 @@ public:
 	virtual void OnJumped_Implementation() override;
 	virtual UPlayerCombatComponent* GetPawnCombatComponent() const override;
 
+
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CharacterData | DataAsset", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UACDataAsset_InputConfig> InputConfigDataAsset;
@@ -43,6 +44,7 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UPlayerCombatComponent> PlayerCombatComponent;
+
 
 	#pragma region Sprint
 	/** 이동 입력 해제 시 Sprint 취소 */

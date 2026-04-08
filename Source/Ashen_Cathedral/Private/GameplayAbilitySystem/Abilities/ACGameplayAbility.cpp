@@ -4,6 +4,8 @@
 #include "GameplayAbilitySystem/Abilities/ACGameplayAbility.h"
 #include "AbilitySystemComponent.h"
 #include "Character/ACCharacterBase.h"
+#include "Character/Enemy/ACEnemyCharacter.h"
+#include "Character/Player/ACPlayerCharacter.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 
 void UACGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
@@ -30,6 +32,16 @@ UACAbilitySystemComponent* UACGameplayAbility::GetACAbilitySystemComponentFromAc
 AACCharacterBase* UACGameplayAbility::GetACCharacterFromActorInfo() const
 {
 	return (CurrentActorInfo ? Cast<AACCharacterBase>(CurrentActorInfo->AvatarActor.Get()) : nullptr);
+}
+
+AACPlayerCharacter* UACGameplayAbility::GetACPlayerFromActorInfo() const
+{
+	return (CurrentActorInfo ? Cast<AACPlayerCharacter>(CurrentActorInfo->AvatarActor.Get()) : nullptr);
+}
+
+AACEnemyCharacter* UACGameplayAbility::GetACEnemyFromActorInfo() const
+{
+	return (CurrentActorInfo ? Cast<AACEnemyCharacter>(CurrentActorInfo->AvatarActor.Get()) : nullptr);
 }
 
 UPawnCombatComponent* UACGameplayAbility::GetPawnCombatComponentFromActorInfo() const
