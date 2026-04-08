@@ -105,6 +105,15 @@ FGameplayTag UACFunctionLibrary::ComputeHitReactDirectionTag(const AActor* InAtt
 	return DetermineHitReactionTag(OutAngleDifference);
 }
 
+bool UACFunctionLibrary::IsValidBlock(const AActor* InAttacker, const AActor* InDefender, const float AngleThreshold)
+{
+	check(InAttacker && InDefender);
+
+	const float DotResult = FVector::DotProduct(InAttacker->GetActorForwardVector(), InDefender->GetActorForwardVector());
+
+	return DotResult < -0.1;
+}
+
 FGameplayTag UACFunctionLibrary::DetermineHitReactionTag(const float& OutAngleDifference)
 {
 	// -45 ~ 45도 = 정면
