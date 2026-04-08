@@ -35,3 +35,17 @@ enum class EACConfirmType : uint8
 	Yes,
 	No
 };
+
+
+UENUM(BlueprintType)
+enum class ERollDirection : uint8
+{
+	Forward UMETA(DisplayName = "전방 (Forward)"),
+	ForwardRight UMETA(DisplayName = "전방 우측 (Forward Right)"),
+	Right UMETA(DisplayName = "우측 (Right)"),
+	BackwardRight UMETA(DisplayName = "후방 우측 (Backward Right)"),
+	Backward UMETA(DisplayName = "후방 (Backward)"),
+	BackwardLeft UMETA(DisplayName = "후방 좌측 (Backward Left)"),
+	Left UMETA(DisplayName = "좌측 (Left)"),
+	ForwardLeft UMETA(DisplayName = "전방 좌측 (Forward Left)")
+};
