@@ -45,5 +45,8 @@
 			"Name": "MotionWarping",
 			"Enabled": true
 		}
+	],
+	"TargetPlatforms": [
+		"Windows"
 	]
 }
