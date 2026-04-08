@@ -116,6 +116,10 @@ UPlayerCombatComponent* AACPlayerCharacter::GetPawnCombatComponent() const
 
 void AACPlayerCharacter::StopSprint()
 {
+	if (ACAbilitySystemComponent && ACAbilitySystemComponent->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_HitReact))
+	{
+		return;
+	}
 	// 이동 입력 해제 시 Sprint 어빌리티를 태그로 취소
 	if (ACAbilitySystemComponent)
 	{
@@ -143,6 +147,11 @@ void AACPlayerCharacter::Input_AbilityInputReleased(const FGameplayTag InInputTa
 
 void AACPlayerCharacter::Input_Move(const FInputActionValue& InputActionValue)
 {
+	if (ACAbilitySystemComponent && ACAbilitySystemComponent->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_HitReact))
+	{
+		return;
+	}
+
 	const FVector2D MovementVector = InputActionValue.Get<FVector2D>();
 	const FRotator MovementRotation = FRotator(0.f, Controller->GetControlRotation().Yaw, 0.f);
 
