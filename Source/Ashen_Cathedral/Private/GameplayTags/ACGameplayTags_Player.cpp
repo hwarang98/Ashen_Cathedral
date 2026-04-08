@@ -12,6 +12,7 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Attack_Light, "Player.Ability.Attack.Light")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Attack_Heavy, "Player.Ability.Attack.Heavy")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Block, "Player.Ability.Block")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Roll, "Player.Ability.Roll")
 	#pragma endregion
 
 	#pragma region Player Weapon Tags
@@ -22,6 +23,7 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_Status_Equipping, "Player.Status.Equipping")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Status_Stamina_RegenBlocked, "Player.Status.Stamina.RegenBlocked")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Status_Blocking, "Player.Status.Blocking")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Status_Rolling, "Player.Status.Rolling")
 	#pragma endregion
 
 	#pragma region Player SendGameplayEvent Tags
