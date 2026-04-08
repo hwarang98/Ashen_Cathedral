@@ -83,6 +83,16 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Ashen Cathdral|FunctionLibrary")
 	static FGameplayTag ComputeHitReactDirectionTag(const AActor* InAttacker, const AActor* InVictim, float& OutAngleDifference);
 
+	/**
+	 * 방어자가 공격자를 향해 블록 가능한 각도 범위 내에 있는지 확인합니다.
+	 * @param InAttacker 공격자
+	 * @param InDefender 방어자
+	 * @param AngleThreshold 블록 허용 각도 (도 단위, 기본값 60도)
+	 * @return 유효한 블록이면 true, 아니면 false
+	 */
+	UFUNCTION(BlueprintPure, Category = "Ashen Cathdral|FunctionLibrary")
+	static bool IsValidBlock(const AActor* InAttacker, const AActor* InDefender, const float AngleThreshold = 60.0f);
+
 private:
 	/* 주어진 각도 차이를 바탕으로 히트 반응 태그를 결정 */
 	static FGameplayTag DetermineHitReactionTag(const float& OutAngleDifference);

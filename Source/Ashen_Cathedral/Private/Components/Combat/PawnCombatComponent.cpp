@@ -5,6 +5,7 @@
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "ACFunctionLibrary.h"
 #include "EnhancedInputSubsystems.h"
 #include "Abilities/GameplayAbilityTypes.h"
 #include "AnimInstance/Player/ACPlayerLinkedAnimLayer.h"
@@ -17,6 +18,7 @@
 #include "Items/Weapon/ACWeapon.h"
 #include "Structs/ACStructTypes.h"
 #include "Components/BoxComponent.h"
+#include "GameplayTags/ACGameplayTags_Player.h"
 
 void UPawnCombatComponent::OnHitTargetActor(AActor* HitActor)
 {
@@ -28,10 +30,18 @@ void UPawnCombatComponent::OnHitTargetActor(AActor* HitActor)
 
 	OverlappedActors.AddUnique(HitActor);
 
+	const bool bIsPlayerBlocking = UACFunctionLibrary::NativeDoesActorHaveTag(HitActor, ACGameplayTags::Player_Status_Blocking);
+	const bool bIsMyAttackUnblockable = false;
+
 	// GAS 이벤트 전송 (공통 로직)
 	FGameplayEventData EventData;
 	EventData.Instigator = GetOwningPawn();
 	EventData.Target = HitActor;
+
+	if (bIsPlayerBlocking)
+	{
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(HitActor, ACGameplayTags::Player_Event_SuccessfulBlock, EventData);
+	}
 
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
 		GetOwningPawn(),

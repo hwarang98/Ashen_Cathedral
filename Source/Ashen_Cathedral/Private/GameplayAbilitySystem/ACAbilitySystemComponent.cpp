@@ -31,21 +31,22 @@ void UACAbilitySystemComponent::OnAbilityInputPressed(const FGameplayTag& InputT
 
 void UACAbilitySystemComponent::OnAbilityInputReleased(const FGameplayTag& InputTag)
 {
-	// if (!InputTag.IsValid() || !InputTag.MatchesTag(ACGameplayTags::InputTag_MustBeHeld))
-	// {
-	// 	return;
-	// }
+	if (!InputTag.IsValid() || !InputTag.MatchesTag(ACGameplayTags::InputTag_MustBeHeld))
+	{
+		return;
+	}
 
 	for (const FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
 	{
 		if (AbilitySpec.GetDynamicSpecSourceTags().HasTagExact(InputTag) && AbilitySpec.IsActive())
 		{
+			CancelAbilityHandle(AbilitySpec.Handle);
 			// InputReleased 이벤트를 어빌리티에 전달 (취소하지 않음)
-			FGameplayAbilitySpec* MutableSpec = FindAbilitySpecFromHandle(AbilitySpec.Handle);
-			if (MutableSpec)
-			{
-				AbilitySpecInputReleased(*MutableSpec);
-			}
+			// if (FGameplayAbilitySpec* MutableSpec = FindAbilitySpecFromHandle(AbilitySpec.Handle))
+			// {
+			// 	// AbilitySpecInputReleased(*MutableSpec);
+			// 	AbilitySpecInputReleased(*MutableSpec);
+			// }
 		}
 	}
 }
