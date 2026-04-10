@@ -2,6 +2,9 @@
 
 
 #include "Character/Player/ACPlayerCharacter.h"
+
+#include "AbilitySystemBlueprintLibrary.h"
+#include "ACGameplayDebugHelper.h"
 #include "AnimInstance/Player/ACPlayerAnimInstance.h"
 #include "Components/Input/ACInputComponent.h"
 #include "ACGameplayTags.h"
@@ -89,6 +92,8 @@ void AACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Look, ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
 	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_MouseLook, ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
 	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Jump, ETriggerEvent::Triggered, this, &ThisClass::Jump);
+	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_SwitchTarget, ETriggerEvent::Triggered, this, &ThisClass::Input_SwitchTargetTriggered);
+	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_SwitchTarget, ETriggerEvent::Completed, this, &ThisClass::Input_SwitchTargetCompleted);
 
 	ACInputComponent->BindAbilityInputAction(InputConfigDataAsset, this, &ThisClass::Input_AbilityInputPressed, &ThisClass::Input_AbilityInputReleased);
 }
@@ -151,6 +156,24 @@ void AACPlayerCharacter::Input_AbilityInputReleased(const FGameplayTag InInputTa
 	{
 		ACAbilitySystemComponent->OnAbilityInputReleased(InInputTag);
 	}
+}
+
+void AACPlayerCharacter::Input_SwitchTargetTriggered(const FInputActionValue& InputActionValue)
+{
+	SwitchDirection = InputActionValue.Get<FVector2D>();
+}
+
+void AACPlayerCharacter::Input_SwitchTargetCompleted(const FInputActionValue& InputActionValue)
+{
+	FGameplayEventData GameplayEventData;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+		this,
+		SwitchDirection.X > 0.f ? ACGameplayTags::Player_Event_SwitchTarget_Right : ACGameplayTags::Player_Event_SwitchTarget_Left,
+		GameplayEventData
+		);
+
+	Debug::Print(TEXT("Switch방향") + SwitchDirection.ToString());
 }
 
 void AACPlayerCharacter::Input_Move(const FInputActionValue& InputActionValue)

@@ -55,7 +55,13 @@ private:
 	#pragma region  Input Callback
 	void Input_AbilityInputPressed(const FGameplayTag InInputTag);
 	void Input_AbilityInputReleased(const FGameplayTag InInputTag);
+
+	void Input_SwitchTargetTriggered(const FInputActionValue& InputActionValue);
+	void Input_SwitchTargetCompleted(const FInputActionValue& InputActionValue);
+
 	void Input_Move(const FInputActionValue& InputActionValue);
 	void Input_Look(const FInputActionValue& InputActionValue);
 	#pragma endregion
+
+	FVector2D SwitchDirection = FVector2D::ZeroVector;
 };
