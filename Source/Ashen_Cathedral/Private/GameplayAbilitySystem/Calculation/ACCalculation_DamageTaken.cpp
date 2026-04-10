@@ -2,6 +2,7 @@
 
 
 #include "GameplayAbilitySystem/Calculation/ACCalculation_DamageTaken.h"
+#include "AbilitySystemComponent.h"
 #include "ACGameplayTags.h"
 #include "Structs/ACStructTypes.h"
 
@@ -111,6 +112,19 @@ void UACCalculation_DamageTaken::Execute_Implementation(const FGameplayEffectCus
 	if (CounterAttackBonus > 0.f)
 	{
 		FinalDamageDone *= CounterAttackBonus;
+	}
+
+	// 패링/블락 상태 데미지 보정
+	if (const UAbilitySystemComponent* TargetASC = ExecutionParams.GetTargetAbilitySystemComponent())
+	{
+		if (TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Parry))
+		{
+			FinalDamageDone = 0.f;
+		}
+		else if (TargetASC->HasMatchingGameplayTag(ACGameplayTags::Player_Status_Blocking))
+		{
+			FinalDamageDone *= 0.3f;
+		}
 	}
 
 	if (GEngine)

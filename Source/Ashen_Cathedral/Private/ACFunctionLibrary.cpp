@@ -12,35 +12,40 @@
 
 UACAbilitySystemComponent* UACFunctionLibrary::NativeAbilitySystemComponentFromActor(AActor* InActor)
 {
-	check(InActor);
+	if (!IsValid(InActor))
+	{
+		return nullptr;
+	}
 
-	return CastChecked<UACAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(InActor));
+	return Cast<UACAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(InActor));
 }
 
 void UACFunctionLibrary::AddGameplayTagToActorIfNone(AActor* InActor, FGameplayTag TagToAdd)
 {
-	UACAbilitySystemComponent* AbilitySystemComponent = NativeAbilitySystemComponentFromActor(InActor);
-	if (!AbilitySystemComponent->HasMatchingGameplayTag(TagToAdd))
+	UACAbilitySystemComponent* ASC = NativeAbilitySystemComponentFromActor(InActor);
+	if (!ASC || ASC->HasMatchingGameplayTag(TagToAdd))
 	{
-		AbilitySystemComponent->AddLooseGameplayTag(TagToAdd);
+		return;
 	}
+
+	ASC->AddLooseGameplayTag(TagToAdd);
 }
 
 void UACFunctionLibrary::RemoveGameplayTagFromActorIfFound(AActor* InActor, FGameplayTag TagToRemove)
 {
-	UACAbilitySystemComponent* AbilitySystemComponent = NativeAbilitySystemComponentFromActor(InActor);
-
-	if (AbilitySystemComponent->HasMatchingGameplayTag(TagToRemove))
+	UACAbilitySystemComponent* ASC = NativeAbilitySystemComponentFromActor(InActor);
+	if (!ASC || !ASC->HasMatchingGameplayTag(TagToRemove))
 	{
-		AbilitySystemComponent->RemoveLooseGameplayTag(TagToRemove);
+		return;
 	}
+
+	ASC->RemoveLooseGameplayTag(TagToRemove);
 }
 
 bool UACFunctionLibrary::NativeDoesActorHaveTag(AActor* InActor, FGameplayTag TagToCheck)
 {
-	UACAbilitySystemComponent* AbilitySystemComponent = NativeAbilitySystemComponentFromActor(InActor);
-
-	return AbilitySystemComponent->HasMatchingGameplayTag(TagToCheck);
+	UACAbilitySystemComponent* ASC = NativeAbilitySystemComponentFromActor(InActor);
+	return ASC && ASC->HasMatchingGameplayTag(TagToCheck);
 }
 
 void UACFunctionLibrary::BP_DoesActorHaveTag(AActor* InActor, FGameplayTag TagToCheck, EACConfirmType& OutConfirmType)

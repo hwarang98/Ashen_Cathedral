@@ -4,7 +4,6 @@
 #include "Character/Player/ACPlayerCharacter.h"
 #include "AnimInstance/Player/ACPlayerAnimInstance.h"
 #include "Components/Input/ACInputComponent.h"
-#include "GameFramework/GameplayCameraComponent.h"
 #include "ACGameplayTags.h"
 #include "EnhancedInputSubsystems.h"
 #include "Camera/CameraComponent.h"
@@ -24,9 +23,6 @@ AACPlayerCharacter::AACPlayerCharacter()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
-
-	// GameplayCameraComponent = CreateDefaultSubobject<UGameplayCameraComponent>("Gameplay Camera Component");
-	// GameplayCameraComponent->SetupAttachment(GetRootComponent());
 
 	PlayerCombatComponent = CreateDefaultSubobject<UPlayerCombatComponent>(TEXT("Player Combat Component"));
 
@@ -51,6 +47,18 @@ void AACPlayerCharacter::BeginPlay()
 	{
 		GetCharacterMovement()->MaxWalkSpeed = ACAttributeSet->GetMoveSpeed();
 	}
+
+	if (ACAbilitySystemComponent)
+	{
+		ACAbilitySystemComponent->RegisterGameplayTagEvent(ACGameplayTags::Player_Status_Blocking, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::OnBlockingTagChanged);
+	}
+}
+
+void AACPlayerCharacter::OnBlockingTagChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	const bool bIsBlocking = NewCount > 0;
+	GetCharacterMovement()->bOrientRotationToMovement = !bIsBlocking;
+	bUseControllerRotationYaw = bIsBlocking;
 }
 
 
