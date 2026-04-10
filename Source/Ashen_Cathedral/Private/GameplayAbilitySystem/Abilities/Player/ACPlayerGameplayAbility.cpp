@@ -3,11 +3,18 @@
 #include "GameplayAbilitySystem/Abilities/Player/ACPlayerGameplayAbility.h"
 #include "Character/Player/ACPlayerCharacter.h"
 #include "Components/Combat/PlayerCombatComponent.h"
+#include "Controllers/ACPlayerController.h"
 
 AACPlayerCharacter* UACPlayerGameplayAbility::GetPlayerCharacterFromActorInfo() const
 {
-	return (CurrentActorInfo ? Cast<AACPlayerCharacter>(CurrentActorInfo->AvatarActor.Get()) : nullptr);
+	if (!CachedPlayerCharacter.IsValid())
+	{
+		CachedPlayerCharacter = Cast<AACPlayerCharacter>(CurrentActorInfo->AvatarActor.Get());
+	}
+
+	return CachedPlayerCharacter.IsValid() ? CachedPlayerCharacter.Get() : nullptr;
 }
+
 
 UPlayerCombatComponent* UACPlayerGameplayAbility::GetPlayerCombatComponentFromActorInfo() const
 {
@@ -16,4 +23,14 @@ UPlayerCombatComponent* UACPlayerGameplayAbility::GetPlayerCombatComponentFromAc
 		return Cast<UPlayerCombatComponent>(PlayerCharacter->GetPawnCombatComponent());
 	}
 	return nullptr;
+}
+
+AACPlayerController* UACPlayerGameplayAbility::GetPlayerControllerFromActorInfo()
+{
+	if (!CachedPlayerController.IsValid())
+	{
+		CachedPlayerController = Cast<AACPlayerController>(CurrentActorInfo->PlayerController);
+	}
+
+	return CachedPlayerController.IsValid() ? CachedPlayerController.Get() : nullptr;
 }
