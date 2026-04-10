@@ -16,6 +16,8 @@ UACPlayerGameplayAbility_HitReact::UACPlayerGameplayAbility_HitReact()
 
 	ActivationOwnedTags.AddTag(ACGameplayTags::Shared_Status_HitReact);
 
+	ActivationBlockedTags.AddTag(ACGameplayTags::Player_Status_Blocking);
+
 	FAbilityTriggerData TriggerData;
 	TriggerData.TriggerTag = ACGameplayTags::Shared_Event_HitReact;
 	TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;

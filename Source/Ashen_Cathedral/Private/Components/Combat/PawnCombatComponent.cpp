@@ -31,6 +31,7 @@ void UPawnCombatComponent::OnHitTargetActor(AActor* HitActor)
 	OverlappedActors.AddUnique(HitActor);
 
 	const bool bIsPlayerBlocking = UACFunctionLibrary::NativeDoesActorHaveTag(HitActor, ACGameplayTags::Player_Status_Blocking);
+	const bool bIsParry = UACFunctionLibrary::NativeDoesActorHaveTag(HitActor, ACGameplayTags::Shared_Status_Parry);
 	const bool bIsMyAttackUnblockable = false;
 	bool bIsValidBlock = false;
 
@@ -48,14 +49,12 @@ void UPawnCombatComponent::OnHitTargetActor(AActor* HitActor)
 	{
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(HitActor, ACGameplayTags::Player_Event_SuccessfulBlock, EventData);
 	}
-	else
-	{
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
-			GetOwningPawn(),
-			ACGameplayTags::Shared_Event_MeleeHit,
-			EventData
-			);
-	}
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+		GetOwningPawn(),
+		ACGameplayTags::Shared_Event_MeleeHit,
+		EventData
+		);
 
 	// 자식 클래스의 추가 로직 실행
 	OnHitTargetActorImpl(HitActor);

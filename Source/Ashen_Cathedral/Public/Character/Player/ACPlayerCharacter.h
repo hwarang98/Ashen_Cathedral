@@ -28,13 +28,9 @@ public:
 	virtual void OnJumped_Implementation() override;
 	virtual UPlayerCombatComponent* GetPawnCombatComponent() const override;
 
-
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CharacterData | DataAsset", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UACDataAsset_InputConfig> InputConfigDataAsset;
-
-	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
-	// TObjectPtr<UGameplayCameraComponent> GameplayCameraComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera | SpringArm", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USpringArmComponent> CameraBoom;
@@ -49,6 +45,11 @@ private:
 	#pragma region Sprint
 	/** 이동 입력 해제 시 Sprint 취소 */
 	void StopSprint();
+	#pragma endregion
+
+	#pragma region Block Strafe
+	/** Player_Status_Blocking 태그 추가/제거 시 Strafe 모드를 전환한다 */
+	void OnBlockingTagChanged(const FGameplayTag Tag, int32 NewCount);
 	#pragma endregion
 
 	#pragma region  Input Callback
