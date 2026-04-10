@@ -6,6 +6,7 @@
 #include "GameplayAbilitySystem/Abilities/ACGameplayAbility.h"
 #include "ACPlayerGameplayAbility.generated.h"
 
+class AACPlayerController;
 class AACPlayerCharacter;
 class UPlayerCombatComponent;
 
@@ -32,4 +33,17 @@ protected:
 	 */
 	UFUNCTION(BlueprintPure, Category = "PlayerAbility|Helpers")
 	UPlayerCombatComponent* GetPlayerCombatComponentFromActorInfo() const;
+
+	/**
+	 * 플레이어의 ActorInfo에서 AACPlayerController를 반환한다.
+	 * ActorInfo에 유효한 PlayerController가 없거나 AACPlayerController로 캐스팅할 수 없다면 nullptr을 반환한다.
+	 *
+	 * @return 유효한 AACPlayerController 객체 또는 nullptr을 반환한다.
+	 */
+	UFUNCTION(BlueprintPure, Category = "PlayerAbility|Helpers")
+	AACPlayerController* GetPlayerControllerFromActorInfo();
+
+private:
+	mutable TWeakObjectPtr<AACPlayerCharacter> CachedPlayerCharacter;
+	mutable TWeakObjectPtr<AACPlayerController> CachedPlayerController;
 };
