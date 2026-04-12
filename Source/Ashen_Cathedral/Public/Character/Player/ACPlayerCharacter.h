@@ -9,6 +9,7 @@
 #include "InputActionValue.h"
 #include "ACPlayerCharacter.generated.h"
 
+class UPlayerUIComponent;
 class UCameraComponent;
 class USpringArmComponent;
 class UACDataAsset_InputConfig;
@@ -27,6 +28,7 @@ public:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnJumped_Implementation() override;
 	virtual UPlayerCombatComponent* GetPawnCombatComponent() const override;
+	virtual UPawnUIComponent* GetPawnUIComponent() const override;
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CharacterData | DataAsset", meta = (AllowPrivateAccess = "true"))
@@ -40,6 +42,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UPlayerCombatComponent> PlayerCombatComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPlayerUIComponent> PlayerUIComponent;
 
 
 	#pragma region Sprint

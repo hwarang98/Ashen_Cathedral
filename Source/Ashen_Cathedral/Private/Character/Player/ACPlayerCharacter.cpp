@@ -12,6 +12,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/Combat/PlayerCombatComponent.h"
+#include "Components/UI/PlayerUIComponent.h"
 #include "DataAssets/Startup/ACDataAsset_StartupDataBase.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -28,6 +29,7 @@ AACPlayerCharacter::AACPlayerCharacter()
 	bUseControllerRotationRoll = false;
 
 	PlayerCombatComponent = CreateDefaultSubobject<UPlayerCombatComponent>(TEXT("Player Combat Component"));
+	PlayerUIComponent = CreateDefaultSubobject<UPlayerUIComponent>(TEXT("Player UI Component"));
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("Camera Boom"));
 	CameraBoom->SetupAttachment(GetRootComponent());
@@ -132,6 +134,11 @@ void AACPlayerCharacter::OnJumped_Implementation()
 UPlayerCombatComponent* AACPlayerCharacter::GetPawnCombatComponent() const
 {
 	return PlayerCombatComponent;
+}
+
+UPawnUIComponent* AACPlayerCharacter::GetPawnUIComponent() const
+{
+	return PlayerUIComponent;
 }
 
 void AACPlayerCharacter::StopSprint()
