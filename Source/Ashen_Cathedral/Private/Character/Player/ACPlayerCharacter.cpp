@@ -60,8 +60,15 @@ void AACPlayerCharacter::BeginPlay()
 void AACPlayerCharacter::OnBlockingTagChanged(const FGameplayTag Tag, int32 NewCount)
 {
 	const bool bIsBlocking = NewCount > 0;
-	GetCharacterMovement()->bOrientRotationToMovement = !bIsBlocking;
 	bUseControllerRotationYaw = bIsBlocking;
+
+	const bool bIsLockedOn = ACAbilitySystemComponent
+		&& ACAbilitySystemComponent->HasMatchingGameplayTag(ACGameplayTags::Player_Status_TargetLock);
+
+	if (!bIsLockedOn)
+	{
+		GetCharacterMovement()->bOrientRotationToMovement = !bIsBlocking;
+	}
 }
 
 
@@ -172,8 +179,6 @@ void AACPlayerCharacter::Input_SwitchTargetCompleted(const FInputActionValue& In
 		SwitchDirection.X > 0.f ? ACGameplayTags::Player_Event_SwitchTarget_Right : ACGameplayTags::Player_Event_SwitchTarget_Left,
 		GameplayEventData
 		);
-
-	Debug::Print(TEXT("Switch방향") + SwitchDirection.ToString());
 }
 
 void AACPlayerCharacter::Input_Move(const FInputActionValue& InputActionValue)
