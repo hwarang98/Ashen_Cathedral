@@ -179,8 +179,6 @@ void AACPlayerCharacter::Input_SwitchTargetCompleted(const FInputActionValue& In
 		SwitchDirection.X > 0.f ? ACGameplayTags::Player_Event_SwitchTarget_Right : ACGameplayTags::Player_Event_SwitchTarget_Left,
 		GameplayEventData
 		);
-
-	Debug::Print(TEXT("Switch방향") + SwitchDirection.ToString());
 }
 
 void AACPlayerCharacter::Input_Move(const FInputActionValue& InputActionValue)

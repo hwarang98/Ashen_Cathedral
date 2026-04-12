@@ -41,7 +41,6 @@ void UACPlayerAbility_TargetLock::EndAbility(const FGameplayAbilitySpecHandle Ha
 	CleanUp();
 	ResetTargetLockMappingContext();
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-	UE_LOG(LogTemp, Warning, TEXT("TargetLock Ability 비활성"));
 }
 
 void UACPlayerAbility_TargetLock::OnTargetLockTick(float DeltaTime)
