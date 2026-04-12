@@ -60,8 +60,15 @@ void AACPlayerCharacter::BeginPlay()
 void AACPlayerCharacter::OnBlockingTagChanged(const FGameplayTag Tag, int32 NewCount)
 {
 	const bool bIsBlocking = NewCount > 0;
-	GetCharacterMovement()->bOrientRotationToMovement = !bIsBlocking;
 	bUseControllerRotationYaw = bIsBlocking;
+
+	const bool bIsLockedOn = ACAbilitySystemComponent
+		&& ACAbilitySystemComponent->HasMatchingGameplayTag(ACGameplayTags::Player_Status_TargetLock);
+
+	if (!bIsLockedOn)
+	{
+		GetCharacterMovement()->bOrientRotationToMovement = !bIsBlocking;
+	}
 }
 
 

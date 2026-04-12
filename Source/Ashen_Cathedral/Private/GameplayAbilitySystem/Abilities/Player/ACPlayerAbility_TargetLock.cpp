@@ -56,8 +56,7 @@ void UACPlayerAbility_TargetLock::OnTargetLockTick(float DeltaTime)
 
 	// SetTargetLockWidgetPosition();
 	const bool bShouldOverrideRotation =
-		!UACFunctionLibrary::NativeDoesActorHaveTag(GetPlayerCharacterFromActorInfo(), ACGameplayTags::Player_Status_Rolling) &&
-		!UACFunctionLibrary::NativeDoesActorHaveTag(GetPlayerCharacterFromActorInfo(), ACGameplayTags::Player_Status_Blocking);
+		!UACFunctionLibrary::NativeDoesActorHaveTag(GetPlayerCharacterFromActorInfo(), ACGameplayTags::Player_Status_Rolling);
 
 	if (bShouldOverrideRotation)
 	{
