@@ -49,3 +49,8 @@ UPawnCombatComponent* AACCharacterBase::GetPawnCombatComponent() const
 {
 	return nullptr;
 }
+
+UPawnUIComponent* AACCharacterBase::GetPawnUIComponent() const
+{
+	return nullptr;
+}
