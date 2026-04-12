@@ -2,6 +2,7 @@
 
 
 #include "Character/Enemy/ACEnemyCharacter.h"
+#include "Components/UI/EnemyUIComponent.h"
 #include "Controllers/ACEnemyController.h"
 #include "DataAssets/Startup/ACDataAsset_EnemyStartupData.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -10,6 +11,7 @@
 AACEnemyCharacter::AACEnemyCharacter()
 {
 	EnemyCombatComponent = CreateDefaultSubobject<UEnemyCombatComponent>(TEXT("Enemy Combat Component"));
+	EnemyUIComponent = CreateDefaultSubobject<UEnemyUIComponent>(TEXT("EnemyUIComponent"));
 
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	AIControllerClass = AACEnemyController::StaticClass();
@@ -23,6 +25,11 @@ AACEnemyCharacter::AACEnemyCharacter()
 UPawnCombatComponent* AACEnemyCharacter::GetPawnCombatComponent() const
 {
 	return EnemyCombatComponent;
+}
+
+UPawnUIComponent* AACEnemyCharacter::GetPawnUIComponent() const
+{
+	return EnemyUIComponent;
 }
 
 void AACEnemyCharacter::PossessedBy(AController* NewController)

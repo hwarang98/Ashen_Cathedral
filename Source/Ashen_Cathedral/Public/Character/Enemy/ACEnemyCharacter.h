@@ -8,6 +8,8 @@
 #include "Components/Combat/EnemyCombatComponent.h"
 #include "ACEnemyCharacter.generated.h"
 
+class UEnemyUIComponent;
+
 UCLASS()
 class ASHEN_CATHEDRAL_API AACEnemyCharacter : public AACCharacterBase
 {
@@ -16,12 +18,17 @@ class ASHEN_CATHEDRAL_API AACEnemyCharacter : public AACCharacterBase
 public:
 	AACEnemyCharacter();
 
-	virtual UPawnCombatComponent* GetPawnCombatComponent() const override;
 	virtual void PossessedBy(AController* NewController) override;
+	virtual UPawnCombatComponent* GetPawnCombatComponent() const override;
+	virtual UPawnUIComponent* GetPawnUIComponent() const override;
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UEnemyCombatComponent> EnemyCombatComponent;
 
-	void InitEnemyStartUpData();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UEnemyUIComponent> EnemyUIComponent;
+
+	// void InitEnemyStartUpData();
 };
