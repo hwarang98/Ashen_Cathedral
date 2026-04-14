@@ -127,24 +127,24 @@ void UACCalculation_DamageTaken::Execute_Implementation(const FGameplayEffectCus
 		}
 	}
 
-	if (GEngine)
-	{
-		const FString DebugMsg = FString::Printf(
-			TEXT("[ 데미지 계산 ]\n경량 콤보: %d회 | 중량 콤보: %d회\n기본 데미지: %.1f | 화염 추가: %.1f | 공격력: %.2f | 방어율: %.0f%%\n카운터 보너스: %.2fx\n─────────────────\n최종 데미지: %.1f | 화상 축적: %.2f\n─────────────────\n"),
-			UsedLightAttackComboCount,
-			UsedHeavyAttackComboCount,
-			BaseDamage,
-			FireBonusDamage,
-			AttackMultiplier,
-			DefenseMultiplier * 100.f,
-			CounterAttackBonus > 0.f ? CounterAttackBonus : 1.f,
-			FinalDamageDone,
-			BurnBuildUp
-			);
-
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Yellow, DebugMsg);
-		UE_LOG(LogTemp, Warning, TEXT("%s"), *DebugMsg);
-	}
+	// if (GEngine)
+	// {
+	// 	const FString DebugMsg = FString::Printf(
+	// 		TEXT("[ 데미지 계산 ]\n경량 콤보: %d회 | 중량 콤보: %d회\n기본 데미지: %.1f | 화염 추가: %.1f | 공격력: %.2f | 방어율: %.0f%%\n카운터 보너스: %.2fx\n─────────────────\n최종 데미지: %.1f | 화상 축적: %.2f\n─────────────────\n"),
+	// 		UsedLightAttackComboCount,
+	// 		UsedHeavyAttackComboCount,
+	// 		BaseDamage,
+	// 		FireBonusDamage,
+	// 		AttackMultiplier,
+	// 		DefenseMultiplier * 100.f,
+	// 		CounterAttackBonus > 0.f ? CounterAttackBonus : 1.f,
+	// 		FinalDamageDone,
+	// 		BurnBuildUp
+	// 		);
+	//
+	// 	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Yellow, DebugMsg);
+	// 	UE_LOG(LogTemp, Warning, TEXT("%s"), *DebugMsg);
+	// }
 
 	// 계산된 데미지를 출력(Output)으로 설정
 	if (FinalDamageDone > 0.f)

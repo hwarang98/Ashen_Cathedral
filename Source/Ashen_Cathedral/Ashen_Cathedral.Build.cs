@@ -22,6 +22,7 @@ public class Ashen_Cathedral : ModuleRules
 			"AnimGraphRuntime",
 			"Niagara",
 			"AIModule",
+			"NavigationSystem",
 			"MotionWarping",
 			"Chooser"
 		});
