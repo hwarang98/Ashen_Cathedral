@@ -6,6 +6,8 @@
 #include "GameplayAbilitySystem/Abilities/ACGameplayAbility.h"
 #include "ACEnemyGameplayAbility.generated.h"
 
+class AACEnemyController;
+class UEnemyCombatComponent;
 /**
  * 
  */
@@ -13,5 +15,35 @@ UCLASS()
 class ASHEN_CATHEDRAL_API UACEnemyGameplayAbility : public UACGameplayAbility
 {
 	GENERATED_BODY()
-	
+
+public:
+	/**
+	 * 플레이어의 ActorInfo에서 AACPlayerCharacter를 반환한다.
+	 * ActorInfo에 유효한 AvatarActor가 없거나 AACPlayerCharacter로 캐스팅할 수 없다면 nullptr을 반환한다.
+	 * @return 유효한 AACPlayerCharacter 객체 또는 nullptr을 반환한다.
+	 */
+	UFUNCTION(BlueprintPure, Category = "AshenKnight|Helpers")
+	AACEnemyCharacter* GetEnemyCharacterFromActorInfo() const;
+
+	/**
+	 * 플레이어의 ActorInfo에서 UPlayerCombatComponent를 반환한다.
+	 * ActorInfo에 유효한 AvatarActor가 없거나 AACPlayerCharacter에서 UPlayerCombatComponent를 얻을 수 없으면 nullptr을 반환한다.
+	 *
+	 * @return 유효한 UPlayerCombatComponent 객체 또는 nullptr을 반환한다.
+	 */
+	UFUNCTION(BlueprintPure, Category = "AshenKnight|Helpers")
+	UEnemyCombatComponent* GetEnemyCombatComponentFromActorInfo() const;
+
+	/**
+	 * 플레이어의 ActorInfo에서 AACPlayerController를 반환한다.
+	 * ActorInfo에 유효한 PlayerController가 없거나 AACPlayerController로 캐스팅할 수 없다면 nullptr을 반환한다.
+	 *
+	 * @return 유효한 AACPlayerController 객체 또는 nullptr을 반환한다.
+	 */
+	UFUNCTION(BlueprintPure, Category = "PlayerAbility|Helpers")
+	AACEnemyController* GetEnemyControllerFromActorInfo();
+
+private:
+	mutable TWeakObjectPtr<AACEnemyCharacter> CachedEnemyCharacter;
+	mutable TWeakObjectPtr<AACEnemyController> CachedEnemyController;
 };
