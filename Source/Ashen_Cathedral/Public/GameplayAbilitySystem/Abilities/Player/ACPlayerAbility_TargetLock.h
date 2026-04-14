@@ -6,6 +6,7 @@
 #include "GameplayAbilitySystem/Abilities/Player/ACPlayerGameplayAbility.h"
 #include "ACPlayerAbility_TargetLock.generated.h"
 
+class UACWidgetBase;
 class UInputMappingContext;
 /**
  * 
@@ -33,8 +34,8 @@ private:
 	void GetAvailableActorsToLock();
 	AActor* GetNearestTargetFromAvailableActors(const TArray<AActor*>& InAvailableActors);
 	void GetAvailableActorsAroundTarget(TArray<AActor*>& OutActorsOnLeft, TArray<AActor*>& OutActorsOnRight);
-	// void DrawTargetLockWidget();
-	// 	void SetTargetLockWidgetPosition();
+	void DrawTargetLockWidget();
+	void SetTargetLockWidgetPosition();
 	void InitTargetLockMovement();
 	void InitTargetLockMappingContext();
 
@@ -54,9 +55,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Target Lock")
 	bool bShowPersistentDebugShape = false;
-	//
-	// 	// UPROPERTY(EditDefaultsOnly, Category = "Target Lock")
-	// 	// TSubclassOf<UWarriorWidgetBase> TargetLockWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Target Lock")
+	TSubclassOf<UACWidgetBase> TargetLockWidgetClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Target Lock")
 	float TargetLockRotationInterpSpeed = 5.f;
@@ -66,18 +67,22 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Target Lock")
 	TObjectPtr<UInputMappingContext> TargetLockMappingContext;
-	//
-	// 	UPROPERTY(EditDefaultsOnly, Category = "Target Lock")
-	// 	float TargetLockCameraOffsetDistance = 20.f;
-	//
+
+	UPROPERTY(EditDefaultsOnly, Category = "Target Lock")
+	float TargetLockCameraOffsetDistance = 20.f;
+
+	// 위젯 수직 위치 오프셋 (양수: 위, 음수: 아래)
+	UPROPERTY(EditDefaultsOnly, Category = "Target Lock")
+	float TargetLockWidgetVerticalOffset = 0.f;
+
 	UPROPERTY()
 	TArray<AActor*> AvailableActorsToLock;
 
 	UPROPERTY()
 	TObjectPtr<AActor> CurrentLockedActor;
 
-	// UPROPERTY()
-	// TObjectPtr<UWarriorWidgetBase> DrawnTargetLockWidget;
+	UPROPERTY()
+	TObjectPtr<UACWidgetBase> DrawnTargetLockWidget;
 
 	UPROPERTY()
 	FVector2D TargetLockWidgetSize = FVector2D::ZeroVector;
