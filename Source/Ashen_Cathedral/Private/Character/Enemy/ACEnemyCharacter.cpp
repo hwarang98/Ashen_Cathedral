@@ -2,16 +2,22 @@
 
 
 #include "Character/Enemy/ACEnemyCharacter.h"
+
+#include "Components/WidgetComponent.h"
 #include "Components/UI/EnemyUIComponent.h"
 #include "Controllers/ACEnemyController.h"
 #include "DataAssets/Startup/ACDataAsset_EnemyStartupData.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/AssetManager.h"
+#include "Widget/ACWidgetBase.h"
 
 AACEnemyCharacter::AACEnemyCharacter()
 {
 	EnemyCombatComponent = CreateDefaultSubobject<UEnemyCombatComponent>(TEXT("Enemy Combat Component"));
 	EnemyUIComponent = CreateDefaultSubobject<UEnemyUIComponent>(TEXT("EnemyUIComponent"));
+	EnemyHealthWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("Enemy Health Widget Component"));
+
+	EnemyHealthWidgetComponent->SetupAttachment(GetMesh());
 
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	AIControllerClass = AACEnemyController::StaticClass();
@@ -22,6 +28,17 @@ AACEnemyCharacter::AACEnemyCharacter()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 }
 
+void AACEnemyCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (UACWidgetBase* EnemyHealthWidget = Cast<UACWidgetBase>(EnemyHealthWidgetComponent->GetUserWidgetObject()))
+	{
+		EnemyHealthWidget->InitEnemyCreatedWidget(this);
+	}
+
+}
+
 UPawnCombatComponent* AACEnemyCharacter::GetPawnCombatComponent() const
 {
 	return EnemyCombatComponent;
@@ -30,6 +47,16 @@ UPawnCombatComponent* AACEnemyCharacter::GetPawnCombatComponent() const
 UPawnUIComponent* AACEnemyCharacter::GetPawnUIComponent() const
 {
 	return EnemyUIComponent;
+}
+
+UEnemyUIComponent* AACEnemyCharacter::GetEnemyUIComponent() const
+{
+	return EnemyUIComponent;
+}
+
+void AACEnemyCharacter::OnDeath()
+{
+	EnemyUIComponent->RemoveEnemyDrawnWidgetsIfAny();
 }
 
 void AACEnemyCharacter::PossessedBy(AController* NewController)
