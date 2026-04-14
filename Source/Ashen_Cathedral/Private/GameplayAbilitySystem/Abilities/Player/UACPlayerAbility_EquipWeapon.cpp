@@ -4,6 +4,7 @@
 #include "GameplayAbilitySystem/Abilities/Player/UACPlayerAbility_EquipWeapon.h"
 #include "ACGameplayTags.h"
 #include "Character/Player/ACPlayerCharacter.h"
+#include "Components/UI/PlayerUIComponent.h"
 #include "DataAssets/Items/Weapon/ACDataAsset_WeaponData.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 #include "Items/Weapon/ACWeapon.h"
@@ -145,7 +146,13 @@ void UUACPlayerAbility_EquipWeapon::HandleEquipLogic(FGameplayEventData Payload)
 			// 2. 서버: 상태 변경 (OnRep 호출)
 			PawnCombatComponent->SetCurrentEquippedWeaponTag(WeaponToEquipTag); // [수정]
 
-			// 3. 서버: 무기 장착 태그 추가
+			// 3. UI에 장착 무기 아이콘 브로드캐스트
+			if (const UPlayerUIComponent* PlayerUIComponent = OwnerCharacter->GetPlayerUIComponent())
+			{
+				PlayerUIComponent->OnEquippedWeaponChangedDelegate.Broadcast(WeaponData->SoftWeaponIconTexture);
+			}
+
+			// 4. 서버: 무기 장착 태그 추가
 			ASC->AddLooseGameplayTag(ACGameplayTags::Player_Ability_EquipWeapon);
 		}
 	}

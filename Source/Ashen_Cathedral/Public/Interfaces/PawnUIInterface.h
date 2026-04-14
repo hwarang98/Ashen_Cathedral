@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/UI/PlayerUIComponent.h"
 #include "UObject/Interface.h"
 #include "PawnUIInterface.generated.h"
 
+class UEnemyUIComponent;
 class UPawnUIComponent;
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
@@ -21,7 +23,8 @@ class ASHEN_CATHEDRAL_API IPawnUIInterface
 {
 	GENERATED_BODY()
 
-	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	virtual UPawnUIComponent* GetPawnUIComponent() const = 0;
+	virtual UPlayerUIComponent* GetPlayerUIComponent() const;
+	virtual UEnemyUIComponent* GetEnemyUIComponent() const;
 };

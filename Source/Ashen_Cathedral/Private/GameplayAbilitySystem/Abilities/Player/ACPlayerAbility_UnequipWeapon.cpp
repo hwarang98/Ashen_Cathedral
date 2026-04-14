@@ -6,6 +6,7 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Character/Player/ACPlayerCharacter.h"
+#include "DataAssets/Items/Weapon/ACDataAsset_WeaponData.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 #include "Items/Weapon/ACWeapon.h"
 
@@ -118,7 +119,13 @@ void UACPlayerAbility_UnequipWeapon::HandleUnequipLogic(FGameplayEventData Paylo
 			// 2. 서버: 상태 변경 (OnRep 호출)
 			PawnCombatComponent->SetCurrentEquippedWeaponTag(FGameplayTag()); // [수정]
 
-			// 3. 서버: 무기 장착 태그 제거
+			// 3. UI에 장착 무기 아이콘 브로드캐스트
+			if (const UPlayerUIComponent* PlayerUIComponent = OwnerCharacter->GetPlayerUIComponent())
+			{
+				PlayerUIComponent->OnEquippedWeaponChangedDelegate.Broadcast(nullptr);
+			}
+
+			// 4. 서버: 무기 장착 태그 제거
 			ASC->RemoveLooseGameplayTag(ACGameplayTags::Player_Ability_EquipWeapon);
 		}
 	}

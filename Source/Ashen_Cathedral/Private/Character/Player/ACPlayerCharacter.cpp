@@ -141,12 +141,18 @@ UPawnUIComponent* AACPlayerCharacter::GetPawnUIComponent() const
 	return PlayerUIComponent;
 }
 
+UPlayerUIComponent* AACPlayerCharacter::GetPlayerUIComponent() const
+{
+	return PlayerUIComponent;
+}
+
 void AACPlayerCharacter::StopSprint()
 {
 	if (ACAbilitySystemComponent && ACAbilitySystemComponent->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_HitReact))
 	{
 		return;
 	}
+
 	// 이동 입력 해제 시 Sprint 어빌리티를 태그로 취소
 	if (ACAbilitySystemComponent)
 	{
