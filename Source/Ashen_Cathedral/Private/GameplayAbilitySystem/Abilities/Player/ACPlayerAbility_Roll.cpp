@@ -48,6 +48,17 @@ void UACPlayerAbility_Roll::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	const UPlayerCombatComponent* CombatComp = PlayerCharacter->GetPawnCombatComponent();
 	const bool bIsWeaponEquipped = CombatComp && CombatComp->GetPlayerCurrentEquippedWeapon() != nullptr;
 
+	if (bIsWeaponEquipped)
+	{
+		const UACAbilitySystemComponent* ASC = GetACAbilitySystemComponentFromActorInfo();
+		const bool bIsTargetLocked = ASC && ASC->HasMatchingGameplayTag(ACGameplayTags::Player_Status_TargetLock);
+		if (!bIsTargetLocked)
+		{
+			RollDirection = ERollDirection::Forward;
+			WorldRollDirection = PlayerCharacter->GetActorForwardVector();
+		}
+	}
+
 	UAnimMontage* MontageToPlay = SelectMontage(RollDirection, bIsWeaponEquipped);
 	if (!MontageToPlay)
 	{

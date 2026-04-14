@@ -48,4 +48,7 @@ public:
 	// 이 무기의 스킬 애니메이션 몽타주에서 사용하는 나이아가라 파티클들, 무기 장착 시 미리 로드하여 스킬 첫 사용 시 프리징 방지
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "VFX")
 	TArray<TSoftObjectPtr<UNiagaraSystem>> SkillParticleSystems;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Socket")
+	TSoftObjectPtr<UTexture2D> SoftWeaponIconTexture;
 };

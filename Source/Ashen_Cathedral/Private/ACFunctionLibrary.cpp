@@ -44,8 +44,20 @@ void UACFunctionLibrary::RemoveGameplayTagFromActorIfFound(AActor* InActor, FGam
 
 bool UACFunctionLibrary::NativeDoesActorHaveTag(AActor* InActor, FGameplayTag TagToCheck)
 {
+	if (!IsValid(InActor))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("NativeDoesActorHaveTag: InActor가 null이거나 유효하지 않습니다"));
+		return false;
+	}
+
 	UACAbilitySystemComponent* ASC = NativeAbilitySystemComponentFromActor(InActor);
-	return ASC && ASC->HasMatchingGameplayTag(TagToCheck);
+	if (!ASC)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("NativeDoesActorHaveTag: [%s]의 ASC가 null입니다"), *InActor->GetName());
+		return false;
+	}
+
+	return ASC->HasMatchingGameplayTag(TagToCheck);
 }
 
 void UACFunctionLibrary::BP_DoesActorHaveTag(AActor* InActor, FGameplayTag TagToCheck, EACConfirmType& OutConfirmType)

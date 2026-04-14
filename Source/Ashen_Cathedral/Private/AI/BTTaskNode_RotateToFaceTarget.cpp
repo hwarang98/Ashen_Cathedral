@@ -98,8 +98,9 @@ void UBTTaskNode_RotateToFaceTarget::TickTask(UBehaviorTreeComponent& OwnerComp,
 	}
 	else
 	{
-		// 타겟을 향한 목표 회전값 계산 (Pitch는 포함되지 않아 수평 회전만 적용됨)
-		const FRotator LookAtRot = UKismetMathLibrary::FindLookAtRotation(Memory->OwningPawn->GetActorLocation(), Memory->TargetActor->GetActorLocation());
+		// 타겟을 향한 목표 회전값 계산 후 Pitch를 0으로 고정해 좌우 회전만 적용
+		FRotator LookAtRot = UKismetMathLibrary::FindLookAtRotation(Memory->OwningPawn->GetActorLocation(), Memory->TargetActor->GetActorLocation());
+		LookAtRot.Pitch = 0.f;
 
 		// RInterpTo: 프레임레이트 독립적 보간, RotationInterpSpeed가 클수록 빠르게 회전
 		const FRotator TargetRot = FMath::RInterpTo(Memory->OwningPawn->GetActorRotation(), LookAtRot, DeltaSeconds, RotationInterpSpeed);
@@ -118,11 +119,11 @@ FString UBTTaskNode_RotateToFaceTarget::GetStaticDescription() const
 
 bool UBTTaskNode_RotateToFaceTarget::HasReachedAnglePrecision(const APawn* QueryPawn, const AActor* TargetActor) const
 {
-	// AI의 현재 전방 벡터
-	const FVector OwnerForward = QueryPawn->GetActorForwardVector();
+	// AI의 현재 전방 벡터 (Z 제거 후 정규화해 수평 방향만 비교)
+	const FVector OwnerForward = FVector(QueryPawn->GetActorForwardVector().X, QueryPawn->GetActorForwardVector().Y, 0.f).GetSafeNormal();
 
-	// AI -> 타겟 방향의 단위 벡터 (GetSafeNormal: 길이가 0인 경우 ZeroVector 반환해 크래시 방지)
-	const FVector OwnerToTargetNormalized = (TargetActor->GetActorLocation() - QueryPawn->GetActorLocation()).GetSafeNormal();
+	// AI -> 타겟 방향의 단위 벡터 (Z 제거 후 정규화해 수평 각도 오차만 계산)
+	const FVector OwnerToTargetNormalized = FVector(TargetActor->GetActorLocation().X - QueryPawn->GetActorLocation().X, TargetActor->GetActorLocation().Y - QueryPawn->GetActorLocation().Y, 0.f).GetSafeNormal();
 
 	// 내적(Dot Product): 두 단위 벡터가 완전히 같은 방향이면 1.0, 직각이면 0.0, 반대 방향이면 -1.0
 	const float DotResult = FVector::DotProduct(OwnerForward, OwnerToTargetNormalized);

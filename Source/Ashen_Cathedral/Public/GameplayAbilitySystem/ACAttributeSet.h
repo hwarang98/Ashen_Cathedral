@@ -13,6 +13,7 @@ GAMEPLAYATTRIBUTE_VALUE_GETTER(PropertyName) \
 GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
 GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
+class IPawnUIInterface;
 /**
  * @class UACAttributeSet
  * @brief UACAttributeSet 클래스는 Ashen Cathedral 프로젝트의 캐릭터 속성(Attribute)을 정의하고 관리하는 역할을 수행합니다.
@@ -144,4 +145,5 @@ private:
 	void HandleDamageAndTriggerHitReact(const FGameplayEffectModCallbackData& Data);
 	void HandleStaminaConsumption(const FGameplayEffectModCallbackData& Data);
 	void HandleBurnBuildUp(const FGameplayEffectModCallbackData& Data);
+	TWeakInterfacePtr<IPawnUIInterface> CachedPawnUIInterface;
 };

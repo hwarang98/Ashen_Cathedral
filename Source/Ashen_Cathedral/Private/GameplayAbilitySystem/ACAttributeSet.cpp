@@ -6,9 +6,11 @@
 #include "ACFunctionLibrary.h"
 #include "ACGameplayTags.h"
 #include "GameplayEffectExtension.h"
+#include "Components/UI/PawnUIComponent.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Interfaces/PawnUIInterface.h"
 
 UACAttributeSet::UACAttributeSet()
 {
@@ -97,29 +99,51 @@ void UACAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 {
 	Super::PostGameplayEffectExecute(Data);
 
+	if (!CachedPawnUIInterface.IsValid())
+	{
+		CachedPawnUIInterface = TWeakInterfacePtr<IPawnUIInterface>(Data.Target.GetAvatarActor());
+	}
+
+	checkf(CachedPawnUIInterface.IsValid(), TEXT("%s가 IPawnUIInterface를 구현하지 않았습니다."), *Data.Target.GetAvatarActor()->GetActorNameOrLabel());
+
+	UPawnUIComponent* PawnUIComponent = CachedPawnUIInterface->GetPawnUIComponent();
+
+	checkf(PawnUIComponent, TEXT("%s로 부터 PawnUIComponent를 추출할수 없습니다."), *Data.Target.GetAvatarActor()->GetActorNameOrLabel());
+
+	// 변경된 어트리뷰트에 따라 클램프 및 UI 업데이트 / 전용 핸들러 호출
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
+		// 체력을 [0, MaxHealth] 범위로 클램프 후 UI에 정규화된 비율 전달
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
+		PawnUIComponent->OnCurrentHealthChanged.Broadcast(GetHealth() / GetMaxHealth());
 	}
 	else if (Data.EvaluatedData.Attribute == GetStaminaAttribute())
 	{
-		// Periodic GE가 BaseValue를 무한정 올리지 않도록 클램프
+		// Periodic GE가 BaseValue를 무한정 올리지 않도록 클램프 후 UI에 비율 전달
 		SetStamina(FMath::Clamp(GetStamina(), 0.f, GetMaxStamina()));
+		PawnUIComponent->OnCurrentStaminaChanged.Broadcast(GetStamina() / GetMaxStamina());
 	}
 	else if (Data.EvaluatedData.Attribute == GetDamageTakenAttribute())
 	{
+		// 피해 처리 및 HitReact 트리거
 		HandleDamageAndTriggerHitReact(Data);
+		PawnUIComponent->OnCurrentHealthChanged.Broadcast(GetHealth() / GetMaxHealth());
 	}
 	else if (Data.EvaluatedData.Attribute == GetGroggyDamageTakenAttribute())
 	{
+		// 그로기 피해 처리 (누적량에 따라 그로기 상태 진입 여부 결정)
 		HandleGroggyDamage(Data);
+		PawnUIComponent->OnGroggyStaminaChanged.Broadcast(GetGroggyGauge() / GetMaxGroggyGauge());
 	}
 	else if (Data.EvaluatedData.Attribute == GetStaminaCostAttribute())
 	{
+		// 스태미나 소모 처리 (스태미나에서 비용 차감)
 		HandleStaminaConsumption(Data);
+		PawnUIComponent->OnCurrentStaminaChanged.Broadcast(GetStamina() / GetMaxStamina());
 	}
 	else if (Data.EvaluatedData.Attribute == GetBurnAccumulationAttribute())
 	{
+		// 화상 누적량 처리 (임계치 도달 시 번 상태 적용)
 		HandleBurnBuildUp(Data);
 	}
 }
@@ -225,10 +249,7 @@ void UACAttributeSet::HandleDamageAndTriggerHitReact(const FGameplayEffectModCal
 	// 사망 판정
 	if (GetHealth() <= 0.f)
 	{
-		UACFunctionLibrary::AddGameplayTagToActorIfNone(
-			Data.Target.GetAvatarActor(),
-			ACGameplayTags::Shared_Status_Dead
-			);
+		UACFunctionLibrary::AddGameplayTagToActorIfNone(Data.Target.GetAvatarActor(), ACGameplayTags::Shared_Status_Dead);
 
 		// 사망 이벤트 전송 (Death Drop Ability 트리거용)
 		FGameplayEventData DeathPayload;
@@ -236,11 +257,7 @@ void UACAttributeSet::HandleDamageAndTriggerHitReact(const FGameplayEffectModCal
 		DeathPayload.Instigator = Data.EffectSpec.GetEffectContext().GetInstigator();
 		DeathPayload.Target = Data.Target.GetAvatarActor();
 
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
-			Data.Target.GetAvatarActor(),
-			ACGameplayTags::Shared_Event_Death,
-			DeathPayload
-			);
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Data.Target.GetAvatarActor(), ACGameplayTags::Shared_Event_Death, DeathPayload);
 
 		return;
 	}
@@ -262,11 +279,7 @@ void UACAttributeSet::HandleDamageAndTriggerHitReact(const FGameplayEffectModCal
 		HitPayload.Target = Data.Target.GetAvatarActor();
 		HitPayload.EventMagnitude = DamageDone;
 
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
-			Data.Target.GetAvatarActor(),
-			ACGameplayTags::Shared_Event_HitReact,
-			HitPayload
-			);
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Data.Target.GetAvatarActor(), ACGameplayTags::Shared_Event_HitReact, HitPayload);
 	}
 }
 
