@@ -184,15 +184,20 @@ void UACAttributeSet::HandleGroggyDamage(const FGameplayEffectModCallbackData& D
 		return;
 	}
 
-	// 무적or슈퍼아머 태그 보유시 그로기 데미지 무효화
-	static FGameplayTagContainer GroggyImmunityTags;
-	if (GroggyImmunityTags.IsEmpty())
+	const float CounterBonus = Data.EffectSpec.GetSetByCallerMagnitude(ACGameplayTags::Shared_SetByCaller_CounterAttackBonus, false, 0.f);
+	const bool bIsCounterAttack = CounterBonus > 0.f;
+
+	const float HeavyComboCount = Data.EffectSpec.GetSetByCallerMagnitude(ACGameplayTags::Shared_SetByCaller_AttackType_Heavy, false, 0.f);
+	const bool bIsHeavyAttack = HeavyComboCount > 0.f;
+
+	// 무적 태그는 항상 그로기 무효화
+	if (TargetASC && TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Invincible))
 	{
-		GroggyImmunityTags.AddTag(ACGameplayTags::Shared_Status_Invincible);
-		GroggyImmunityTags.AddTag(ACGameplayTags::Shared_Status_SuperArmor);
+		return;
 	}
 
-	if (TargetASC && TargetASC->HasAnyMatchingGameplayTags(GroggyImmunityTags))
+	// 슈퍼아머는 카운터/강공격이 아닐 때만 그로기 무효화
+	if (!bIsCounterAttack && !bIsHeavyAttack && TargetASC && TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_SuperArmor))
 	{
 		return;
 	}
