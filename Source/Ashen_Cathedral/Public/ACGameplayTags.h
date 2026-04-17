@@ -6,3 +6,4 @@
 #include "GameplayTags/ACGameplayTags_Shared.h"
 #include "GameplayTags/ACGameplayTags_Player.h"
 #include "GameplayTags/ACGameplayTags_Enemy.h"
+#include "GameplayTags/ACGameplayTags_GameplayCue.h"

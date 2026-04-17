@@ -40,6 +40,7 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Ability_HitReact, "Shared.Ability.HitReact")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Ability_Death, "Shared.Ability.Death")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Ability_BurnDot, "Shared.Ability.BurnDot")
+	UE_DEFINE_GAMEPLAY_TAG(Shared_Ability_Groggy, "Shared.Ability.Groggy")
 	#pragma endregion
 
 	#pragma region Shared Event Tags - Burn
