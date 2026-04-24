@@ -11,6 +11,24 @@ void UACAbilitySystemComponent::OnAbilityInputPressed(const FGameplayTag& InputT
 		return;
 	}
 
+	// LightAttack 입력 시 처형 어빌리티가 발동 가능하면 먼저 활성화하고 LightAttack을 건너뜀
+	if (InputTag.MatchesTagExact(ACGameplayTags::InputTag_LightAttack))
+	{
+		for (FGameplayAbilitySpec& ExecSpec : GetActivatableAbilities())
+		{
+			if (!ExecSpec.GetDynamicSpecSourceTags().HasTagExact(ACGameplayTags::Player_Ability_Execution))
+			{
+				continue;
+			}
+
+			if (!ExecSpec.IsActive() && TryActivateAbility(ExecSpec.Handle))
+			{
+				return;
+			}
+			break;
+		}
+	}
+
 	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
 	{
 		if (!AbilitySpec.GetDynamicSpecSourceTags().HasTagExact(InputTag))
