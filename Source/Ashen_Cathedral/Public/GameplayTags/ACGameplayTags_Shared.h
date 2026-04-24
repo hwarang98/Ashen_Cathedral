@@ -26,6 +26,8 @@ namespace ACGameplayTags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Status_HitReact_Left);
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Status_HitReact_Back);
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Status_HitReact_Right);
+	// Enemy가 처형당하는 동안 부여되는 상태 태그 — HitReact/GroggyDamage 차단 및 AI 잠금에 사용
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Status_Executed);
 	#pragma endregion
 
 	#pragma region Shared SetByCaller Tags
@@ -50,5 +52,12 @@ namespace ACGameplayTags
 	#pragma region Shared Event Tags - Burn
 	// BurnGauge가 MaxBurnGauge에 도달했을 때 DoT 어빌리티를 트리거하는 이벤트 태그
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Event_BurnTriggered);
+	#pragma endregion
+
+	#pragma region Execution Tags
+	// 처형 몽타주의 AnimNotify가 발송하는 데미지 타이밍 이벤트 — 이 이벤트 수신 시 ExecutionDamage GE를 적용한다
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Event_ExecutionDamage);
+	// ExecutionDamageEffect GE에서 SetByCaller로 처형 데미지 값을 전달하는 태그
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_SetByCaller_ExecutionDamage);
 	#pragma endregion
 }
