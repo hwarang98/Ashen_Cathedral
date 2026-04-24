@@ -6,7 +6,9 @@
 #include "Character/ACCharacterBase.h"
 #include "Character/Enemy/ACEnemyCharacter.h"
 #include "Character/Player/ACPlayerCharacter.h"
+#include "Controllers/ACEnemyController.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
+#include "Runtime/Media/Public/IMediaControls.h"
 
 void UACGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
 {
