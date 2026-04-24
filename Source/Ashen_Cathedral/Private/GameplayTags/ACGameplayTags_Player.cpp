@@ -14,6 +14,7 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Block, "Player.Ability.Block")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Roll, "Player.Ability.Roll")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_TargetLock, "Player.Ability.TargetLock")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Execution, "Player.Ability.Execution")
 	#pragma endregion
 
 	#pragma region Player Weapon Tags
@@ -26,6 +27,7 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_Status_Blocking, "Player.Status.Blocking")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Status_Rolling, "Player.Status.Rolling")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Status_TargetLock, "Player_Status_TargetLock")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Status_Executing, "Player.Status.Executing")
 	#pragma endregion
 
 	#pragma region Player SendGameplayEvent Tags

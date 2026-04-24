@@ -24,6 +24,7 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Status_HitReact_Left, "Shared.Status.HitReact.Left")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Status_HitReact_Back, "Shared.Status.HitReact.Back")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Status_HitReact_Right, "Shared.Status.HitReact.Right")
+	UE_DEFINE_GAMEPLAY_TAG(Shared_Status_Executed, "Shared.Status.Executed")
 	#pragma endregion
 
 	#pragma region Shared SetByCaller Tags
@@ -45,5 +46,10 @@ namespace ACGameplayTags
 
 	#pragma region Shared Event Tags - Burn
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Event_BurnTriggered, "Shared.Event.BurnTriggered")
+	#pragma endregion
+
+	#pragma region Execution Tags
+	UE_DEFINE_GAMEPLAY_TAG(Shared_Event_ExecutionDamage, "Shared.Event.ExecutionDamage")
+	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_ExecutionDamage, "Shared.SetByCaller.ExecutionDamage")
 	#pragma endregion
 }

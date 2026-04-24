@@ -184,6 +184,12 @@ void UACAttributeSet::HandleGroggyDamage(const FGameplayEffectModCallbackData& D
 		return;
 	}
 
+	// 처형 중에는 그로기 누적 불필요
+	if (TargetASC && TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Executed))
+	{
+		return;
+	}
+
 	const float CounterBonus = Data.EffectSpec.GetSetByCallerMagnitude(ACGameplayTags::Shared_SetByCaller_CounterAttackBonus, false, 0.f);
 	const bool bIsCounterAttack = CounterBonus > 0.f;
 
@@ -267,12 +273,14 @@ void UACAttributeSet::HandleDamageAndTriggerHitReact(const FGameplayEffectModCal
 		return;
 	}
 
-	// HitReact — 무적, 슈퍼아머 보유 시 무효화
+	// HitReact 면역 태그 초기화 (최초 1회)
+	// Shared_Status_Executed: 처형 중 HitReact 이벤트 발송 차단
 	static FGameplayTagContainer HitReactImmunityTags;
 	if (HitReactImmunityTags.IsEmpty())
 	{
 		HitReactImmunityTags.AddTag(ACGameplayTags::Shared_Status_Invincible);
 		HitReactImmunityTags.AddTag(ACGameplayTags::Shared_Status_SuperArmor);
+		HitReactImmunityTags.AddTag(ACGameplayTags::Shared_Status_Executed);
 	}
 
 	//  HitReact 차단

@@ -91,16 +91,23 @@ void UACGameplayAbility_Groggy::EndAbility(const FGameplayAbilitySpecHandle Hand
 {
 	if (AACCharacterBase* CharacterBase = GetACCharacterFromActorInfo())
 	{
-		// 1. 이동 복구
-		if (UCharacterMovementComponent* Movement = CharacterBase->GetCharacterMovement())
-		{
-			Movement->SetMovementMode(MOVE_Walking);
-		}
+		// 처형 중에는 이동·입력 복구 생략 — GA_Execution이 종료 시점에 직접 복구한다
+		const UACAbilitySystemComponent* OwnerASC = GetACAbilitySystemComponentFromActorInfo();
+		const bool bIsBeingExecuted = OwnerASC && OwnerASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Executed);
 
-		// 2. 플레이어 입력 복구
-		if (APlayerController* PlayerController = Cast<APlayerController>(CharacterBase->GetController()))
+		if (!bIsBeingExecuted)
 		{
-			CharacterBase->EnableInput(PlayerController);
+			// 1. 이동 복구
+			if (UCharacterMovementComponent* Movement = CharacterBase->GetCharacterMovement())
+			{
+				Movement->SetMovementMode(MOVE_Walking);
+			}
+
+			// 2. 플레이어 입력 복구
+			if (APlayerController* PlayerController = Cast<APlayerController>(CharacterBase->GetController()))
+			{
+				CharacterBase->EnableInput(PlayerController);
+			}
 		}
 	}
 
