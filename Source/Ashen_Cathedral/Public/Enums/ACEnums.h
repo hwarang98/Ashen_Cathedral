@@ -49,3 +49,24 @@ enum class ERollDirection : uint8
 	Left UMETA(DisplayName = "좌측 (Left)"),
 	ForwardLeft UMETA(DisplayName = "전방 좌측 (Forward Left)")
 };
+
+// 로그라이크 보상 카드 계열
+UENUM(BlueprintType)
+enum class EACCardCategory : uint8
+{
+	Attack   UMETA(DisplayName = "공격"),
+	Defense  UMETA(DisplayName = "방어"),
+	Mobility UMETA(DisplayName = "기동"),
+	Parry    UMETA(DisplayName = "패링"),
+	Resource UMETA(DisplayName = "자원"),
+};
+
+// 로그라이크 보상 카드 희귀도
+UENUM(BlueprintType)
+enum class EACCardRarity : uint8
+{
+	Common    UMETA(DisplayName = "일반"),
+	Uncommon  UMETA(DisplayName = "고급"),
+	Rare      UMETA(DisplayName = "희귀"),
+	Legendary UMETA(DisplayName = "전설"),
+};
