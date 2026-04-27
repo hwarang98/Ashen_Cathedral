@@ -14,6 +14,7 @@ class UCameraComponent;
 class USpringArmComponent;
 class UACDataAsset_InputConfig;
 class UGameplayCameraComponent;
+class UACRewardCardComponent;
 
 UCLASS()
 class ASHEN_CATHEDRAL_API AACPlayerCharacter : public AACCharacterBase
@@ -30,6 +31,7 @@ public:
 	virtual UPlayerCombatComponent* GetPawnCombatComponent() const override;
 	virtual UPawnUIComponent* GetPawnUIComponent() const override;
 	virtual UPlayerUIComponent* GetPlayerUIComponent() const;
+	FORCEINLINE UACRewardCardComponent* GetRewardCardComponent() const { return RewardCardComponent; }
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CharacterData | DataAsset", meta = (AllowPrivateAccess = "true"))
@@ -47,6 +49,8 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UPlayerUIComponent> PlayerUIComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "RewardCard", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UACRewardCardComponent> RewardCardComponent;
 
 	#pragma region Sprint
 	/** 이동 입력 해제 시 Sprint 취소 */
