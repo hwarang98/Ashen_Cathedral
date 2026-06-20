@@ -2,13 +2,15 @@
 
 
 #include "Character/Enemy/ACEnemyCharacter.h"
-
+#include "Character/Player/ACPlayerCharacter.h"
+#include "Components/RewardCard/ACRewardCardComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Components/UI/EnemyUIComponent.h"
 #include "Controllers/ACEnemyController.h"
 #include "DataAssets/Startup/ACDataAsset_EnemyStartupData.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/AssetManager.h"
+#include "Kismet/GameplayStatics.h"
 #include "Widget/ACWidgetBase.h"
 
 AACEnemyCharacter::AACEnemyCharacter()
@@ -37,6 +39,16 @@ void AACEnemyCharacter::BeginPlay()
 		EnemyHealthWidget->InitEnemyCreatedWidget(this);
 	}
 
+	if (bIsBoss)
+	{
+		if (const AACPlayerCharacter* PlayerCharacter = Cast<AACPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+		{
+			if (UACRewardCardComponent* RewardCardComponent = PlayerCharacter->GetRewardCardComponent())
+			{
+				RewardCardComponent->RegisterBossCharacter(this);
+			}
+		}
+	}
 }
 
 UPawnCombatComponent* AACEnemyCharacter::GetPawnCombatComponent() const

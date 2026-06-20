@@ -3,15 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/DataTable.h"
 #include "GameplayEffectExecutionCalculation.h"
 #include "GameplayTagContainer.h"
 #include "InputAction.h"
 #include "NiagaraSystem.h"
+#include "Enums/ACEnums.h"
 #include "GameplayAbilitySystem/ACAttributeSet.h"
 #include "ACStructTypes.generated.h"
 
+class UTexture2D;
 class AACWeaponBase;
-
 class UACGameplayAbility;
 
 
@@ -121,6 +123,78 @@ struct FRotateToFaceTargetTaskMemory
 		OwningPawn.Reset();
 		TargetActor.Reset();
 	}
+};
+
+/**
+ * 보상 카드 한 장의 정의 데이터. FTableRowBase를 상속하므로 UDataTable에서 사용 가능.
+ * RowName이 카드 고유 ID 역할을 하며, CardID는 컴포넌트가 런타임에 RowName으로 채운다.
+ * CSV 임포트 대상 컬럼: CardName, Description, Category, Rarity, MaxStack, Weight, bIsMVP
+ * 에디터에서 수동 설정 컬럼: GameplayEffectClass, GrantedAbilityClass, Icon
+ */
+USTRUCT(BlueprintType)
+struct FACRewardCardData : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	// 런타임에 DataTable RowName으로 자동 채워짐 — DataTable 에디터에서 비워도 무방
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FName CardID = NAME_None;
+
+	// UI에 표시할 카드 이름
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FText CardName;
+
+	// 카드 효과 설명
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FText Description;
+
+	// 카드 계열
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	EACCardCategory Category = EACCardCategory::Attack;
+
+	// 카드 희귀도
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	EACCardRarity Rarity = EACCardRarity::Common;
+
+	// Run 내 최대 중첩 가능 횟수
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = 1))
+	int32 MaxStack = 1;
+
+	// 추첨 가중치 (높을수록 더 자주 등장)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = 0.01f))
+	float Weight = 1.0f;
+
+	// 선택 시 플레이어 ASC에 적용할 Infinite GameplayEffect
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSubclassOf<UGameplayEffect> GameplayEffectClass;
+
+	// 선택 시 플레이어 ASC에 부여할 Ability (Passive GA 등)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSubclassOf<UACGameplayAbility> GrantedAbilityClass;
+
+	// UI에 표시할 카드 아이콘
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSoftObjectPtr<UTexture2D> Icon;
+
+	// MVP 구현 대상 카드 여부 (우선 구현 표시용)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bIsMVP = false;
+
+	bool IsValid() const { return CardID != NAME_None; }
+};
+
+/** 위젯에 전달하는 카드 표시 정보 — 카드 데이터와 현재 중첩 수를 함께 전달 */
+USTRUCT(BlueprintType)
+struct FACRewardCardDisplayInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly)
+	FACRewardCardData CardData;
+
+	// 현재 Run에서 이미 획득한 중첩 수
+	UPROPERTY(BlueprintReadOnly)
+	int32 CurrentStack = 0;
 };
 
 /** 소켓 이름과 Niagara 시스템을 쌍으로 묶어 복수 소켓에 이펙트를 부착할 때 사용합니다. */

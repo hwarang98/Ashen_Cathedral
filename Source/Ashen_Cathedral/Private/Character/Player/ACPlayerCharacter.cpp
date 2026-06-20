@@ -13,6 +13,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/Combat/PlayerCombatComponent.h"
 #include "Components/UI/PlayerUIComponent.h"
+#include "Components/RewardCard/ACRewardCardComponent.h"
 #include "DataAssets/Startup/ACDataAsset_StartupDataBase.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -30,6 +31,7 @@ AACPlayerCharacter::AACPlayerCharacter()
 
 	PlayerCombatComponent = CreateDefaultSubobject<UPlayerCombatComponent>(TEXT("Player Combat Component"));
 	PlayerUIComponent = CreateDefaultSubobject<UPlayerUIComponent>(TEXT("Player UI Component"));
+	RewardCardComponent = CreateDefaultSubobject<UACRewardCardComponent>(TEXT("Reward Card Component"));
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("Camera Boom"));
 	CameraBoom->SetupAttachment(GetRootComponent());
