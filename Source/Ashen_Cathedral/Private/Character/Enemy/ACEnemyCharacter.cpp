@@ -9,6 +9,7 @@
 #include "Controllers/ACEnemyController.h"
 #include "DataAssets/Startup/ACDataAsset_EnemyStartupData.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameModes/ACGameMode.h"
 #include "Engine/AssetManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Widget/ACWidgetBase.h"
@@ -47,6 +48,11 @@ void AACEnemyCharacter::BeginPlay()
 			{
 				RewardCardComponent->RegisterBossCharacter(this);
 			}
+		}
+
+		if (AACGameMode* ACGameMode = GetWorld()->GetAuthGameMode<AACGameMode>())
+		{
+			ACGameMode->RegisterBossCharacter(this);
 		}
 	}
 }
