@@ -57,8 +57,8 @@ enum class EACCardCategory : uint8
 	Attack   UMETA(DisplayName = "공격"),
 	Defense  UMETA(DisplayName = "방어"),
 	Mobility UMETA(DisplayName = "기동"),
-	Parry    UMETA(DisplayName = "패링"),
-	Resource UMETA(DisplayName = "자원"),
+	Parry    UMETA(DisplayName = "패링/스킬"),
+	Resource UMETA(DisplayName = "자원/회복"),
 };
 
 // 로그라이크 보상 카드 희귀도
