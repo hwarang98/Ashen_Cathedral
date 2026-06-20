@@ -70,3 +70,12 @@ enum class EACCardRarity : uint8
 	Rare      UMETA(DisplayName = "희귀"),
 	Legendary UMETA(DisplayName = "전설"),
 };
+
+// GameState가 추적하는 보스 전투 상태. Phase 판정 등 세부 전투 로직은 포함하지 않음
+UENUM(BlueprintType)
+enum class EACBattleState : uint8
+{
+	Idle                 UMETA(DisplayName = "대기"),
+	BossBattleInProgress UMETA(DisplayName = "보스전 진행 중"),
+	BossDefeated         UMETA(DisplayName = "보스 격파"),
+};
