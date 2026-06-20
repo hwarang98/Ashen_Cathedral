@@ -28,6 +28,10 @@ public:
 	virtual void OnDeath() override;
 
 private:
+	// 보스 개체 여부 — true면 BeginPlay에서 플레이어의 RewardCardComponent에 자동 등록되어 사망 시 카드 보상을 트리거한다
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RewardCard", meta = (AllowPrivateAccess = "true"))
+	bool bIsBoss = false;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UEnemyCombatComponent> EnemyCombatComponent;
 
