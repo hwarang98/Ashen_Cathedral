@@ -42,17 +42,22 @@ void AACEnemyCharacter::BeginPlay()
 
 	if (bIsBoss)
 	{
-		if (const AACPlayerCharacter* PlayerCharacter = Cast<AACPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
-		{
-			if (UACRewardCardComponent* RewardCardComponent = PlayerCharacter->GetRewardCardComponent())
-			{
-				RewardCardComponent->RegisterBossCharacter(this);
-			}
-		}
-
-		if (AACGameMode* ACGameMode = GetWorld()->GetAuthGameMode<AACGameMode>())
+		AACGameMode* ACGameMode = GetWorld()->GetAuthGameMode<AACGameMode>();
+		if (ACGameMode)
 		{
 			ACGameMode->RegisterBossCharacter(this);
+		}
+
+		// 최종 보스는 능력(보상 카드) 선택을 생략하므로 등록하지 않는다
+		if (ACGameMode && !ACGameMode->IsFinalBossPending())
+		{
+			if (const AACPlayerCharacter* PlayerCharacter = Cast<AACPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+			{
+				if (UACRewardCardComponent* RewardCardComponent = PlayerCharacter->GetRewardCardComponent())
+				{
+					RewardCardComponent->RegisterBossCharacter(this);
+				}
+			}
 		}
 	}
 }
@@ -88,13 +93,20 @@ void AACEnemyCharacter::PossessedBy(AController* NewController)
 
 	int32 AbilityApplyLevel = 1;
 
+	TWeakObjectPtr<AACEnemyCharacter> WeakThis(this);
 	UAssetManager::GetStreamableManager().RequestAsyncLoad(
 		CharacterStartUpData.ToSoftObjectPath(),
 		FStreamableDelegate::CreateLambda(
-			[this,AbilityApplyLevel]() {
-				if (UACDataAsset_EnemyStartupData* LoadedData = Cast<UACDataAsset_EnemyStartupData>(CharacterStartUpData.Get()))
+			[WeakThis,AbilityApplyLevel]() {
+				AACEnemyCharacter* StrongThis = WeakThis.Get();
+				if (!StrongThis || !StrongThis->ACAbilitySystemComponent)
 				{
-					LoadedData->GiveToAbilitySystemComponent(ACAbilitySystemComponent, AbilityApplyLevel);
+					return;
+				}
+
+				if (UACDataAsset_EnemyStartupData* LoadedData = Cast<UACDataAsset_EnemyStartupData>(StrongThis->CharacterStartUpData.Get()))
+				{
+					LoadedData->GiveToAbilitySystemComponent(StrongThis->ACAbilitySystemComponent, AbilityApplyLevel);
 				}
 			}
 			)
