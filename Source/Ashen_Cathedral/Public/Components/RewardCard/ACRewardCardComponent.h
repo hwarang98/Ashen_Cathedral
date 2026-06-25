@@ -14,6 +14,9 @@ class UACRewardCardSelectionWidget;
 class UACAbilitySystemComponent;
 class AACCharacterBase;
 
+// 카드 선택 UI가 닫혔을 때 1회 전달되는 콜백 — 외부 시스템이 선택 완료를 기다릴 때 바인딩
+DECLARE_DELEGATE(FOnSelectionClosed);
+
 /**
  * @brief 로그라이크 카드 보상 컴포넌트.
  *
@@ -69,6 +72,12 @@ public:
 	// 현재 Run에서 획득한 카드와 중첩 수 (Blueprint에서 읽기 가능)
 	UFUNCTION(BlueprintPure, Category = "RewardCard")
 	int32 GetCurrentStack(FName CardID) const;
+
+	// 카드 선택 UI가 현재 표시 중인지 여부 — 외부 시스템(Boss Clear UI 등)이 선택 완료를 기다릴 때 사용
+	FORCEINLINE bool IsSelectionActive() const { return bSelectionActive; }
+
+	// 카드 선택 UI가 닫혔을 때 1회 호출됨 — CloseSelectionUI() 호출 시점에 바인딩된 콜백을 실행하고 즉시 Unbind
+	FOnSelectionClosed OnSelectionClosedDelegate;
 
 protected:
 	/**

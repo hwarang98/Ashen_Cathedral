@@ -51,6 +51,14 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Death")
 	FOnCharacterDeath OnDeathDelegate;
 
+	/**
+	 * 사망 애니메이션 재생이 끝났을 때 브로드캐스트되는 델리게이트.
+	 * OnDeathDelegate(HP 0 판정 즉시)와 달리 사망 몽타주가 끝까지 재생된 시점에 호출됨.
+	 * 사망 연출 완료를 기준으로 동작해야 하는 시스템(보스 클리어 UI 등)에서 구독할 것.
+	 */
+	UPROPERTY(BlueprintAssignable, Category = "Death")
+	FOnCharacterDeath OnDeathAnimationCompletedDelegate;
+
 protected:
 	#pragma region GAS
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AbilitySystem")

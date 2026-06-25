@@ -189,6 +189,12 @@ void UACGameplayAbility_Death::OnMontageCompleted()
 			);
 	}
 
+	// [브로드캐스트] 사망 연출이 끝까지 재생된 시점을 외부 시스템(보스 클리어 UI 등)에 전파
+	if (AACCharacterBase* CharacterBase = GetACCharacterFromActorInfo())
+	{
+		CharacterBase->OnDeathAnimationCompletedDelegate.Broadcast(CharacterBase);
+	}
+
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 

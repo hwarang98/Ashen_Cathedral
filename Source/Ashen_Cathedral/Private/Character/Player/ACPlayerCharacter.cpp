@@ -18,6 +18,7 @@
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameModes/ACGameMode.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 #include "GameplayAbilitySystem/ACAttributeSet.h"
 
@@ -58,6 +59,11 @@ void AACPlayerCharacter::BeginPlay()
 	if (ACAbilitySystemComponent)
 	{
 		ACAbilitySystemComponent->RegisterGameplayTagEvent(ACGameplayTags::Player_Status_Blocking, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::OnBlockingTagChanged);
+	}
+
+	if (AACGameMode* ACGameMode = GetWorld()->GetAuthGameMode<AACGameMode>())
+	{
+		ACGameMode->RegisterPlayerCharacter(this);
 	}
 }
 
@@ -105,6 +111,7 @@ void AACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Jump, ETriggerEvent::Triggered, this, &ThisClass::Jump);
 	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_SwitchTarget, ETriggerEvent::Triggered, this, &ThisClass::Input_SwitchTargetTriggered);
 	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_SwitchTarget, ETriggerEvent::Completed, this, &ThisClass::Input_SwitchTargetCompleted);
+	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Interact, ETriggerEvent::Started, this, &ThisClass::Input_Interact);
 
 	ACInputComponent->BindAbilityInputAction(InputConfigDataAsset, this, &ThisClass::Input_AbilityInputPressed, &ThisClass::Input_AbilityInputReleased);
 }
@@ -194,6 +201,27 @@ void AACPlayerCharacter::Input_SwitchTargetCompleted(const FInputActionValue& In
 		SwitchDirection.X > 0.f ? ACGameplayTags::Player_Event_SwitchTarget_Right : ACGameplayTags::Player_Event_SwitchTarget_Left,
 		GameplayEventData
 		);
+}
+
+void AACPlayerCharacter::SetCurrentInteractable(TScriptInterface<IInteractableInterface> InInteractable)
+{
+	CurrentInteractable = InInteractable;
+}
+
+void AACPlayerCharacter::ClearCurrentInteractable(TScriptInterface<IInteractableInterface> InInteractable)
+{
+	if (CurrentInteractable == InInteractable)
+	{
+		CurrentInteractable = nullptr;
+	}
+}
+
+void AACPlayerCharacter::Input_Interact()
+{
+	if (CurrentInteractable.GetObject())
+	{
+		CurrentInteractable->Interact(this);
+	}
 }
 
 void AACPlayerCharacter::Input_Move(const FInputActionValue& InputActionValue)

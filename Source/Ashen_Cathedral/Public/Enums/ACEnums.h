@@ -78,4 +78,5 @@ enum class EACBattleState : uint8
 	Idle                 UMETA(DisplayName = "대기"),
 	BossBattleInProgress UMETA(DisplayName = "보스전 진행 중"),
 	BossDefeated         UMETA(DisplayName = "보스 격파"),
+	Completed            UMETA(DisplayName = "전투 완료"),
 };
