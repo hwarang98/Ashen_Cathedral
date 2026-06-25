@@ -371,6 +371,13 @@ void UACRewardCardComponent::CloseSelectionUI()
 			PC->SetShowMouseCursor(false);
 		}
 	}
+
+	// 카드 선택 완료를 기다리던 외부 시스템(Boss Clear UI 등)에 1회 통지
+	if (OnSelectionClosedDelegate.IsBound())
+	{
+		OnSelectionClosedDelegate.Execute();
+		OnSelectionClosedDelegate.Unbind();
+	}
 }
 
 UACAbilitySystemComponent* UACRewardCardComponent::GetPlayerASC() const
