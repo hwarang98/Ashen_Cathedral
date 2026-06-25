@@ -21,4 +21,5 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_Toggleable_TargetLock, "InputTag.Toggleable.TargetLock")
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_SwitchTarget, "InputTag.SwitchTarget")
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_Execution, "InputTag.Execution")
+	UE_DEFINE_GAMEPLAY_TAG(InputTag_Interact, "InputTag.Interact")
 }

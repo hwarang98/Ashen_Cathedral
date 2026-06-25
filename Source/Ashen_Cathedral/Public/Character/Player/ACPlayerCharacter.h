@@ -7,6 +7,7 @@
 #include "Components/Combat/PlayerCombatComponent.h"
 #include "GameplayTagContainer.h"
 #include "InputActionValue.h"
+#include "Interfaces/InteractableInterface.h"
 #include "ACPlayerCharacter.generated.h"
 
 class UPlayerUIComponent;
@@ -32,6 +33,12 @@ public:
 	virtual UPawnUIComponent* GetPawnUIComponent() const override;
 	virtual UPlayerUIComponent* GetPlayerUIComponent() const;
 	FORCEINLINE UACRewardCardComponent* GetRewardCardComponent() const { return RewardCardComponent; }
+
+	// 상호작용 가능한 액터가 오버랩 범위에 들어왔을 때 호출
+	void SetCurrentInteractable(TScriptInterface<IInteractableInterface> InInteractable);
+
+	// 상호작용 가능한 액터가 오버랩 범위를 벗어났을 때 호출. InInteractable이 현재 등록된 대상과 일치할 때만 해제
+	void ClearCurrentInteractable(TScriptInterface<IInteractableInterface> InInteractable);
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CharacterData | DataAsset", meta = (AllowPrivateAccess = "true"))
@@ -71,7 +78,11 @@ private:
 
 	void Input_Move(const FInputActionValue& InputActionValue);
 	void Input_Look(const FInputActionValue& InputActionValue);
+	void Input_Interact();
 	#pragma endregion
 
 	FVector2D SwitchDirection = FVector2D::ZeroVector;
+
+	// 현재 오버랩 범위 안에 있어 상호작용 입력이 들어오면 호출할 대상
+	TScriptInterface<IInteractableInterface> CurrentInteractable;
 };
