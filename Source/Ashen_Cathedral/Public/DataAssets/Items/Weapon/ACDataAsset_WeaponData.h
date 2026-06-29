@@ -51,4 +51,8 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Socket")
 	TSoftObjectPtr<UTexture2D> SoftWeaponIconTexture;
+
+	// 이 무기를 장착할 때 ASC에 추가할 무기 식별 태그
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	FGameplayTag WeaponTypeTag;
 };

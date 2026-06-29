@@ -127,6 +127,12 @@ void UACPlayerAbility_UnequipWeapon::HandleUnequipLogic(FGameplayEventData Paylo
 
 			// 4. 서버: 무기 장착 태그 제거
 			ASC->RemoveLooseGameplayTag(ACGameplayTags::Player_Ability_EquipWeapon);
+			ASC->AddLooseGameplayTag(ACGameplayTags::Player_Weapon_Unarmed);
+
+			if (WeaponData->WeaponTypeTag.IsValid())
+			{
+				ASC->RemoveLooseGameplayTag(WeaponData->WeaponTypeTag);
+			}
 		}
 	}
 }

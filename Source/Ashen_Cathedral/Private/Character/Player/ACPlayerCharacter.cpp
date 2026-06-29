@@ -34,14 +34,14 @@ AACPlayerCharacter::AACPlayerCharacter()
 	PlayerUIComponent = CreateDefaultSubobject<UPlayerUIComponent>(TEXT("Player UI Component"));
 	RewardCardComponent = CreateDefaultSubobject<UACRewardCardComponent>(TEXT("Reward Card Component"));
 
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("Camera Boom"));
-	CameraBoom->SetupAttachment(GetRootComponent());
-	CameraBoom->TargetArmLength = 400.f;
-	CameraBoom->SocketOffset = FVector(0.f, 55.f, 120.f);
-	CameraBoom->bUsePawnControlRotation = true;
+	// CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("Camera Boom"));
+	// CameraBoom->SetupAttachment(GetRootComponent());
+	// CameraBoom->TargetArmLength = 400.f;
+	// CameraBoom->SocketOffset = FVector(0.f, 55.f, 120.f);
+	// CameraBoom->bUsePawnControlRotation = true;
 
-	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("View Camera"));
-	ViewCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	// ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("View Camera"));
+	// ViewCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 720.f, 0.f);
@@ -104,11 +104,11 @@ void AACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		PlayerSubsystem->AddMappingContext(InputConfigDataAsset->DefaultMappingContext, 0);
 	}
 
-	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Move, ETriggerEvent::Triggered, this, &ThisClass::Input_Move);
-	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Move, ETriggerEvent::Completed, this, &ThisClass::StopSprint);
-	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Look, ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
-	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_MouseLook, ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
-	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Jump, ETriggerEvent::Triggered, this, &ThisClass::Jump);
+	// ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Move, ETriggerEvent::Triggered, this, &ThisClass::Input_Move);
+	// ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Move, ETriggerEvent::Completed, this, &ThisClass::StopSprint);
+	// ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Look, ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
+	// ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_MouseLook, ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
+	// ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Jump, ETriggerEvent::Triggered, this, &ThisClass::Jump);
 	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_SwitchTarget, ETriggerEvent::Triggered, this, &ThisClass::Input_SwitchTargetTriggered);
 	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_SwitchTarget, ETriggerEvent::Completed, this, &ThisClass::Input_SwitchTargetCompleted);
 	ACInputComponent->BindNativeInputAction(InputConfigDataAsset, ACGameplayTags::InputTag_Interact, ETriggerEvent::Started, this, &ThisClass::Input_Interact);
@@ -119,6 +119,11 @@ void AACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 void AACPlayerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
+
+	if (ACAbilitySystemComponent)
+	{
+		ACAbilitySystemComponent->AddLooseGameplayTag(ACGameplayTags::Player_Weapon_Unarmed);
+	}
 
 	if (!CharacterStartUpData.IsNull())
 	{

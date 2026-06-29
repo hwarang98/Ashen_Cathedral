@@ -20,6 +20,8 @@ namespace ACGameplayTags
 
 	#pragma region Player Weapon Tags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Weapon_Sword);
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Weapon_Basic);
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Weapon_Unarmed);
 	#pragma endregion
 
 	#pragma region Player Status Tags
