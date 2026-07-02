@@ -19,6 +19,8 @@ namespace ACGameplayTags
 
 	#pragma region Player Weapon Tags
 	UE_DEFINE_GAMEPLAY_TAG(Player_Weapon_Sword, "Player.Weapon.Sword")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Weapon_Basic, "Player.Weapon.Basic")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Weapon_Unarmed, "Player.Weapon.Unarmed")
 	#pragma endregion
 
 	#pragma region Player Status Tags
@@ -28,6 +30,7 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_Status_Rolling, "Player.Status.Rolling")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Status_TargetLock, "Player_Status_TargetLock")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Status_Executing, "Player.Status.Executing")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Status_ComboWindow, "Player.Status.ComboWindow")
 	#pragma endregion
 
 	#pragma region Player SendGameplayEvent Tags
@@ -36,6 +39,7 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_Event_SuccessfulBlock, "Player.Event.SuccessfulBlock")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Event_SwitchTarget_Left, "Player.Event.SwitchTarget.Left")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Event_SwitchTarget_Right, "Player.Event.SwitchTarget.Right")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Event_ComboWindow_Open, "Player.Event.ComboWindow.Open")
 
 	#pragma endregion
 }

@@ -154,6 +154,12 @@ void UUACPlayerAbility_EquipWeapon::HandleEquipLogic(FGameplayEventData Payload)
 
 			// 4. 서버: 무기 장착 태그 추가
 			ASC->AddLooseGameplayTag(ACGameplayTags::Player_Ability_EquipWeapon);
+			ASC->RemoveLooseGameplayTag(ACGameplayTags::Player_Weapon_Unarmed);
+
+			if (WeaponData->WeaponTypeTag.IsValid())
+			{
+				ASC->AddLooseGameplayTag(WeaponData->WeaponTypeTag);
+			}
 		}
 	}
 }

@@ -46,7 +46,7 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Locomotion")
 	bool bHasAcceleration = false;
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Locomotion")
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "AnimData|Locomotion")
 	FVector Velocity = FVector::ZeroVector;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Locomotion")

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AnimInstance/ACAnimInstanceBase.h"
+#include "GameplayTagContainer.h"
 #include "ACPlayerAnimInstance.generated.h"
 
 class AACPlayerCharacter;
@@ -24,6 +25,7 @@ class ASHEN_CATHEDRAL_API UACPlayerAnimInstance : public UACAnimInstanceBase
 
 public:
 	virtual void NativeInitializeAnimation() override;
+	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
 
 	// ACPlayerCharacter::OnJumped_Implementation()에서 호출
@@ -54,4 +56,8 @@ protected:
 	// 점프 순간 스냅샷 — 공중에서 방향이 바뀌어도 Jump 애니메이션은 이 값을 사용
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Locomotion")
 	float JumpDirection = 0.f;
+
+	// 현재 장착된 무기의 식별 태그 (Player.Weapon.* 하위 태그)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "AnimData|Weapon")
+	FGameplayTagContainer CurrentGameplayTags;
 };

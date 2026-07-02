@@ -2,9 +2,11 @@
 
 
 #include "AnimInstance/Player/ACPlayerAnimInstance.h"
+#include "ACFunctionLibrary.h"
 #include "ACGameplayTags.h"
 #include "Character/Player/ACPlayerCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 #include "KismetAnimationLibrary.h"
 
 void UACPlayerAnimInstance::NativeInitializeAnimation()
@@ -12,6 +14,23 @@ void UACPlayerAnimInstance::NativeInitializeAnimation()
 	Super::NativeInitializeAnimation();
 
 	OwningPlayerCharacter = Cast<AACPlayerCharacter>(OwningCharacter);
+}
+
+void UACPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
+{
+	Super::NativeUpdateAnimation(DeltaSeconds);
+
+	if (!OwningPlayerCharacter)
+	{
+		return;
+	}
+
+	if (UACAbilitySystemComponent* ASC = UACFunctionLibrary::NativeAbilitySystemComponentFromActor(OwningPlayerCharacter))
+	{
+		FGameplayTagContainer OwnedTags;
+		ASC->GetOwnedGameplayTags(OwnedTags);
+		CurrentGameplayTags = OwnedTags.Filter(FGameplayTagContainer(FGameplayTag::RequestGameplayTag(TEXT("Player.Weapon"))));
+	}
 }
 
 void UACPlayerAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)

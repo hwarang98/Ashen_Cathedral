@@ -20,6 +20,8 @@ namespace ACGameplayTags
 
 	#pragma region Player Weapon Tags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Weapon_Sword);
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Weapon_Basic);
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Weapon_Unarmed);
 	#pragma endregion
 
 	#pragma region Player Status Tags
@@ -30,6 +32,8 @@ namespace ACGameplayTags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Status_TargetLock);
 	// 플레이어가 처형을 실행 중인 동안 부여되는 상태 태그
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Status_Executing);
+	// ANS_ComboWindow Begin/End에 맞춰 추가·제거 — 콤보 체인 허용 구간 표시
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Status_ComboWindow);
 	#pragma endregion
 
 	#pragma region Player SendGameplayEvent Tags
@@ -38,5 +42,7 @@ namespace ACGameplayTags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Event_SuccessfulBlock);
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Event_SwitchTarget_Left);
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Event_SwitchTarget_Right);
+	// 공격 몽타주의 콤보 연계 가능 구간 진입 시 ANS가 발송하는 이벤트
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Event_ComboWindow_Open);
 	#pragma endregion
 }
