@@ -4,7 +4,6 @@
 #include "Character/Player/ACPlayerCharacter.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
-#include "ACGameplayDebugHelper.h"
 #include "AnimInstance/Player/ACPlayerAnimInstance.h"
 #include "Components/Input/ACInputComponent.h"
 #include "ACGameplayTags.h"
@@ -12,6 +11,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/Combat/PlayerCombatComponent.h"
+#include "GameplayAbilitySystem/Abilities/Player/ACPlayerAbility_Attack.h"
 #include "Components/UI/PlayerUIComponent.h"
 #include "Components/RewardCard/ACRewardCardComponent.h"
 #include "DataAssets/Startup/ACDataAsset_StartupDataBase.h"
@@ -33,7 +33,6 @@ AACPlayerCharacter::AACPlayerCharacter()
 	PlayerCombatComponent = CreateDefaultSubobject<UPlayerCombatComponent>(TEXT("Player Combat Component"));
 	PlayerUIComponent = CreateDefaultSubobject<UPlayerUIComponent>(TEXT("Player UI Component"));
 	RewardCardComponent = CreateDefaultSubobject<UACRewardCardComponent>(TEXT("Reward Card Component"));
-
 	// CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("Camera Boom"));
 	// CameraBoom->SetupAttachment(GetRootComponent());
 	// CameraBoom->TargetArmLength = 400.f;
@@ -178,10 +177,28 @@ void AACPlayerCharacter::StopSprint()
 
 void AACPlayerCharacter::Input_AbilityInputPressed(const FGameplayTag InInputTag)
 {
-	if (ACAbilitySystemComponent)
+	if (!ACAbilitySystemComponent)
 	{
-		ACAbilitySystemComponent->OnAbilityInputPressed(InInputTag);
+		return;
 	}
+
+	if (InInputTag.MatchesTagExact(ACGameplayTags::InputTag_LightAttack))
+	{
+		for (const FGameplayAbilitySpec& Spec : ACAbilitySystemComponent->GetActivatableAbilities())
+		{
+			if (!Spec.GetDynamicSpecSourceTags().HasTagExact(InInputTag) || !Spec.IsActive())
+			{
+				continue;
+			}
+			if (UACPlayerAbility_Attack* AttackAbility = Cast<UACPlayerAbility_Attack>(Spec.GetPrimaryInstance()))
+			{
+				AttackAbility->TriggerComboChain();
+			}
+			return;
+		}
+	}
+
+	ACAbilitySystemComponent->OnAbilityInputPressed(InInputTag);
 }
 
 void AACPlayerCharacter::Input_AbilityInputReleased(const FGameplayTag InInputTag)
