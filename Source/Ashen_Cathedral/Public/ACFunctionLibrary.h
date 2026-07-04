@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Enums/ACEnums.h"
+#include "GameplayTagContainer.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "ACFunctionLibrary.generated.h"
 
@@ -46,6 +47,24 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Ashen Cathdral|FunctionLibrary")
 	static void RemoveGameplayTagFromActorIfFound(AActor* InActor, FGameplayTag TagToRemove);
+
+	/**
+	 * Actor의 AbilitySystemComponent에 GameplayTagContainer 전체를 Loose Tag로 추가
+	 *
+	 * @param InActor 태그를 추가할 Actor
+	 * @param TagsToAdd 추가하려는 GameplayTagContainer
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Ashen Cathdral|FunctionLibrary")
+	static void AddGameplayTagsToActor(AActor* InActor, const FGameplayTagContainer& TagsToAdd);
+
+	/**
+	 * Actor의 AbilitySystemComponent에서 GameplayTagContainer 전체를 Loose Tag로 제거
+	 *
+	 * @param InActor 태그를 제거할 Actor
+	 * @param TagsToRemove 제거하려는 GameplayTagContainer
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Ashen Cathdral|FunctionLibrary")
+	static void RemoveGameplayTagsFromActor(AActor* InActor, const FGameplayTagContainer& TagsToRemove);
 
 	/**
 	 * 주어진 Actor가 특정 GameplayTag를 가지고 있는지 확인

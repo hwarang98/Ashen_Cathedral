@@ -42,6 +42,28 @@ void UACFunctionLibrary::RemoveGameplayTagFromActorIfFound(AActor* InActor, FGam
 	ASC->RemoveLooseGameplayTag(TagToRemove);
 }
 
+void UACFunctionLibrary::AddGameplayTagsToActor(AActor* InActor, const FGameplayTagContainer& TagsToAdd)
+{
+	UACAbilitySystemComponent* ASC = NativeAbilitySystemComponentFromActor(InActor);
+	if (!ASC)
+	{
+		return;
+	}
+
+	ASC->AddLooseGameplayTags(TagsToAdd);
+}
+
+void UACFunctionLibrary::RemoveGameplayTagsFromActor(AActor* InActor, const FGameplayTagContainer& TagsToRemove)
+{
+	UACAbilitySystemComponent* ASC = NativeAbilitySystemComponentFromActor(InActor);
+	if (!ASC)
+	{
+		return;
+	}
+
+	ASC->RemoveLooseGameplayTags(TagsToRemove);
+}
+
 bool UACFunctionLibrary::NativeDoesActorHaveTag(AActor* InActor, FGameplayTag TagToCheck)
 {
 	if (!IsValid(InActor))
