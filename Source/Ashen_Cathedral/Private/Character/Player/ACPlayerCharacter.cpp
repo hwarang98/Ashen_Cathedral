@@ -33,13 +33,14 @@ AACPlayerCharacter::AACPlayerCharacter()
 	PlayerCombatComponent = CreateDefaultSubobject<UPlayerCombatComponent>(TEXT("Player Combat Component"));
 	PlayerUIComponent = CreateDefaultSubobject<UPlayerUIComponent>(TEXT("Player UI Component"));
 	RewardCardComponent = CreateDefaultSubobject<UACRewardCardComponent>(TEXT("Reward Card Component"));
-	// CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("Camera Boom"));
-	// CameraBoom->SetupAttachment(GetRootComponent());
-	// CameraBoom->TargetArmLength = 400.f;
-	// CameraBoom->SocketOffset = FVector(0.f, 55.f, 120.f);
-	// CameraBoom->bUsePawnControlRotation = true;
 
-	// ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("View Camera"));
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("Camera Boom"));
+	CameraBoom->SetupAttachment(GetRootComponent());
+	CameraBoom->TargetArmLength = 400.f;
+	CameraBoom->SocketOffset = FVector(0.f, 55.f, 120.f);
+	CameraBoom->bUsePawnControlRotation = false;
+
+	// ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("View Camera (NotUse)"));
 	// ViewCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
