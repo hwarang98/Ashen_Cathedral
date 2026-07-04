@@ -33,6 +33,15 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_Status_ComboWindow, "Player.Status.ComboWindow")
 	#pragma endregion
 
+	#pragma region Player ActionState Tags
+	UE_DEFINE_GAMEPLAY_TAG(Player_ActionState_Attacking, "Player.ActionState.Attacking")
+	UE_DEFINE_GAMEPLAY_TAG(Player_ActionState_Dodging, "Player.ActionState.Dodging")
+	UE_DEFINE_GAMEPLAY_TAG(Player_ActionState_Parrying, "Player.ActionState.Parrying")
+	UE_DEFINE_GAMEPLAY_TAG(Player_ActionState_LastAttack_Jump, "Player.ActionState.LastAttack.Jump")
+	UE_DEFINE_GAMEPLAY_TAG(Player_ActionState_LastAttack_Land, "Player.ActionState.LastAttack.Land")
+	UE_DEFINE_GAMEPLAY_TAG(Player_ActionState_LockOn, "Player.ActionState.LockOn")
+	#pragma endregion
+
 	#pragma region Player SendGameplayEvent Tags
 	UE_DEFINE_GAMEPLAY_TAG(Player_Event_EquipWeapon, "Player.Event.EquipWeapon")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Event_UnequipWeapon, "Player.Event.UnequipWeapon")
