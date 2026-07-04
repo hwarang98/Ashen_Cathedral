@@ -256,14 +256,14 @@ float UACPlayerAbility_Roll::CalculateSafeRollDistance(const FVector& StartLocat
 
 		if (bDebugDrawTrace)
 		{
-			DrawDebugLine(World, HorizontalTraceStart, HorizontalHit.Location, FColor::Green, false, 3.0f, 0, 3.0f);
-			DrawDebugLine(World, HorizontalHit.Location, HorizontalTraceEnd, FColor::Red, false, 3.0f, 0, 3.0f);
-			DrawDebugSphere(World, HorizontalHit.Location, 20.0f, 12, FColor::Red, false, 3.0f, 0, 3.0f);
+			DrawDebugLine(World, HorizontalTraceStart, HorizontalHit.Location, FColor::Green, false, 3.0f, 0, 1.0f);
+			DrawDebugLine(World, HorizontalHit.Location, HorizontalTraceEnd, FColor::Red, false, 3.0f, 0, 1.0f);
+			DrawDebugSphere(World, HorizontalHit.Location, 20.0f, 12, FColor::Red, false, 3.0f, 0, 1.0f);
 		}
 	}
 	else if (bDebugDrawTrace)
 	{
-		DrawDebugLine(World, HorizontalTraceStart, HorizontalTraceEnd, FColor::Green, false, 3.0f, 0, 3.0f);
+		DrawDebugLine(World, HorizontalTraceStart, HorizontalTraceEnd, FColor::Green, false, 3.0f, 0, 1.0f);
 	}
 
 	// 수직 트레이스 - 목표 위치의 절벽 감지
@@ -282,18 +282,18 @@ float UACPlayerAbility_Roll::CalculateSafeRollDistance(const FVector& StartLocat
 
 	if (bDebugDrawTrace)
 	{
-		DrawDebugSphere(World, HorizontalTraceStart, 15.0f, 12, FColor::Blue, false, 3.0f, 0, 3.0f);
-		DrawDebugSphere(World, TargetHorizontalLocation, 15.0f, 12, FColor::Yellow, false, 3.0f, 0, 3.0f);
+		DrawDebugSphere(World, HorizontalTraceStart, 15.0f, 12, FColor::Blue, false, 3.0f, 0, 1.0f);
+		DrawDebugSphere(World, TargetHorizontalLocation, 15.0f, 12, FColor::Yellow, false, 3.0f, 0, 1.0f);
 
 		if (bHitGround)
 		{
-			DrawDebugLine(World, VerticalTraceStart, VerticalHit.Location, FColor::Cyan, false, 3.0f, 0, 3.0f);
-			DrawDebugLine(World, VerticalHit.Location, VerticalTraceEnd, FColor::Magenta, false, 3.0f, 0, 3.0f);
-			DrawDebugSphere(World, VerticalHit.Location, 20.0f, 12, FColor::Orange, false, 3.0f, 0, 3.0f);
+			DrawDebugLine(World, VerticalTraceStart, VerticalHit.Location, FColor::Cyan, false, 3.0f, 0, 1.0f);
+			DrawDebugLine(World, VerticalHit.Location, VerticalTraceEnd, FColor::Magenta, false, 3.0f, 0, 1.0f);
+			DrawDebugSphere(World, VerticalHit.Location, 20.0f, 12, FColor::Orange, false, 3.0f, 0, 1.0f);
 		}
 		else
 		{
-			DrawDebugLine(World, VerticalTraceStart, VerticalTraceEnd, FColor::Red, false, 3.0f, 0, 3.0f);
+			DrawDebugLine(World, VerticalTraceStart, VerticalTraceEnd, FColor::Red, false, 3.0f, 0, 1.0f);
 		}
 	}
 
