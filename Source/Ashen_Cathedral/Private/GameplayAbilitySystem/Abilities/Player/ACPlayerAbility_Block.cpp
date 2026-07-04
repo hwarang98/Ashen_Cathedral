@@ -93,9 +93,7 @@ void UACPlayerAbility_Block::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
-void UACPlayerAbility_Block::OnMontageCompleted()
-{
-}
+void UACPlayerAbility_Block::OnMontageCompleted() {}
 
 void UACPlayerAbility_Block::OnMontageCancelled()
 {
@@ -116,8 +114,7 @@ void UACPlayerAbility_Block::OnSuccessfulBlockEventReceived(FGameplayEventData P
 	RotateActorToTargetFromEventData(Payload);
 
 	const AACCharacterBase* Character = GetACCharacterFromActorInfo();
-	const bool bIsParry = Character &&
-		UACFunctionLibrary::NativeDoesActorHaveTag(const_cast<AACCharacterBase*>(Character), ACGameplayTags::Shared_Status_Parry);
+	const bool bIsParry = Character && UACFunctionLibrary::NativeDoesActorHaveTag(const_cast<AACCharacterBase*>(Character), ACGameplayTags::Shared_Status_Parry);
 
 	if (bIsParry)
 	{
