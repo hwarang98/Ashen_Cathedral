@@ -159,6 +159,29 @@ UPlayerUIComponent* AACPlayerCharacter::GetPlayerUIComponent() const
 	return PlayerUIComponent;
 }
 
+void AACPlayerCharacter::OnAnimNotifyAddGameplayTags_Implementation(const FGameplayTagContainer& GameplayTags)
+{
+	Super::OnAnimNotifyAddGameplayTags_Implementation(GameplayTags);
+
+	ActionStates.AppendTags(GameplayTags);
+	OnActionStatesChanged.Broadcast();
+}
+
+void AACPlayerCharacter::OnAnimNotifyRemoveGameplayTags_Implementation(const FGameplayTagContainer& GameplayTags)
+{
+	Super::OnAnimNotifyRemoveGameplayTags_Implementation(GameplayTags);
+
+	ActionStates.RemoveTags(GameplayTags);
+	OnActionStatesChanged.Broadcast();
+}
+
+FACCameraChooserContext AACPlayerCharacter::MakeCameraChooserContext() const
+{
+	FACCameraChooserContext Context;
+	Context.ActionStates = ActionStates;
+	return Context;
+}
+
 void AACPlayerCharacter::StopSprint()
 {
 	if (ACAbilitySystemComponent && ACAbilitySystemComponent->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_HitReact))

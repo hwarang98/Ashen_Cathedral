@@ -6,6 +6,7 @@
 #include "ACGameplayTags.h"
 #include "EnhancedInputSubsystems.h"
 #include "Character/Player/ACPlayerCharacter.h"
+#include "Interfaces/ACAnimNotifyTagReceiverInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -36,6 +37,14 @@ void UACPlayerAbility_TargetLock::ActivateAbility(const FGameplayAbilitySpecHand
 	TryLockOnTarget();
 	InitTargetLockMappingContext();
 
+	AActor* AvatarActor = GetAvatarActorFromActorInfo();
+	if (AvatarActor && AvatarActor->GetClass()->ImplementsInterface(UACAnimNotifyTagReceiverInterface::StaticClass()))
+	{
+		FGameplayTagContainer LockOnTags;
+		LockOnTags.AddTag(ACGameplayTags::Player_ActionState_LockOn);
+		IACAnimNotifyTagReceiverInterface::Execute_OnAnimNotifyAddGameplayTags(AvatarActor, LockOnTags);
+	}
+
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 }
 
@@ -43,6 +52,15 @@ void UACPlayerAbility_TargetLock::EndAbility(const FGameplayAbilitySpecHandle Ha
 {
 	CleanUp();
 	ResetTargetLockMappingContext();
+
+	AActor* AvatarActor = GetAvatarActorFromActorInfo();
+	if (AvatarActor && AvatarActor->GetClass()->ImplementsInterface(UACAnimNotifyTagReceiverInterface::StaticClass()))
+	{
+		FGameplayTagContainer LockOnTags;
+		LockOnTags.AddTag(ACGameplayTags::Player_ActionState_LockOn);
+		IACAnimNotifyTagReceiverInterface::Execute_OnAnimNotifyRemoveGameplayTags(AvatarActor, LockOnTags);
+	}
+
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
