@@ -5,6 +5,7 @@
 #include "ACFunctionLibrary.h"
 #include "ACGameplayTags.h"
 #include "Character/Player/ACPlayerCharacter.h"
+#include "Components/Combat/PlayerCombatComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 #include "KismetAnimationLibrary.h"
@@ -30,6 +31,11 @@ void UACPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		FGameplayTagContainer OwnedTags;
 		ASC->GetOwnedGameplayTags(OwnedTags);
 		CurrentGameplayTags = OwnedTags.Filter(FGameplayTagContainer(FGameplayTag::RequestGameplayTag(TEXT("Player.Weapon"))));
+	}
+
+	if (UPlayerCombatComponent* CombatComponent = OwningPlayerCharacter->GetPawnCombatComponent())
+	{
+		CurrentWeaponType = CombatComponent->GetPlayerCurrentWeaponType();
 	}
 }
 
