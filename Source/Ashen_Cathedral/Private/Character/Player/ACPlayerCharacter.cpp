@@ -33,13 +33,14 @@ AACPlayerCharacter::AACPlayerCharacter()
 	PlayerCombatComponent = CreateDefaultSubobject<UPlayerCombatComponent>(TEXT("Player Combat Component"));
 	PlayerUIComponent = CreateDefaultSubobject<UPlayerUIComponent>(TEXT("Player UI Component"));
 	RewardCardComponent = CreateDefaultSubobject<UACRewardCardComponent>(TEXT("Reward Card Component"));
-	// CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("Camera Boom"));
-	// CameraBoom->SetupAttachment(GetRootComponent());
-	// CameraBoom->TargetArmLength = 400.f;
-	// CameraBoom->SocketOffset = FVector(0.f, 55.f, 120.f);
-	// CameraBoom->bUsePawnControlRotation = true;
 
-	// ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("View Camera"));
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("Camera Boom"));
+	CameraBoom->SetupAttachment(GetRootComponent());
+	CameraBoom->TargetArmLength = 400.f;
+	CameraBoom->SocketOffset = FVector(0.f, 55.f, 120.f);
+	CameraBoom->bUsePawnControlRotation = false;
+
+	// ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("View Camera (NotUse)"));
 	// ViewCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
@@ -159,6 +160,29 @@ UPlayerUIComponent* AACPlayerCharacter::GetPlayerUIComponent() const
 	return PlayerUIComponent;
 }
 
+void AACPlayerCharacter::OnAnimNotifyAddGameplayTags_Implementation(const FGameplayTagContainer& GameplayTags)
+{
+	Super::OnAnimNotifyAddGameplayTags_Implementation(GameplayTags);
+
+	ActionStates.AppendTags(GameplayTags);
+	OnActionStatesChanged.Broadcast();
+}
+
+void AACPlayerCharacter::OnAnimNotifyRemoveGameplayTags_Implementation(const FGameplayTagContainer& GameplayTags)
+{
+	Super::OnAnimNotifyRemoveGameplayTags_Implementation(GameplayTags);
+
+	ActionStates.RemoveTags(GameplayTags);
+	OnActionStatesChanged.Broadcast();
+}
+
+FACCameraChooserContext AACPlayerCharacter::MakeCameraChooserContext() const
+{
+	FACCameraChooserContext Context;
+	Context.ActionStates = ActionStates;
+	return Context;
+}
+
 void AACPlayerCharacter::StopSprint()
 {
 	if (ACAbilitySystemComponent && ACAbilitySystemComponent->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_HitReact))
@@ -182,19 +206,22 @@ void AACPlayerCharacter::Input_AbilityInputPressed(const FGameplayTag InInputTag
 		return;
 	}
 
-	if (InInputTag.MatchesTagExact(ACGameplayTags::InputTag_LightAttack))
+	if (InInputTag.MatchesTagExact(ACGameplayTags::InputTag_LightAttack) || InInputTag.MatchesTagExact(ACGameplayTags::InputTag_HeavyAttack))
 	{
+		// 입력 태그와 무관하게 현재 활성 중인 공격 어빌리티를 찾는다.
+		// TriggerComboChain에 누른 입력 태그를 넘겨 크로스 체이닝(Light→Heavy, Heavy→Light)을 지원한다.
 		for (const FGameplayAbilitySpec& Spec : ACAbilitySystemComponent->GetActivatableAbilities())
 		{
-			if (!Spec.GetDynamicSpecSourceTags().HasTagExact(InInputTag) || !Spec.IsActive())
+			if (!Spec.IsActive())
 			{
 				continue;
 			}
+
 			if (UACPlayerAbility_Attack* AttackAbility = Cast<UACPlayerAbility_Attack>(Spec.GetPrimaryInstance()))
 			{
-				AttackAbility->TriggerComboChain();
+				AttackAbility->TriggerComboChain(InInputTag);
+				return;
 			}
-			return;
 		}
 	}
 

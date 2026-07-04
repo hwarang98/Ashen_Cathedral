@@ -29,6 +29,9 @@ public:
 	/** 몽타주 자연 완료 후 콤보 리셋 타이머를 시작한다. */
 	virtual void HandleComboComplete() override;
 
+	/** SharedComboCount를 기준으로 몽타주를 선택한다. Light/Heavy 체이닝 시 카운트를 공유한다. */
+	virtual UAnimMontage* SelectAttackMontage() override;
+
 	/**
 	 * @brief 콤보 취소 처리.
 	 * bComboChaining 플래그가 true이면 ResetComboCount를 건너뛴다.
@@ -38,18 +41,14 @@ public:
 
 	/**
 	 * @brief 어빌리티가 활성 중일 때 즉시 콤보 체인을 트리거한다.
-	 * EndAbility(true) 완료 직후 같은 프레임 안에서 다음 어빌리티를 동기 활성화한다.
-	 * Input_AbilityInputPressed에서 LightAttack이 들어왔을 때 외부 호출용.
+	 * EndAbility(true) 완료 직후 같은 프레임 안에서 InputTag에 해당하는 다음 어빌리티를 동기 활성화한다.
+	 * Input_AbilityInputPressed에서 외부 호출용.
+	 *
+	 * @param InputTag 재활성화할 어빌리티를 찾는 데 사용하는 입력 태그 (LightAttack 또는 HeavyAttack)
 	 */
-	void TriggerComboChain();
+	void TriggerComboChain(const FGameplayTag& InputTag);
 
 private:
-	/** 콤보 완료 후 이 시간 안에 재입력이 없으면 콤보 카운트가 리셋된다. */
-	UPROPERTY(EditDefaultsOnly, Category = "Combo", meta = (AllowPrivateAccess = "true"))
-	float ComboResetDelay = 2.0f;
-
-	FTimerHandle ComboResetTimerHandle;
-
 	void OnComboResetTimerExpired();
 
 	/**

@@ -211,3 +211,14 @@ struct FACPhase2NiagaraAttachment
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UNiagaraSystem> NiagaraSystem;
 };
+
+/** GameplayCamera Chooser Table이 바인딩하는 계약(contract) 구조체. 캐릭터 구체 클래스와 무관하게 카메라 판단에 필요한 상태만 담는다. */
+USTRUCT(BlueprintType)
+struct FACCameraChooserContext
+{
+	GENERATED_BODY()
+
+	// Chooser Table의 Gameplay Tag Query 컬럼이 바인딩할 액션 상태 태그
+	UPROPERTY(BlueprintReadOnly)
+	FGameplayTagContainer ActionStates;
+};
