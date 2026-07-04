@@ -68,6 +68,15 @@ float UPlayerCombatComponent::GetPlayerCurrentWeaponCounterGroggyDamage() const
 	return 0.f;
 }
 
+EACWeaponType UPlayerCombatComponent::GetPlayerCurrentWeaponType() const
+{
+	if (const FACWeaponStatRow* Row = GetCurrentWeaponStatRow())
+	{
+		return Row->WeaponType;
+	}
+	return EACWeaponType::None;
+}
+
 float UPlayerCombatComponent::GetCurrentWeaponBaseDamage() const
 {
 	return GetPlayerCurrentEquippedWeaponDamageAtLevel();

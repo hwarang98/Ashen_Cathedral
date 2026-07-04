@@ -40,6 +40,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Ashen Cathedral|Weapon|Groggy")
 	float GetPlayerCurrentWeaponCounterGroggyDamage() const;
 
+	// 현재 장착 무기의 타입을 반환
+	UFUNCTION(BlueprintPure, Category = "Ashen Cathedral|Weapon")
+	EACWeaponType GetPlayerCurrentWeaponType() const;
+
 	virtual float GetCurrentWeaponBaseDamage() const override;
 	virtual float GetCurrentWeaponHeavyAttackGroggyDamage() const override;
 	virtual float GetCurrentWeaponCounterAttackGroggyDamage() const override;

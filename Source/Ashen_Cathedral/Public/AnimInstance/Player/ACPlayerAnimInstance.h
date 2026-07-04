@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AnimInstance/ACAnimInstanceBase.h"
+#include "Enums/Weapon/ACWeaponEnum.h"
 #include "GameplayTagContainer.h"
 #include "ACPlayerAnimInstance.generated.h"
 
@@ -60,4 +61,8 @@ protected:
 	// 현재 장착된 무기의 식별 태그 (Player.Weapon.* 하위 태그)
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "AnimData|Weapon")
 	FGameplayTagContainer CurrentGameplayTags;
+
+	// 현재 장착된 무기의 타입 (Blend Poses by Enum 등에서 사용)
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Weapon")
+	EACWeaponType CurrentWeaponType = EACWeaponType::None;
 };
