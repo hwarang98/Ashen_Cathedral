@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "GameplayAbilitySystem/Abilities/Player/ACPlayerAbility_Attack.h"
+#include "ACGameplayDebugHelper.h"
 #include "ACGameplayTags.h"
 #include "Character/Player/ACPlayerCharacter.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
@@ -55,24 +56,53 @@ bool UACPlayerAbility_Attack::CanActivateAbility(
 	return true;
 }
 
+UAnimMontage* UACPlayerAbility_Attack::SelectAttackMontage()
+{
+	AACPlayerCharacter* PlayerCharacter = GetTypedOuter<AACPlayerCharacter>();
+	if (!PlayerCharacter)
+	{
+		return Super::SelectAttackMontage();
+	}
+
+	int32& SharedCount = PlayerCharacter->SharedComboCount;
+	if (SharedCount >= AttackMontages.Num())
+	{
+		SharedCount = 0;
+	}
+
+	// 베이스 클래스가 SelectAttackMontage 이후 CurrentComboCount를 따로 증가시키므로
+	// 여기서 SharedCount만 증가시켜 두 카운트가 독립적으로 관리되도록 한다.
+	UAnimMontage* Selected = AttackMontages[SharedCount++];
+	return Selected;
+}
+
 void UACPlayerAbility_Attack::HandleComboComplete()
 {
+	AACPlayerCharacter* PlayerCharacter = GetTypedOuter<AACPlayerCharacter>();
+	if (!PlayerCharacter)
+		return;
+
 	if (UWorld* World = GetWorld())
 	{
+		// 공유 핸들을 사용하므로 다른 어빌리티가 건 타이머를 자동으로 교체한다.
 		World->GetTimerManager().SetTimer(
-			ComboResetTimerHandle,
+			PlayerCharacter->SharedComboResetTimerHandle,
 			this,
 			&ThisClass::OnComboResetTimerExpired,
-			ComboResetDelay,
+			PlayerCharacter->ComboResetDelay,
 			false);
 	}
 }
 
 void UACPlayerAbility_Attack::HandleComboCancelled()
 {
-	if (UWorld* World = GetWorld())
+	AACPlayerCharacter* PlayerCharacter = GetTypedOuter<AACPlayerCharacter>();
+	if (PlayerCharacter)
 	{
-		World->GetTimerManager().ClearTimer(ComboResetTimerHandle);
+		if (UWorld* World = GetWorld())
+		{
+			World->GetTimerManager().ClearTimer(PlayerCharacter->SharedComboResetTimerHandle);
+		}
 	}
 
 	if (bComboChaining)
@@ -81,15 +111,23 @@ void UACPlayerAbility_Attack::HandleComboCancelled()
 		return;
 	}
 
+	if (PlayerCharacter)
+	{
+		PlayerCharacter->SharedComboCount = 0;
+	}
 	Super::HandleComboCancelled();
 }
 
 void UACPlayerAbility_Attack::OnComboResetTimerExpired()
 {
+	if (AACPlayerCharacter* PlayerChar = GetTypedOuter<AACPlayerCharacter>())
+	{
+		PlayerChar->SharedComboCount = 0;
+	}
 	ResetComboCount();
 }
 
-void UACPlayerAbility_Attack::TriggerComboChain()
+void UACPlayerAbility_Attack::TriggerComboChain(const FGameplayTag& InputTag)
 {
 	if (!IsActive())
 	{
@@ -116,7 +154,7 @@ void UACPlayerAbility_Attack::TriggerComboChain()
 	{
 		for (FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
 		{
-			if (!Spec.GetDynamicSpecSourceTags().HasTagExact(ACGameplayTags::InputTag_LightAttack) || Spec.IsActive())
+			if (!Spec.GetDynamicSpecSourceTags().HasTagExact(InputTag) || Spec.IsActive())
 			{
 				continue;
 			}

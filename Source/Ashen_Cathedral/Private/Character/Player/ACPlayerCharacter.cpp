@@ -182,19 +182,22 @@ void AACPlayerCharacter::Input_AbilityInputPressed(const FGameplayTag InInputTag
 		return;
 	}
 
-	if (InInputTag.MatchesTagExact(ACGameplayTags::InputTag_LightAttack))
+	if (InInputTag.MatchesTagExact(ACGameplayTags::InputTag_LightAttack) || InInputTag.MatchesTagExact(ACGameplayTags::InputTag_HeavyAttack))
 	{
+		// 입력 태그와 무관하게 현재 활성 중인 공격 어빌리티를 찾는다.
+		// TriggerComboChain에 누른 입력 태그를 넘겨 크로스 체이닝(Light→Heavy, Heavy→Light)을 지원한다.
 		for (const FGameplayAbilitySpec& Spec : ACAbilitySystemComponent->GetActivatableAbilities())
 		{
-			if (!Spec.GetDynamicSpecSourceTags().HasTagExact(InInputTag) || !Spec.IsActive())
+			if (!Spec.IsActive())
 			{
 				continue;
 			}
+
 			if (UACPlayerAbility_Attack* AttackAbility = Cast<UACPlayerAbility_Attack>(Spec.GetPrimaryInstance()))
 			{
-				AttackAbility->TriggerComboChain();
+				AttackAbility->TriggerComboChain(InInputTag);
+				return;
 			}
-			return;
 		}
 	}
 

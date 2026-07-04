@@ -34,6 +34,16 @@ public:
 	virtual UPlayerUIComponent* GetPlayerUIComponent() const;
 	FORCEINLINE UACRewardCardComponent* GetRewardCardComponent() const { return RewardCardComponent; }
 
+	/** Light/Heavy 어빌리티가 공유하는 콤보 카운트. SelectAttackMontage()가 이 값을 기준으로 몽타주를 선택한다. */
+	int32 SharedComboCount = 0;
+
+	/** Light/Heavy 어빌리티가 공유하는 콤보 리셋 타이머 핸들. 하나만 유지되므로 어빌리티 전환 시 이전 타이머가 자동으로 교체된다. */
+	FTimerHandle SharedComboResetTimerHandle;
+
+	/** 마지막 공격 후 이 시간 안에 재입력이 없으면 콤보 카운트를 리셋한다. */
+	UPROPERTY(EditDefaultsOnly, Category = "Combat|Combo")
+	float ComboResetDelay = 2.0f;
+
 	// 상호작용 가능한 액터가 오버랩 범위에 들어왔을 때 호출
 	void SetCurrentInteractable(TScriptInterface<IInteractableInterface> InInteractable);
 
