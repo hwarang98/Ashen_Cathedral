@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
+#include "Interfaces/ACAnimNotifyTagReceiverInterface.h"
 #include "Interfaces/PawnCombatInterface.h"
 #include "Interfaces/PawnUIInterface.h"
 #include "ACCharacterBase.generated.h"
@@ -24,7 +25,7 @@ class UACAbilitySystemComponent;
 class UMotionWarpingComponent;
 
 UCLASS(Abstract)
-class ASHEN_CATHEDRAL_API AACCharacterBase : public ACharacter, public IAbilitySystemInterface, public IPawnCombatInterface, public IPawnUIInterface
+class ASHEN_CATHEDRAL_API AACCharacterBase : public ACharacter, public IAbilitySystemInterface, public IPawnCombatInterface, public IPawnUIInterface, public IACAnimNotifyTagReceiverInterface
 {
 	GENERATED_BODY()
 
@@ -37,6 +38,8 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	virtual UPawnCombatComponent* GetPawnCombatComponent() const override;
 	virtual UPawnUIComponent* GetPawnUIComponent() const override;
+	virtual void OnAnimNotifyAddGameplayTags_Implementation(const FGameplayTagContainer& GameplayTags) override;
+	virtual void OnAnimNotifyRemoveGameplayTags_Implementation(const FGameplayTagContainer& GameplayTags) override;
 
 	FORCEINLINE UACAbilitySystemComponent* GetACAbilitySystemComponent() const { return ACAbilitySystemComponent; }
 	FORCEINLINE UACAttributeSet* GetACAttributeSet() const { return ACAttributeSet; }

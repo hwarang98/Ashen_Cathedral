@@ -2,6 +2,8 @@
 
 
 #include "Character/ACCharacterBase.h"
+
+#include "ACFunctionLibrary.h"
 #include "Components/Input/ACInputComponent.h"
 #include "DataAssets/Startup/ACDataAsset_StartupDataBase.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
@@ -53,4 +55,14 @@ UPawnCombatComponent* AACCharacterBase::GetPawnCombatComponent() const
 UPawnUIComponent* AACCharacterBase::GetPawnUIComponent() const
 {
 	return nullptr;
+}
+
+void AACCharacterBase::OnAnimNotifyAddGameplayTags_Implementation(const FGameplayTagContainer& GameplayTags)
+{
+	UACFunctionLibrary::AddGameplayTagsToActor(this, GameplayTags);
+}
+
+void AACCharacterBase::OnAnimNotifyRemoveGameplayTags_Implementation(const FGameplayTagContainer& GameplayTags)
+{
+	UACFunctionLibrary::RemoveGameplayTagsFromActor(this, GameplayTags);
 }
