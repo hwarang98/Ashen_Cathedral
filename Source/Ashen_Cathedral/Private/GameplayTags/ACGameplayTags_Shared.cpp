@@ -9,6 +9,9 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Event_GroggyTriggered, "Shared.Event.GroggyTriggered")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Event_Death, "Shared.Event.Death")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Event_HitReact, "Shared.Event.HitReact")
+	UE_DEFINE_GAMEPLAY_TAG(Shared_Event_AOE_Instant, "Shared.Event.AOE.Instant")
+	UE_DEFINE_GAMEPLAY_TAG(Shared_Event_AOE_Sustained_Start, "Shared.Event.AOE.Sustained.Start")
+	UE_DEFINE_GAMEPLAY_TAG(Shared_Event_AOE_Sustained_End, "Shared.Event.AOE.Sustained.End")
 	#pragma endregion
 
 	#pragma region Shared Status Tags
