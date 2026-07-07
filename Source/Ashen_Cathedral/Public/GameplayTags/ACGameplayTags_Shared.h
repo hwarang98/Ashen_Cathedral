@@ -11,6 +11,12 @@ namespace ACGameplayTags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Event_GroggyTriggered);
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Event_Death);
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Event_HitReact);
+	// 단발형 AOE 데미지 타이밍 이벤트 — 몽타주 AnimNotify가 1회 발송하면 즉시 범위 판정 후 DamageEffect를 적용한다
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Event_AOE_Instant);
+	// 지속형 AOE 시작 이벤트 — 몽타주 AnimNotifyState의 NotifyBegin에서 발송, 대상 구간 동안 스윕 판정을 시작한다 (대쉬/채널링/이동 스킬 등 재사용 가능)
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Event_AOE_Sustained_Start);
+	// 지속형 AOE 종료 이벤트 — 몽타주 AnimNotifyState의 NotifyEnd에서 발송, 스윕 판정을 종료한다
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Event_AOE_Sustained_End);
 	#pragma endregion
 
 	#pragma region Shared Status Tags
