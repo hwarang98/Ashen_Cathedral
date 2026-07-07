@@ -281,6 +281,7 @@ void UACAttributeSet::HandleDamageAndTriggerHitReact(const FGameplayEffectModCal
 		HitReactImmunityTags.AddTag(ACGameplayTags::Shared_Status_Invincible);
 		HitReactImmunityTags.AddTag(ACGameplayTags::Shared_Status_SuperArmor);
 		HitReactImmunityTags.AddTag(ACGameplayTags::Shared_Status_Executed);
+		HitReactImmunityTags.AddTag(ACGameplayTags::Shared_Status_Groggy);
 	}
 
 	//  HitReact 차단
