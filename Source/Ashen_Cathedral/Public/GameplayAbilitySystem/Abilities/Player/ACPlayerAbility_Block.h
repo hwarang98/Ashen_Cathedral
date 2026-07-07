@@ -35,9 +35,13 @@ public:
 		bool bWasCancelled) override;
 
 protected:
-	/** 패링 성공 후 카운터어택 가능 윈도우 유지 시간 (초) */
+	/**
+	 * 패링 성공 시 적용할 카운터어택 윈도우 GameplayEffect.
+	 * Duration Policy: Has Duration, Granted Tag: Shared.Status.CanCounterAttack로 구성한다.
+	 * 지속시간 만료 시 태그 제거를 ASC가 자동으로 처리하므로 별도 타이머 관리가 필요 없다.
+	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Block|CounterAttack")
-	float CounterAttackWindowDuration = 2.0f;
+	TSubclassOf<UGameplayEffect> CounterAttackWindowEffect;
 
 	/** 블록 히트 시 밀려나는 힘 */
 	UPROPERTY(EditDefaultsOnly, Category = "Block|RootMotion")
@@ -67,10 +71,6 @@ private:
 	UFUNCTION()
 	void OnSuccessfulBlockEventReceived(FGameplayEventData Payload);
 
-	/** 카운터어택 윈도우 타이머 만료 시 호출 — Shared.Status.CanCounterAttack 태그 제거 */
-	UFUNCTION()
-	void ResetCounterAttackWindow();
-
 	/** Payload의 Instigator 방향으로 액터를 Yaw 회전시킨다 */
 	void RotateActorToTargetFromEventData(const FGameplayEventData& Payload) const;
 
@@ -80,11 +80,10 @@ private:
 	void ExecuteSuccessfulBlockCue(const FGameplayEventData& Payload);
 	void ExecuteParryCue(const FGameplayEventData& Payload);
 
-	/** 패링 성공 시 Shared.Status.CanCounterAttack 태그를 추가하고 윈도우 타이머를 시작한다 */
-	void StartCounterAttackWindow();
+	/** 패링 성공 시 카운터어택 윈도우 GameplayEffect를 적용한다 */
+	void ApplyCounterAttackWindowEffect();
 
 	FGameplayEventData CachedPayload;
-	FTimerHandle CounterAttackTimerHandle;
 
 	UPROPERTY()
 	TObjectPtr<UAbilityTask_WaitGameplayEvent> WaitEventTask;

@@ -8,7 +8,6 @@
 #include "Abilities/Tasks/AbilityTask_ApplyRootMotionConstantForce.h"
 #include "Character/ACCharacterBase.h"
 #include "GameFramework/Character.h"
-#include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
 UACPlayerAbility_Block::UACPlayerAbility_Block()
@@ -75,16 +74,9 @@ void UACPlayerAbility_Block::InputReleased(const FGameplayAbilitySpecHandle Hand
 
 void UACPlayerAbility_Block::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-	// 카운터어택 윈도우 태그 제거 및 타이머 정리
-	if (AACCharacterBase* Character = GetACCharacterFromActorInfo())
-	{
-		UACFunctionLibrary::RemoveGameplayTagFromActorIfFound(Character, ACGameplayTags::Shared_Status_CanCounterAttack);
-	}
-
-	if (const UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(CounterAttackTimerHandle);
-	}
+	// 카운터어택 윈도우는 GameplayEffect의 Duration이 단독으로 관리한다.
+	// Block 어빌리티가 끝나도(입력 릴리즈 등) 건드리지 않아야
+	// 패링 성공 직후 반격을 위해 Block 입력을 떼는 순간 윈도우가 파괴되지 않는다.
 
 	// 지속형 블록 GameplayCue 제거
 	K2_RemoveGameplayCue(ACGameplayTags::GameplayCue_FX_Block);
@@ -119,7 +111,7 @@ void UACPlayerAbility_Block::OnSuccessfulBlockEventReceived(FGameplayEventData P
 	if (bIsParry)
 	{
 		ExecuteParryCue(Payload);
-		StartCounterAttackWindow();
+		ApplyCounterAttackWindowEffect();
 	}
 	else
 	{
@@ -148,33 +140,17 @@ void UACPlayerAbility_Block::OnSuccessfulBlockEventReceived(FGameplayEventData P
 	}
 }
 
-void UACPlayerAbility_Block::StartCounterAttackWindow()
+void UACPlayerAbility_Block::ApplyCounterAttackWindowEffect()
 {
-	AACCharacterBase* Character = GetACCharacterFromActorInfo();
-	if (!Character)
+	if (!CounterAttackWindowEffect)
 	{
 		return;
 	}
 
-	UACFunctionLibrary::AddGameplayTagToActorIfNone(Character, ACGameplayTags::Shared_Status_CanCounterAttack);
-
-	if (UWorld* World = GetWorld())
+	const FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(CounterAttackWindowEffect);
+	if (SpecHandle.IsValid())
 	{
-		World->GetTimerManager().SetTimer(
-			CounterAttackTimerHandle,
-			this,
-			&ThisClass::ResetCounterAttackWindow,
-			CounterAttackWindowDuration,
-			false
-			);
-	}
-}
-
-void UACPlayerAbility_Block::ResetCounterAttackWindow()
-{
-	if (AACCharacterBase* Character = GetACCharacterFromActorInfo())
-	{
-		UACFunctionLibrary::RemoveGameplayTagFromActorIfFound(Character, ACGameplayTags::Shared_Status_CanCounterAttack);
+		ApplyGameplayEffectSpecToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, SpecHandle);
 	}
 }
 
@@ -218,6 +194,5 @@ void UACPlayerAbility_Block::ExecuteSuccessfulBlockCue(const FGameplayEventData&
 
 void UACPlayerAbility_Block::ExecuteParryCue(const FGameplayEventData& Payload)
 {
-	K2_ExecuteGameplayCueWithParams(ACGameplayTags::GameplayCue_FX_Parry, MakeBlockGameplayCueParams(Payload)
-		);
+	K2_ExecuteGameplayCueWithParams(ACGameplayTags::GameplayCue_FX_Parry, MakeBlockGameplayCueParams(Payload));
 }
