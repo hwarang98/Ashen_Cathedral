@@ -46,7 +46,7 @@ void UACAbility_Attack::ActivateAbility(
 		return;
 	}
 
-	const AACCharacterBase* OwnerCharacter = GetACCharacterFromActorInfo();
+	AACCharacterBase* OwnerCharacter = GetACCharacterFromActorInfo();
 	UPawnCombatComponent* CombatComponent = OwnerCharacter ? OwnerCharacter->GetPawnCombatComponent() : nullptr;
 	if (!CombatComponent)
 	{
@@ -54,18 +54,25 @@ void UACAbility_Attack::ActivateAbility(
 		return;
 	}
 
-	const UACAbilitySystemComponent* ASC = GetACAbilitySystemComponentFromActorInfo();
+	UACAbilitySystemComponent* ASC = GetACAbilitySystemComponentFromActorInfo();
 
 	// Shared_Status_CanCounterAttack 태그가 있으면 카운터 어택으로 처리
-	const bool bIsCounterAttack = ASC && ASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_CanCounterAttack);
+	// OnHitTarget에서도 동일한 판정을 써야 하므로 멤버에 캐시해둔다.
+	bWasCounterAttack = ASC && ASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_CanCounterAttack);
 
 	UAnimMontage* MontageToPlay;
 
-	if (bIsCounterAttack && CounterAttackMontage)
+	if (UAnimMontage* CounterMontage = bWasCounterAttack ? SelectCounterAttackMontage() : nullptr)
 	{
-		// 카운터 어택: 전용 몽타주 재생 및 콤보 카운트 초기화
-		MontageToPlay = CounterAttackMontage;
+		// 카운터 어택: 랜덤으로 고른 전용 몽타주 재생 및 콤보 카운트 초기화
+		MontageToPlay = CounterMontage;
 		CurrentComboCount = 0;
+
+		// 카운터어택 윈도우 소모 — 남은 시간 동안의 후속 공격이 계속 카운터로 처리되지 않도록
+		// 윈도우를 부여한 GameplayEffect를 즉시 제거한다 (남은 지속시간과 무관하게 종료됨)
+		FGameplayTagContainer TagsToRemove;
+		TagsToRemove.AddTag(ACGameplayTags::Shared_Status_CanCounterAttack);
+		ASC->RemoveActiveEffectsWithGrantedTags(TagsToRemove);
 	}
 	else
 	{
@@ -93,6 +100,7 @@ void UACAbility_Attack::ActivateAbility(
 		CombatComponent->GetCurrentWeaponAttackSpeed(),
 		NAME_None,
 		false);
+
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::OnMontageEnded);
 	MontageTask->OnBlendOut.AddDynamic(this, &ThisClass::OnMontageEnded);
 	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::OnMontageCancelled);
@@ -101,7 +109,7 @@ void UACAbility_Attack::ActivateAbility(
 
 	// 카운터 어택이 아닌 경우에만 콤보 카운트 증가
 	// OnHitTarget에서 이 값을 SetByCaller로 데미지 계산기에 전달한다
-	if (!bIsCounterAttack)
+	if (!bWasCounterAttack)
 	{
 		CurrentComboCount++;
 	}
@@ -142,6 +150,17 @@ UAnimMontage* UACAbility_Attack::SelectAttackMontage()
 		CurrentComboCount = 0;
 	}
 	return AttackMontages[CurrentComboCount];
+}
+
+UAnimMontage* UACAbility_Attack::SelectCounterAttackMontage() const
+{
+	if (CounterAttackMontages.IsEmpty())
+	{
+		return nullptr;
+	}
+
+	const int32 RandomIndex = FMath::RandRange(0, CounterAttackMontages.Num() - 1);
+	return CounterAttackMontages[RandomIndex];
 }
 
 void UACAbility_Attack::HandleComboCancelled()
@@ -197,7 +216,8 @@ void UACAbility_Attack::OnHitTarget(FGameplayEventData Payload)
 
 	// virtual dispatch를 통해 Player/Enemy 각자의 DataTable 값을 가져온다
 	const float BaseDamage = CombatComponent->GetCurrentWeaponBaseDamage();
-	const bool bIsCounterAttack = ASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_CanCounterAttack);
+	// ActivateAbility에서 태그를 이미 소모했으므로, 여기서 태그를 다시 조회하지 않고 캐시된 값을 사용한다.
+	const bool bIsCounterAttack = bWasCounterAttack;
 
 	float GroggyDamage = 0.f;
 	if (bIsCounterAttack)
