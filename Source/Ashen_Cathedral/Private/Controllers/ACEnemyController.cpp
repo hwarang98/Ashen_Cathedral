@@ -3,9 +3,11 @@
 
 #include "Controllers/ACEnemyController.h"
 
+#include "ACGameplayTags.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/Enemy/ACEnemyCharacter.h"
+#include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 
@@ -37,6 +39,11 @@ void AACEnemyController::OnPossess(APawn* InPawn)
 	Super::OnPossess(InPawn);
 
 	CachedEnemyCharacter = Cast<AACEnemyCharacter>(InPawn);
+
+	if (UACAbilitySystemComponent* ASC = CachedEnemyCharacter ? CachedEnemyCharacter->GetACAbilitySystemComponent() : nullptr)
+	{
+		ASC->RegisterGameplayTagEvent(ACGameplayTags::Enemy_State_PressureReady, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::OnPressureReadyTagChanged);
+	}
 }
 
 ETeamAttitude::Type AACEnemyController::GetTeamAttitudeTowards(const AActor& Other) const
@@ -65,5 +72,13 @@ void AACEnemyController::OnEnemyPerceptionUpdated(AActor* Actor, FAIStimulus Sti
 				BlackboardComponent->SetValueAsObject(FName("TargetActor"), Actor);
 			}
 		}
+	}
+}
+
+void AACEnemyController::OnPressureReadyTagChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	if (UBlackboardComponent* BlackboardComponent = GetBlackboardComponent())
+	{
+		BlackboardComponent->SetValueAsBool(FName("bPressureResponseRequested"), NewCount > 0);
 	}
 }

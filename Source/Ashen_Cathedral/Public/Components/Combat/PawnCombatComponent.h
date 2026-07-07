@@ -24,6 +24,10 @@ class ASHEN_CATHEDRAL_API UPawnCombatComponent : public UPawnExtensionComponentB
 	GENERATED_BODY()
 
 public:
+	UPawnCombatComponent();
+
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
 	virtual void OnHitTargetActor(AActor* HitActor);
 	virtual void OnWeaponPulledFromTargetActor(AActor* InteractingActor);
 	virtual void OnHitTargetActorImpl(AActor* HitActor);
@@ -58,6 +62,10 @@ public:
 	#pragma region Collision
 	UFUNCTION(BlueprintCallable, Category = "Ashen Cathdral|Combat")
 	void ToggleWeaponCollision(bool bShouldEnable, EToggleDamageType ToggleDamageType);
+
+	/** true면 무기 콜리전이 활성화된 동안 콜리전 박스를 화면에 표시한다 (히트박스 타이밍 디버깅용) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ashen Cathdral|Combat")
+	bool bDebugShowWeaponCollision = false;
 	#pragma endregion
 
 protected:

@@ -7,6 +7,7 @@
 #include "ACEnemyController.generated.h"
 
 struct FAIStimulus;
+struct FGameplayTag;
 class UAISenseConfig_Sight;
 class AACEnemyCharacter;
 
@@ -34,6 +35,9 @@ protected:
 	/** AI가 감지한 키값을 TargetActor라는 키 값으로 블랙보드에 저장 */
 	UFUNCTION()
 	virtual void OnEnemyPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+
+	/** Enemy.State.PressureReady 태그 추가/제거를 Blackboard의 bPressureResponseRequested로 동기화한다 */
+	void OnPressureReadyTagChanged(const FGameplayTag Tag, int32 NewCount);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UAIPerceptionComponent> EnemyPerceptionComponent;

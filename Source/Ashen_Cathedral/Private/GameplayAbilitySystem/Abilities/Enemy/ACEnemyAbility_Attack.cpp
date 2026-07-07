@@ -9,6 +9,8 @@ UACEnemyAbility_Attack::UACEnemyAbility_Attack()
 {
 	// 적은 콤보 횟수에 따른 데미지 증가 없음
 	bApplyComboDamageBonus = false;
+
+	ActivationOwnedTags.AddTag(ACGameplayTags::Enemy_Status_Attacking);
 }
 
 void UACEnemyAbility_Attack::HandleComboComplete()

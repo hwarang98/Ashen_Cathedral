@@ -48,6 +48,7 @@ bool UACPlayerAbility_Attack::CanActivateAbility(
 
 	const AACPlayerCharacter* PlayerCharacter = ActorInfo ? Cast<AACPlayerCharacter>(ActorInfo->AvatarActor.Get()) : nullptr;
 	const UACAttributeSet* AttributeSet = PlayerCharacter ? PlayerCharacter->GetACAttributeSet() : nullptr;
+
 	if (AttributeSet && AttributeSet->GetStamina() <= 0.f)
 	{
 		return false;
