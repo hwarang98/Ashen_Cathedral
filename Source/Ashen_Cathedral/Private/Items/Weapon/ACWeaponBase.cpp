@@ -21,8 +21,22 @@ AACWeaponBase::AACWeaponBase()
 	WeaponCollisionBox->SetupAttachment(GetRootComponent());
 	WeaponCollisionBox->SetBoxExtent(FVector(20.f));
 	WeaponCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponCollisionBox->SetHiddenInGame(true);
 	WeaponCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnCollisionBoxBeginOverlap);
 	WeaponCollisionBox->OnComponentEndOverlap.AddUniqueDynamic(this, &ThisClass::OnCollisionBoxEndOverlap);
+}
+
+UNiagaraSystem* AACWeaponBase::GetTrailEffectOverride(FName SocketName) const
+{
+	for (const FACPhase2NiagaraAttachment& Override : TrailEffectOverrides)
+	{
+		if (Override.SocketName == SocketName)
+		{
+			return Override.NiagaraSystem;
+		}
+	}
+
+	return nullptr;
 }
 
 UMeshComponent* AACWeaponBase::GetWeaponMeshComponent() const

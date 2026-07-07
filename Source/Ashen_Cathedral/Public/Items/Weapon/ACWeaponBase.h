@@ -5,10 +5,12 @@
 #include "CoreMinimal.h"
 #include "ActiveGameplayEffectHandle.h"
 #include "GameFramework/Actor.h"
+#include "Structs/ACStructTypes.h"
 #include "ACWeaponBase.generated.h"
 
 class UBoxComponent;
 class UMeshComponent;
+class UNiagaraSystem;
 
 DECLARE_DELEGATE_OneParam(FonTargetInteractedDelegate, AActor*)
 
@@ -54,6 +56,12 @@ public:
 	 */
 	UMeshComponent* GetWeaponMeshComponent() const;
 
+	/** SocketName에 해당하는 Trail 오버라이드 이펙트를 반환한다. 등록된 게 없으면 nullptr. */
+	UNiagaraSystem* GetTrailEffectOverride(FName SocketName) const;
+
+	// 공격 애니메이션의 무기 Trail 노티파이가 소켓별로 재생할 이펙트를 런타임에 덮어씀 (예: 보스 페이즈 전환)
+	void SetTrailEffectOverrides(const TArray<FACPhase2NiagaraAttachment>& NewOverrides) { TrailEffectOverrides = NewOverrides; }
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapons")
 	TObjectPtr<UStaticMeshComponent> WeaponMesh;
@@ -83,4 +91,8 @@ protected:
 
 	// 이 무기가 장착되면서 적용한 이펙트들의 핸들 목록
 	TArray<FActiveGameplayEffectHandle> GrantedEffectHandles;
+
+	// 무기 Trail 노티파이가 기본값 대신 소켓별로 재생할 이펙트 목록. 일치하는 소켓이 없으면 노티파이의 기본 이펙트를 사용
+	UPROPERTY()
+	TArray<FACPhase2NiagaraAttachment> TrailEffectOverrides;
 };

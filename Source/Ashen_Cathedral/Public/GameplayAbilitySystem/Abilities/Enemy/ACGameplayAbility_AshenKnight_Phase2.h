@@ -9,6 +9,7 @@
 #include "ACGameplayAbility_AshenKnight_Phase2.generated.h"
 
 class UNiagaraComponent;
+class UNiagaraSystem;
 class AACWeaponBase;
 class UAbilityTask_PlayMontageAndWait;
 class UAbilityTask_WaitGameplayEvent;
@@ -85,6 +86,10 @@ private:
 	/** 무기 Static/Skeletal Mesh 소켓에 부착할 Niagara 이펙트 목록. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Phase2|Visual", meta = (AllowPrivateAccess = "true"))
 	TArray<FACPhase2NiagaraAttachment> NiagaraAttachmentsWeapon;
+
+	/** 무기 공격 몽타주의 ANS_PlayWeaponTrail이 소켓별로 재생할 Trail 이펙트 목록. 비어있으면 기존 Trail을 유지합니다. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Phase2|Visual", meta = (AllowPrivateAccess = "true"))
+	TArray<FACPhase2NiagaraAttachment> Phase2WeaponTrailEffects;
 
 	/** Phase2 스탯 GE를 소유 ASC에 Infinite 타입으로 적용한다. */
 	void ApplyPhase2StatsEffect(const FGameplayAbilitySpecHandle& Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo& ActivationInfo) const;
