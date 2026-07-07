@@ -93,25 +93,19 @@ void UACAbility_Attack::ActivateAbility(
 	WaitHitTask->EventReceived.AddDynamic(this, &ThisClass::OnHitTarget);
 	WaitHitTask->ReadyForActivation();
 
-	// bEnableInstantAOE가 true인 어빌리티만 몽타주의 Shared_Event_AOE_Instant 노티파이를 대기한다.
-	if (bEnableInstantAOE)
-	{
-		UAbilityTask_WaitGameplayEvent* WaitInstantAOETask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, ACGameplayTags::Shared_Event_AOE_Instant);
-		WaitInstantAOETask->EventReceived.AddDynamic(this, &ThisClass::OnInstantAOEEventReceived);
-		WaitInstantAOETask->ReadyForActivation();
-	}
+	// 몽타주에 AOE 노티파이(AN_AOEInstant / ANS_AOESustained)가 없으면 이벤트가 오지 않으므로
+	// 별도 활성화 옵션 없이 항상 대기한다 — MeleeHit 대기 태스크와 동일한 패턴.
+	UAbilityTask_WaitGameplayEvent* WaitInstantAOETask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, ACGameplayTags::Shared_Event_AOE_Instant);
+	WaitInstantAOETask->EventReceived.AddDynamic(this, &ThisClass::OnInstantAOEEventReceived);
+	WaitInstantAOETask->ReadyForActivation();
 
-	// bEnableSustainedAOE가 true인 어빌리티만 몽타주의 Shared_Event_AOE_Sustained_Start/End 노티파이스테이트를 대기한다.
-	if (bEnableSustainedAOE)
-	{
-		UAbilityTask_WaitGameplayEvent* WaitSustainedStartTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, ACGameplayTags::Shared_Event_AOE_Sustained_Start);
-		WaitSustainedStartTask->EventReceived.AddDynamic(this, &ThisClass::OnSustainedAOEStartReceived);
-		WaitSustainedStartTask->ReadyForActivation();
+	UAbilityTask_WaitGameplayEvent* WaitSustainedStartTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, ACGameplayTags::Shared_Event_AOE_Sustained_Start);
+	WaitSustainedStartTask->EventReceived.AddDynamic(this, &ThisClass::OnSustainedAOEStartReceived);
+	WaitSustainedStartTask->ReadyForActivation();
 
-		UAbilityTask_WaitGameplayEvent* WaitSustainedEndTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, ACGameplayTags::Shared_Event_AOE_Sustained_End);
-		WaitSustainedEndTask->EventReceived.AddDynamic(this, &ThisClass::OnSustainedAOEEndReceived);
-		WaitSustainedEndTask->ReadyForActivation();
-	}
+	UAbilityTask_WaitGameplayEvent* WaitSustainedEndTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, ACGameplayTags::Shared_Event_AOE_Sustained_End);
+	WaitSustainedEndTask->EventReceived.AddDynamic(this, &ThisClass::OnSustainedAOEEndReceived);
+	WaitSustainedEndTask->ReadyForActivation();
 
 	// DataTable의 AttackSpeed를 몽타주 재생 속도로 사용
 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
