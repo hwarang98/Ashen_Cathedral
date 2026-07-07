@@ -128,6 +128,11 @@ void UACGameplayAbility_AshenKnight_Phase2::OnVisualActivateEventReceived(FGamep
 		AACWeaponBase* Weapon = CombatComp->GetCharacterCurrentEquippedWeapon();
 		ApplyFireMaterialToWeapon(Weapon);
 		AttachNiagaraEffectsToWeapon(Weapon);
+
+		if (Weapon && !Phase2WeaponTrailEffects.IsEmpty())
+		{
+			Weapon->SetTrailEffectOverrides(Phase2WeaponTrailEffects);
+		}
 	}
 
 	// 캐릭터 메시 Niagara 이펙트 부착

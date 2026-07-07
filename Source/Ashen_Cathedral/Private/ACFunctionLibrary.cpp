@@ -4,9 +4,11 @@
 #include "ACFunctionLibrary.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "GenericTeamAgentInterface.h"
+#include "Components/Combat/PawnCombatComponent.h"
 #include "Enums/ACEnums.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 #include "Interfaces/PawnCombatInterface.h"
+#include "Items/Weapon/ACWeaponBase.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "ACGameplayTags.h"
 
@@ -121,6 +123,22 @@ UPawnCombatComponent* UACFunctionLibrary::NativeGetPawnCombatComponentFromActor(
 	}
 
 	return nullptr;
+}
+
+UNiagaraSystem* UACFunctionLibrary::ResolveWeaponTrailEffect(AActor* InOwner, FName SocketName, UNiagaraSystem* InDefaultNiagaraSystem)
+{
+	if (const UPawnCombatComponent* PawnCombatComponent = NativeGetPawnCombatComponentFromActor(InOwner))
+	{
+		if (const AACWeaponBase* WeaponBase = PawnCombatComponent->GetCharacterCurrentEquippedWeapon())
+		{
+			if (UNiagaraSystem* TrailOverride = WeaponBase->GetTrailEffectOverride(SocketName))
+			{
+				return TrailOverride;
+			}
+		}
+	}
+
+	return InDefaultNiagaraSystem;
 }
 
 FGameplayTag UACFunctionLibrary::ComputeHitReactDirectionTag(const AActor* InAttacker, const AActor* InVictim, float& OutAngleDifference)

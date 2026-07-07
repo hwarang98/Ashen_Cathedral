@@ -10,6 +10,7 @@
 
 class UPawnCombatComponent;
 class UACAbilitySystemComponent;
+class UNiagaraSystem;
 struct FGameplayTag;
 /**
  * 
@@ -97,6 +98,12 @@ public:
 
 	/* 내부적으로 PawnCombatComponent를 직접 검색 */
 	static UPawnCombatComponent* NativeGetPawnCombatComponentFromActor(AActor* InActor);
+
+	/**
+	 * 무기 Trail 노티파이/노티파이 스테이트가 재생할 Niagara 이펙트를 결정한다.
+	 * 소유 액터의 현재 장착 무기에 SocketName과 일치하는 TrailEffectOverride가 있으면 그것을, 없으면 InDefaultNiagaraSystem을 반환한다.
+	 */
+	static UNiagaraSystem* ResolveWeaponTrailEffect(AActor* InOwner, FName SocketName, UNiagaraSystem* InDefaultNiagaraSystem);
 
 	/* 캐릭터가 맞은 위치 별 태그 반환 */
 	UFUNCTION(BlueprintPure, Category = "Ashen Cathdral|FunctionLibrary")

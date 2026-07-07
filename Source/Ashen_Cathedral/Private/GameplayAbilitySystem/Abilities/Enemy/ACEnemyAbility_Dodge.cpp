@@ -2,6 +2,7 @@
 
 
 #include "GameplayAbilitySystem/Abilities/Enemy/ACEnemyAbility_Dodge.h"
+#include "ACFunctionLibrary.h"
 #include "ACGameplayTags.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Character/Enemy/ACEnemyCharacter.h"
@@ -16,6 +17,7 @@ UACEnemyAbility_Dodge::UACEnemyAbility_Dodge()
 	ActivationOwnedTags.AddTag(ACGameplayTags::Enemy_Status_Dodging);
 
 	ActivationBlockedTags.AddTag(ACGameplayTags::Enemy_Status_Dodging);
+	ActivationBlockedTags.AddTag(ACGameplayTags::Enemy_Status_PressureCountering);
 	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_Dead);
 
 	// BT가 Enemy.Event.Dodge 이벤트를 전송하면 이 어빌리티가 활성화됨
@@ -36,6 +38,10 @@ void UACEnemyAbility_Dodge::ActivateAbility(const FGameplayAbilitySpecHandle Han
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
+
+	// 압박 반응으로 선택되어 실제로 시작됐을 수 있음 — Detection이 다시 감지할 수 있도록 요청 태그를 즉시 해제한다
+	// (압박과 무관한 일반 회피에서도 호출되지만, 이미 요청이 없으면 아무 동작도 하지 않아 부작용이 없다)
+	UACFunctionLibrary::RemoveGameplayTagFromActorIfFound(GetAvatarActorFromActorInfo(), ACGameplayTags::Enemy_State_PressureReady);
 
 	if (!GetACEnemyFromActorInfo())
 	{

@@ -18,7 +18,42 @@
 #include "Items/Weapon/ACWeapon.h"
 #include "Structs/ACStructTypes.h"
 #include "Components/BoxComponent.h"
+#include "DrawDebugHelpers.h"
 #include "GameplayTags/ACGameplayTags_Player.h"
+
+UPawnCombatComponent::UPawnCombatComponent()
+{
+	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bStartWithTickEnabled = false;
+}
+
+void UPawnCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	const AACWeaponBase* CurrentWeapon = GetCharacterCurrentEquippedWeapon();
+	const UBoxComponent* CollisionBox = CurrentWeapon ? CurrentWeapon->GetWeaponCollisionBox() : nullptr;
+	if (!CollisionBox)
+	{
+		return;
+	}
+
+	// 콜리전이 활성화된 동안 매 프레임 박스를 그리되 10초간 남겨서 스윙 궤적 전체가 보이게 한다
+	// 이번 공격에서 이미 대상을 맞췄다면 파란색, 아니면 빨간색으로 표시
+	const FColor DebugColor = OverlappedActors.IsEmpty() ? FColor::Red : FColor::Green;
+
+	DrawDebugBox(
+		GetWorld(),
+		CollisionBox->GetComponentLocation(),
+		CollisionBox->GetScaledBoxExtent(),
+		CollisionBox->GetComponentQuat(),
+		DebugColor,
+		false,
+		10.f,
+		SDPG_Foreground,
+		1.f
+		);
+}
 
 void UPawnCombatComponent::OnHitTargetActor(AActor* HitActor)
 {
@@ -148,6 +183,7 @@ void UPawnCombatComponent::ToggleWeaponCollision(bool bShouldEnable, EToggleDama
 		}
 
 		WeaponToToggle->GetWeaponCollisionBox()->SetCollisionEnabled(bShouldEnable ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
+		SetComponentTickEnabled(bShouldEnable && bDebugShowWeaponCollision);
 
 		if (!bShouldEnable)
 		{

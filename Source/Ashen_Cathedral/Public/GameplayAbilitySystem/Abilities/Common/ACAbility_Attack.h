@@ -77,9 +77,12 @@ protected:
 
 private:
 
-	/** 카운터 어택 몽타주 */
+	/** 카운터 어택 몽타주 — 여러 개 등록 시 매번 랜덤으로 하나를 선택해 재생한다 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Montage", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UAnimMontage> CounterAttackMontage;
+	TArray<TObjectPtr<UAnimMontage>> CounterAttackMontages;
+
+	/** CounterAttackMontages 중 하나를 랜덤으로 선택해 반환한다. 비어있으면 nullptr. */
+	UAnimMontage* SelectCounterAttackMontage() const;
 
 	/** 타겟에게 적용할 데미지 게임플레이 이펙트 (서버 전용) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects", meta = (AllowPrivateAccess = "true"))
@@ -88,6 +91,14 @@ private:
 	/** 현재 콤보 횟수 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Combo", meta = (AllowPrivateAccess = "true"))
 	int32 CurrentComboCount = 0;
+
+	/**
+	 * ActivateAbility 시점에 판정한 카운터어택 여부를 캐시한다.
+	 * OnHitTarget은 이 값을 사용해야 한다 — Shared_Status_CanCounterAttack 태그는
+	 * ActivateAbility에서 이미 소모(제거)되므로, 히트 시점에 태그를 다시 조회하면
+	 * 항상 false로 읽혀 카운터 데미지 보너스가 누락된다.
+	 */
+	bool bWasCounterAttack = false;
 
 	/** 콤보 공격 타입 (Light/Heavy) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combo|Attack", meta = (AllowPrivateAccess = "true", Categories = "Shared.SetByCaller"))
