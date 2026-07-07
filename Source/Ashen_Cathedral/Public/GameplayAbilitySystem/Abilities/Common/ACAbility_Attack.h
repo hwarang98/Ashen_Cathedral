@@ -7,6 +7,7 @@
 #include "ACGameplayTags.h"
 #include "ACAbility_Attack.generated.h"
 
+class UAOEDamageComponent;
 class UCameraShakeBase;
 
 /**
@@ -71,6 +72,33 @@ protected:
 	 */
 	virtual void ApplyAdditionalHitEffects(const AActor* HitActor, const FGameplayEventData& Payload) {}
 
+	/**
+	 * @brief DamageEffect Spec을 생성하고 BaseDamage/GroggyDamage SetByCaller 값을 주입한다.
+	 * OnHitTarget, OnInstantAOEEventReceived, OnSustainedAOEStartReceived가 공통으로 사용하는 GE 생성 로직이다.
+	 *
+	 * @param BaseDamage    Shared_SetByCaller_BaseDamage로 주입할 기본 데미지
+	 * @param GroggyDamage  Shared_SetByCaller_GroggyDamage로 주입할 그로기 데미지. 0 이하면 주입하지 않는다.
+	 * @return DamageEffect가 없거나 Spec 생성에 실패하면 Invalid 핸들을 반환한다.
+	 */
+	FGameplayEffectSpecHandle CreateDamageEffectSpec(float BaseDamage, float GroggyDamage);
+
+	/**
+	 * @brief ModifyDamageSpec 확장 포인트를 호출한 뒤 Spec을 타겟 ASC에 적용한다.
+	 *
+	 * @param SpecHandle  CreateDamageEffectSpec으로 생성한 Spec 핸들
+	 * @param HitActor    적중된 대상 액터
+	 * @param BaseDamage  ModifyDamageSpec에 전달할 기본 데미지 값
+	 * @return 타겟 ASC를 찾아 Spec을 적용했으면 true
+	 */
+	bool ApplyDamageEffectSpecToTarget(const FGameplayEffectSpecHandle& SpecHandle, const AActor* HitActor, float BaseDamage);
+
+	/**
+	 * @brief MeleeAttackSoundCueTag GameplayCue를 HitActor 위치/방향으로 재생한다.
+	 * OnHitTarget, OnInstantAOEEventReceived, OnSustainedAOEStartReceived가 GE 적용 성공 후 공통으로 호출한다.
+	 * @note Parry/Block으로 최종 데미지가 0이거나 감소해도 큐는 재생된다 — 명중 자체에 대한 피드백이기 때문이다.
+	 */
+	void PlayHitGameplayCue(const AActor* HitActor) const;
+
 	/** 순차적으로 재생할 공격 몽타주 배열 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Montage", meta = (AllowPrivateAccess = "true"))
 	TArray<TObjectPtr<UAnimMontage>> AttackMontages;
@@ -115,6 +143,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CameraShake", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UCameraShakeBase> HitCameraShakeClass;
 
+	 */
+	UAOEDamageComponent* GetOrCreateAOEDamageComponent() const;
+
 	/** 몽타주 재생이 정상적으로 완료/블렌드아웃되었을 때 호출 */
 	UFUNCTION()
 	void OnMontageEnded();
@@ -126,5 +157,27 @@ private:
 	/** 'Shared_Event_MeleeHit' 이벤트를 수신했을 때 호출 */
 	UFUNCTION()
 	void OnHitTarget(FGameplayEventData Payload);
+
+	/**
+	 * @brief 'Shared_Event_AOE_Instant' 이벤트를 수신했을 때 호출.
+	 * 서버 권한에서 UAOEDamageComponent::TriggerInstantAOE를 호출해 1회 판정하고,
+	 * 찾아낸 대상마다 DamageEffect Spec을 만들어 적용한다.
+	 */
+	UFUNCTION()
+	void OnInstantAOEEventReceived(FGameplayEventData Payload);
+
+	/**
+	 * @brief 'Shared_Event_AOE_Sustained_Start' 이벤트를 수신했을 때 호출.
+	 * UAOEDamageComponent::StartSustainedAOE를 호출해 지속형 스윕 판정을 시작한다.
+	 */
+	UFUNCTION()
+	void OnSustainedAOEStartReceived(FGameplayEventData Payload);
+
+	/**
+	 * @brief 'Shared_Event_AOE_Sustained_End' 이벤트를 수신했을 때 호출.
+	 * UAOEDamageComponent::StopSustainedAOE를 호출해 지속형 판정을 종료한다.
+	 */
+	UFUNCTION()
+	void OnSustainedAOEEndReceived(FGameplayEventData Payload);
 
 };
