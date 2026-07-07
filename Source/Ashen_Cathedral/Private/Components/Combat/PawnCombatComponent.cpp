@@ -65,25 +65,11 @@ void UPawnCombatComponent::OnHitTargetActor(AActor* HitActor)
 
 	OverlappedActors.AddUnique(HitActor);
 
-	const bool bIsPlayerBlocking = UACFunctionLibrary::NativeDoesActorHaveTag(HitActor, ACGameplayTags::Player_Status_Blocking);
-	const bool bIsParry = UACFunctionLibrary::NativeDoesActorHaveTag(HitActor, ACGameplayTags::Shared_Status_Parry);
-	const bool bIsMyAttackUnblockable = false;
-	bool bIsValidBlock = false;
+	UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(GetOwningPawn(), HitActor);
 
-	// GAS 이벤트 전송 (공통 로직)
 	FGameplayEventData EventData;
 	EventData.Instigator = GetOwningPawn();
 	EventData.Target = HitActor;
-
-	if (bIsPlayerBlocking && !bIsMyAttackUnblockable)
-	{
-		bIsValidBlock = UACFunctionLibrary::IsValidBlock(GetOwningPawn(), HitActor);
-	}
-
-	if (bIsValidBlock)
-	{
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(HitActor, ACGameplayTags::Player_Event_SuccessfulBlock, EventData);
-	}
 
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
 		GetOwningPawn(),

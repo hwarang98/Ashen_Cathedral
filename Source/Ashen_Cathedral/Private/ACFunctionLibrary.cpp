@@ -171,6 +171,26 @@ bool UACFunctionLibrary::IsValidBlock(const AActor* InAttacker, const AActor* In
 	return DotResult < -0.1;
 }
 
+bool UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(const AActor* Attacker, AActor* HitActor)
+{
+	if (!Attacker || !NativeDoesActorHaveTag(HitActor, ACGameplayTags::Player_Status_Blocking))
+	{
+		return false;
+	}
+
+	if (!IsValidBlock(Attacker, HitActor))
+	{
+		return false;
+	}
+
+	FGameplayEventData EventData;
+	EventData.Instigator = Attacker;
+	EventData.Target = HitActor;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(HitActor, ACGameplayTags::Player_Event_SuccessfulBlock, EventData);
+	return true;
+}
+
 FGameplayTag UACFunctionLibrary::DetermineHitReactionTag(const float& OutAngleDifference)
 {
 	// -45 ~ 45도 = 정면

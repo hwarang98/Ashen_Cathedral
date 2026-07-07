@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "GameplayAbilitySystem/Abilities/Common/ACAbility_Attack.h"
+#include "ACFunctionLibrary.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
@@ -281,6 +282,14 @@ void UACAbility_Attack::PlayHitGameplayCue(const AActor* HitActor) const
 		return;
 	}
 
+	// 대상이 Block/Parry 중이면 대상 쪽에서 별도의 Block/Parry GameplayCue가 재생되므로(TryTriggerSuccessfulBlockEvent → GA_Block)
+	// 일반 히트 사운드는 생략한다. ACCalculation_DamageTaken도 이 태그들을 기준으로 데미지를 보정하므로 판정 기준이 일치한다.
+	const UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(const_cast<AActor*>(HitActor));
+	if (TargetASC && (TargetASC->HasMatchingGameplayTag(ACGameplayTags::Player_Status_Blocking) || TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Parry)))
+	{
+		return;
+	}
+
 	const UPawnCombatComponent* CombatComponent = OwnerCharacter->GetPawnCombatComponent();
 
 	FGameplayCueParameters CueParams;
@@ -400,8 +409,11 @@ void UACAbility_Attack::OnInstantAOEEventReceived(FGameplayEventData Payload)
 	const float GroggyDamage = AOEGroggyDamage;
 
 	AOEComponent->TriggerInstantAOE(InstantAOERadius, InstantAOEForwardOffset, bDebugDrawAOE,
-		[this, BaseDamage, GroggyDamage](AActor* TargetActor)
+		[this, OwnerCharacter, BaseDamage, GroggyDamage](AActor* TargetActor)
 		{
+			// 무기 콜리전 근접 공격과 동일하게, 유효한 블록이면 대상에게 Block/Parry GameplayCue를 발동시킨다.
+			UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(OwnerCharacter, TargetActor);
+
 			const FGameplayEffectSpecHandle SpecHandle = CreateDamageEffectSpec(BaseDamage, GroggyDamage);
 			if (ApplyDamageEffectSpecToTarget(SpecHandle, TargetActor, BaseDamage))
 			{
@@ -431,8 +443,11 @@ void UACAbility_Attack::OnSustainedAOEStartReceived(FGameplayEventData Payload)
 	const float GroggyDamage = AOEGroggyDamage;
 
 	AOEComponent->StartSustainedAOE(SustainedAOERadius, SustainedAOEForwardOffset, SustainedAOEDamageInterval, bDebugDrawAOE,
-		[this, BaseDamage, GroggyDamage](AActor* TargetActor)
+		[this, OwnerCharacter, BaseDamage, GroggyDamage](AActor* TargetActor)
 		{
+			// 무기 콜리전 근접 공격과 동일하게, 유효한 블록이면 대상에게 Block/Parry GameplayCue를 발동시킨다.
+			UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(OwnerCharacter, TargetActor);
+
 			const FGameplayEffectSpecHandle SpecHandle = CreateDamageEffectSpec(BaseDamage, GroggyDamage);
 			if (ApplyDamageEffectSpecToTarget(SpecHandle, TargetActor, BaseDamage))
 			{

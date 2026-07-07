@@ -119,6 +119,18 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Ashen Cathdral|FunctionLibrary")
 	static bool IsValidBlock(const AActor* InAttacker, const AActor* InDefender, const float AngleThreshold = 60.0f);
 
+	/**
+	 * @brief HitActor가 유효한 각도에서 블록 중이면 Player.Event.SuccessfulBlock 이벤트를 HitActor에게 보낸다.
+	 * GA_Block이 이 이벤트를 받아 Block/Parry GameplayCue 재생, 넉백, 카운터어택 윈도우 부여를 처리한다.
+	 * 무기 콜리전 기반 근접 공격(PawnCombatComponent)과 AOE 판정이 공통으로 사용한다.
+	 *
+	 * @param Attacker 공격자
+	 * @param HitActor 피격된 대상 액터
+	 * @return 이벤트를 보냈으면(=유효한 블록이었으면) true
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Ashen Cathdral|FunctionLibrary")
+	static bool TryTriggerSuccessfulBlockEvent(const AActor* Attacker, AActor* HitActor);
+
 private:
 	/* 주어진 각도 차이를 바탕으로 히트 반응 태그를 결정 */
 	static FGameplayTag DetermineHitReactionTag(const float& OutAngleDifference);
