@@ -143,6 +143,49 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CameraShake", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UCameraShakeBase> HitCameraShakeClass;
 
+	/** true면 ActivateAbility에서 Shared.Event.AOE.Instant 이벤트 대기 태스크를 등록한다. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "AOE|Instant", meta = (AllowPrivateAccess = "true"))
+	bool bEnableInstantAOE = false;
+
+	/** 단발형 AOE 판정 반경 (cm) */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AOE|Instant", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
+	float InstantAOERadius = 200.f;
+
+	/** 단발형 AOE 판정 원점을 Owner 전방으로 밀어낼 거리 (cm) */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AOE|Instant", meta = (AllowPrivateAccess = "true"))
+	float InstantAOEForwardOffset = 0.f;
+
+	/** true면 ActivateAbility에서 Shared.Event.AOE.Sustained.Start / Sustained.End 이벤트 대기 태스크를 등록한다. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "AOE|Sustained", meta = (AllowPrivateAccess = "true"))
+	bool bEnableSustainedAOE = false;
+
+	/** 지속형 AOE 판정 반경 (cm) */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AOE|Sustained", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
+	float SustainedAOERadius = 150.f;
+
+	/** 지속형 AOE 판정 원점을 Owner 전방으로 밀어낼 거리 (cm) */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AOE|Sustained", meta = (AllowPrivateAccess = "true"))
+	float SustainedAOEForwardOffset = 0.f;
+
+	/** 지속 중 AOE 스윕 판정을 반복할 간격 (초). 짧을수록 빠른 이동 중 누락이 줄어든다. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AOE|Sustained", meta = (AllowPrivateAccess = "true", ClampMin = "0.01"))
+	float SustainedAOEDamageInterval = 0.05f;
+
+	/** AOE 데미지 = 현재 무기 기본 데미지 * 이 배율 (Shared_SetByCaller_BaseDamage로 주입, Instant/Sustained 공통) */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AOE", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
+	float AOEBaseDamageMultiplier = 1.f;
+
+	/** AOE 히트 시 각 타겟에게 주입할 그로기 데미지. 0이면 주입하지 않는다 (Instant/Sustained 공통) */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AOE", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
+	float AOEGroggyDamage = 0.f;
+
+	/** true면 AOE 판정 범위(단발 스피어 / 지속형 스윕 경로)를 디버그로 표시한다. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AOE", meta = (AllowPrivateAccess = "true"))
+	bool bDebugDrawAOE = false;
+
+	/**
+	 * @brief Owner Character에서 UAOEDamageComponent를 찾고, 없으면 새로 부착해 반환한다.
+	 * AOE 판정(오버랩/스윕/중복 방지/타이머)은 이 컴포넌트가 전담하며, 어빌리티는 GE 생성/적용만 담당한다.
 	 */
 	UAOEDamageComponent* GetOrCreateAOEDamageComponent() const;
 
