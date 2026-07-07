@@ -9,6 +9,8 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Status_Strafing, "Enemy.Status.Strafing")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Status_Dodging, "Enemy.Status.Dodging")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Status_UnderAttack, "Enemy.Status.UnderAttack")
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Status_PressureCountering, "Enemy.Status.PressureCountering")
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Status_Attacking, "Enemy.Status.Attacking")
 
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Melee, "Enemy.Ability.Melee")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Dodge, "Enemy.Ability.Dodge")
@@ -17,6 +19,7 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_AttackType_Run, "Enemy.Ability.AttackType.Run")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_AttackType_Special_01, "Enemy.Ability.AttackType.Special.01")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_AttackType_Special_02, "Enemy.Ability.AttackType.Special.02")
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Pressure_Counter, "Enemy.Ability.Pressure.Counter")
 
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Status_Phase2, "Enemy.Status.Phase2")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Phase2, "Enemy.State.Phase2")
@@ -27,4 +30,7 @@ namespace ACGameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_SetByCaller_FireBonusDamage, "Enemy.SetByCaller.FireBonusDamage")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_SetByCaller_BurnBuildUp, "Enemy.SetByCaller.BurnBuildUp")
+
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Event_PressureDetected, "Enemy.Event.PressureDetected")
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_PressureReady, "Enemy.State.PressureReady")
 }
