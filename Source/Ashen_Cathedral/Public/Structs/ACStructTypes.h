@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
+#include "GameplayAbilitySpecHandle.h"
 #include "GameplayEffectExecutionCalculation.h"
 #include "GameplayTagContainer.h"
 #include "InputAction.h"
@@ -15,6 +16,8 @@
 class UTexture2D;
 class AACWeaponBase;
 class UACGameplayAbility;
+class AACEnemyCharacter;
+class UAbilitySystemComponent;
 
 
 /**
@@ -122,6 +125,28 @@ struct FRotateToFaceTargetTaskMemory
 	{
 		OwningPawn.Reset();
 		TargetActor.Reset();
+	}
+};
+
+// UACBTTask_ActivateAbilityByTagAndWait의 AI 인스턴스별 대기 상태 (활성화한 어빌리티 핸들, 경과 시간)
+struct FActivateAbilityAndWaitTaskMemory
+{
+	TWeakObjectPtr<AACEnemyCharacter> OwningEnemyCharacter;
+	TWeakObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+	FGameplayAbilitySpecHandle AbilityHandle;
+	float ElapsedTime = 0.f;
+
+	bool IsValid() const
+	{
+		return OwningEnemyCharacter.IsValid() && AbilitySystemComponent.IsValid();
+	}
+
+	void Reset()
+	{
+		OwningEnemyCharacter.Reset();
+		AbilitySystemComponent.Reset();
+		AbilityHandle = FGameplayAbilitySpecHandle();
+		ElapsedTime = 0.f;
 	}
 };
 
