@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ActiveGameplayEffectHandle.h"
 #include "GameplayAbilitySystem/Abilities/Enemy/ACEnemyGameplayAbility.h"
 #include "ACEnemyAbility_Dodge.generated.h"
 
@@ -37,10 +36,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Montage")
 	TObjectPtr<UAnimMontage> RightDodgeMontage;
 
-	/** 닷지 중 무적 여부를 결정하는 GameplayEffect */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
-	TSubclassOf<UGameplayEffect> InvincibilityEffect;
-
 private:
 	/** BT가 SendGameplayEvent로 전달하는 4방향 닷지 의도 */
 	enum class EDodgeDirection : uint8
@@ -54,8 +49,6 @@ private:
 	UPROPERTY()
 	TObjectPtr<UAbilityTask_PlayMontageAndWait> MontageTask;
 
-	FActiveGameplayEffectHandle InvincibilityEffectHandle;
-
 	UFUNCTION()
 	void OnMontageCompleted();
 
@@ -67,9 +60,6 @@ private:
 
 	/** 방향에 해당하는 몽타주 반환 */
 	UAnimMontage* SelectMontage(EDodgeDirection Direction) const;
-
-	/** 무적 GameplayEffect를 자신에게 적용 */
-	void ApplyInvincibilityEffect();
 
 	/** 몽타주 태스크를 생성하고 실행 */
 	void PlayDodgeMontage(UAnimMontage* Montage);

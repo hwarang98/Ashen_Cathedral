@@ -6,7 +6,6 @@
 #include "ACGameplayTags.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Character/Enemy/ACEnemyCharacter.h"
-#include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 
 UACEnemyAbility_Dodge::UACEnemyAbility_Dodge()
 {
@@ -60,21 +59,11 @@ void UACEnemyAbility_Dodge::ActivateAbility(const FGameplayAbilitySpecHandle Han
 		return;
 	}
 
-	ApplyInvincibilityEffect();
 	PlayDodgeMontage(MontageToPlay);
 }
 
 void UACEnemyAbility_Dodge::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-	if (InvincibilityEffectHandle.IsValid())
-	{
-		if (UACAbilitySystemComponent* ASC = GetACAbilitySystemComponentFromActorInfo())
-		{
-			ASC->RemoveActiveGameplayEffect(InvincibilityEffectHandle);
-		}
-		InvincibilityEffectHandle.Invalidate();
-	}
-
 	if (MontageTask && MontageTask->IsActive())
 	{
 		MontageTask->EndTask();
@@ -133,23 +122,6 @@ UAnimMontage* UACEnemyAbility_Dodge::SelectMontage(EDodgeDirection Direction) co
 
 		default:
 			return BackDodgeMontage;
-	}
-}
-
-void UACEnemyAbility_Dodge::ApplyInvincibilityEffect()
-{
-	if (!InvincibilityEffect)
-	{
-		return;
-	}
-
-	if (UACAbilitySystemComponent* ASC = GetACAbilitySystemComponentFromActorInfo())
-	{
-		InvincibilityEffectHandle = ASC->ApplyGameplayEffectToSelf(
-			InvincibilityEffect->GetDefaultObject<UGameplayEffect>(),
-			1.0f,
-			ASC->MakeEffectContext()
-			);
 	}
 }
 

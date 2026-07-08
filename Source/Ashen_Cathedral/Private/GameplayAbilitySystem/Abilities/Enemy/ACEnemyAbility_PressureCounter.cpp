@@ -7,8 +7,11 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "Character/Enemy/ACEnemyCharacter.h"
+#include "Components/Combat/AOEDamageComponent.h"
 #include "Components/Combat/EnemyCombatComponent.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
+#include "Items/Weapon/ACWeaponBase.h"
 
 UACEnemyAbility_PressureCounter::UACEnemyAbility_PressureCounter()
 {
@@ -65,6 +68,20 @@ void UACEnemyAbility_PressureCounter::ActivateAbility(const FGameplayAbilitySpec
 	WaitHitTask->EventReceived.AddDynamic(this, &ThisClass::OnHitTarget);
 	WaitHitTask->ReadyForActivation();
 
+	// 몽타주에 AOE 노티파이(AN_AOEInstant / ANS_AOESustained)가 없으면 이벤트가 오지 않으므로
+	// 별도 활성화 옵션 없이 항상 대기한다 — MeleeHit 대기 태스크와 동일한 패턴.
+	UAbilityTask_WaitGameplayEvent* WaitInstantAOETask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, ACGameplayTags::Shared_Event_AOE_Instant);
+	WaitInstantAOETask->EventReceived.AddDynamic(this, &ThisClass::OnInstantAOEEventReceived);
+	WaitInstantAOETask->ReadyForActivation();
+
+	UAbilityTask_WaitGameplayEvent* WaitSustainedStartTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, ACGameplayTags::Shared_Event_AOE_Sustained_Start);
+	WaitSustainedStartTask->EventReceived.AddDynamic(this, &ThisClass::OnSustainedAOEStartReceived);
+	WaitSustainedStartTask->ReadyForActivation();
+
+	UAbilityTask_WaitGameplayEvent* WaitSustainedEndTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, ACGameplayTags::Shared_Event_AOE_Sustained_End);
+	WaitSustainedEndTask->EventReceived.AddDynamic(this, &ThisClass::OnSustainedAOEEndReceived);
+	WaitSustainedEndTask->ReadyForActivation();
+
 	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, CounterMontage, 1.0f, NAME_None, false);
 
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::OnMontageCompleted);
@@ -77,6 +94,15 @@ void UACEnemyAbility_PressureCounter::ActivateAbility(const FGameplayAbilitySpec
 
 void UACEnemyAbility_PressureCounter::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
+	// 지속형 AOE가 진행 중이었다면 컴포넌트의 타이머와 중복 히트 목록을 정리한다.
+	if (AACEnemyCharacter* EnemyCharacter = GetEnemyCharacterFromActorInfo())
+	{
+		if (UAOEDamageComponent* AOEComponent = EnemyCharacter->FindComponentByClass<UAOEDamageComponent>())
+		{
+			AOEComponent->StopSustainedAOE();
+		}
+	}
+
 	if (InvincibilityEffectHandle.IsValid())
 	{
 		if (UACAbilitySystemComponent* ASC = GetACAbilitySystemComponentFromActorInfo())
@@ -108,30 +134,167 @@ void UACEnemyAbility_PressureCounter::OnMontageCancelled()
 void UACEnemyAbility_PressureCounter::OnHitTarget(FGameplayEventData Payload)
 {
 	const AActor* HitActor = Payload.Target.Get();
-	if (!HitActor || !DamageEffect)
+	if (!HitActor)
 	{
 		return;
 	}
 
 	UEnemyCombatComponent* CombatComponent = GetEnemyCombatComponentFromActorInfo();
-	UACAbilitySystemComponent* ASC = GetACAbilitySystemComponentFromActorInfo();
-	if (!CombatComponent || !ASC)
+	if (!CombatComponent)
 	{
 		return;
+	}
+
+	ApplyDamageEffectSpecToTarget(HitActor, CombatComponent->GetCurrentWeaponBaseDamage(), 0.f);
+}
+
+void UACEnemyAbility_PressureCounter::OnInstantAOEEventReceived(FGameplayEventData Payload)
+{
+	// 서버 권한에서만 판정한다 — 클라이언트에서의 중복 판정/데미지 적용을 방지한다.
+	if (!CurrentActorInfo || !CurrentActorInfo->IsNetAuthority())
+	{
+		return;
+	}
+
+	AACEnemyCharacter* OwnerCharacter = GetEnemyCharacterFromActorInfo();
+	UEnemyCombatComponent* CombatComponent = GetEnemyCombatComponentFromActorInfo();
+	UAOEDamageComponent* AOEComponent = GetOrCreateAOEDamageComponent();
+	if (!OwnerCharacter || !CombatComponent || !AOEComponent || !DamageEffect)
+	{
+		return;
+	}
+
+	const float BaseDamage = CombatComponent->GetCurrentWeaponBaseDamage() * AOEBaseDamageMultiplier;
+	const float GroggyDamage = AOEGroggyDamage;
+
+	AOEComponent->TriggerInstantAOE(InstantAOERadius, InstantAOEForwardOffset, bDebugDrawAOE,
+		[this, OwnerCharacter, BaseDamage, GroggyDamage](AActor* TargetActor)
+		{
+			// 무기 콜리전 근접 공격과 동일하게, 유효한 블록이면 대상에게 Block/Parry GameplayCue를 발동시킨다.
+			UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(OwnerCharacter, TargetActor);
+			ApplyDamageEffectSpecToTarget(TargetActor, BaseDamage, GroggyDamage);
+		});
+}
+
+void UACEnemyAbility_PressureCounter::OnSustainedAOEStartReceived(FGameplayEventData Payload)
+{
+	if (!CurrentActorInfo || !CurrentActorInfo->IsNetAuthority())
+	{
+		return;
+	}
+
+	AACEnemyCharacter* OwnerCharacter = GetEnemyCharacterFromActorInfo();
+	UEnemyCombatComponent* CombatComponent = GetEnemyCombatComponentFromActorInfo();
+	UAOEDamageComponent* AOEComponent = GetOrCreateAOEDamageComponent();
+	if (!OwnerCharacter || !CombatComponent || !AOEComponent || !DamageEffect)
+	{
+		return;
+	}
+
+	const float BaseDamage = CombatComponent->GetCurrentWeaponBaseDamage() * AOEBaseDamageMultiplier;
+	const float GroggyDamage = AOEGroggyDamage;
+
+	AOEComponent->StartSustainedAOE(SustainedAOERadius, SustainedAOEForwardOffset, SustainedAOEDamageInterval, bDebugDrawAOE,
+		[this, OwnerCharacter, BaseDamage, GroggyDamage](AActor* TargetActor)
+		{
+			// 무기 콜리전 근접 공격과 동일하게, 유효한 블록이면 대상에게 Block/Parry GameplayCue를 발동시킨다.
+			UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(OwnerCharacter, TargetActor);
+			ApplyDamageEffectSpecToTarget(TargetActor, BaseDamage, GroggyDamage);
+		});
+}
+
+void UACEnemyAbility_PressureCounter::OnSustainedAOEEndReceived(FGameplayEventData Payload)
+{
+	if (AACEnemyCharacter* EnemyCharacter = GetEnemyCharacterFromActorInfo())
+	{
+		if (UAOEDamageComponent* AOEComponent = EnemyCharacter->FindComponentByClass<UAOEDamageComponent>())
+		{
+			AOEComponent->StopSustainedAOE();
+		}
+	}
+}
+
+UAOEDamageComponent* UACEnemyAbility_PressureCounter::GetOrCreateAOEDamageComponent() const
+{
+	AACEnemyCharacter* EnemyCharacter = GetEnemyCharacterFromActorInfo();
+	if (!EnemyCharacter)
+	{
+		return nullptr;
+	}
+
+	if (UAOEDamageComponent* Existing = EnemyCharacter->FindComponentByClass<UAOEDamageComponent>())
+	{
+		return Existing;
+	}
+
+	UAOEDamageComponent* NewComponent = NewObject<UAOEDamageComponent>(EnemyCharacter);
+	NewComponent->RegisterComponent();
+	return NewComponent;
+}
+
+bool UACEnemyAbility_PressureCounter::ApplyDamageEffectSpecToTarget(const AActor* TargetActor, float BaseDamage, float GroggyDamage)
+{
+	UACAbilitySystemComponent* ASC = GetACAbilitySystemComponentFromActorInfo();
+	if (!ASC || !TargetActor || !DamageEffect)
+	{
+		return false;
 	}
 
 	const FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(DamageEffect, GetAbilityLevel());
 	if (!SpecHandle.IsValid())
 	{
+		return false;
+	}
+
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, ACGameplayTags::Shared_SetByCaller_BaseDamage, BaseDamage);
+
+	if (GroggyDamage > 0.f)
+	{
+		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, ACGameplayTags::Shared_SetByCaller_GroggyDamage, GroggyDamage);
+	}
+
+	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(const_cast<AActor*>(TargetActor));
+	if (!TargetASC)
+	{
+		return false;
+	}
+
+	ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
+	PlayHitGameplayCue(TargetActor);
+	return true;
+}
+
+void UACEnemyAbility_PressureCounter::PlayHitGameplayCue(const AActor* HitActor) const
+{
+	AACEnemyCharacter* OwnerCharacter = GetEnemyCharacterFromActorInfo();
+	UACAbilitySystemComponent* ASC = GetACAbilitySystemComponentFromActorInfo();
+	if (!OwnerCharacter || !ASC || !HitActor)
+	{
 		return;
 	}
 
-	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, ACGameplayTags::Shared_SetByCaller_BaseDamage, CombatComponent->GetCurrentWeaponBaseDamage());
-
-	if (UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(const_cast<AActor*>(HitActor)))
+	// 대상이 Block/Parry 중이면 대상 쪽에서 별도의 Block/Parry GameplayCue가 재생되므로 일반 히트 큐는 생략한다.
+	// Invincible/Dead 상태는 데미지 자체가 0으로 무효화되므로("맞은 효과"가 없으므로) 마찬가지로 재생하지 않는다.
+	const UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(const_cast<AActor*>(HitActor));
+	if (TargetASC && (TargetASC->HasMatchingGameplayTag(ACGameplayTags::Player_Status_Blocking)
+		|| TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Parry)
+		|| TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Invincible)
+		|| TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Dead)))
 	{
-		ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
+		return;
 	}
+
+	const UEnemyCombatComponent* CombatComponent = GetEnemyCombatComponentFromActorInfo();
+
+	FGameplayCueParameters CueParams;
+	CueParams.Instigator = OwnerCharacter;
+	CueParams.EffectCauser = OwnerCharacter;
+	CueParams.SourceObject = CombatComponent ? Cast<AACWeaponBase>(CombatComponent->GetCharacterCurrentEquippedWeapon()) : nullptr;
+	CueParams.TargetAttachComponent = HitActor->GetRootComponent();
+	CueParams.Location = HitActor->GetActorLocation();
+	CueParams.Normal = (OwnerCharacter->GetActorLocation() - HitActor->GetActorLocation()).GetSafeNormal();
+
+	ASC->ExecuteGameplayCue(HitGameplayCueTag, CueParams);
 }
 
 void UACEnemyAbility_PressureCounter::ApplyInvincibilityEffect()
