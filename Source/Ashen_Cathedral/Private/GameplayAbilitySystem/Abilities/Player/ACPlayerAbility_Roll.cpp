@@ -2,6 +2,7 @@
 
 
 #include "GameplayAbilitySystem/Abilities/Player/ACPlayerAbility_Roll.h"
+#include "ACFunctionLibrary.h"
 #include "ACGameplayTags.h"
 #include "MotionWarpingComponent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
@@ -60,6 +61,10 @@ void UACPlayerAbility_Roll::ActivateAbility(const FGameplayAbilitySpecHandle Han
 
 	SetupMotionWarping(TargetLocation);
 	ApplyInvincibilityEffect();
+
+	// PlayRollMontage가 재생을 시작하면 진행 중이던 공격 몽타주가 같은 슬롯에서 자동으로 인터럽트된다.
+	// 콤보가 즉시 리셋되지 않고 자연 완료처럼 처리되도록 재생 직전에 소프트 캔슬을 알린다.
+	UACFunctionLibrary::RequestAttackMontageSoftCancel(PlayerCharacter);
 	PlayRollMontage(MontageToPlay);
 }
 

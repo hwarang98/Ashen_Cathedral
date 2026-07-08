@@ -43,8 +43,8 @@ void AACGameMode::RegisterBossCharacter(AACCharacterBase* InBossCharacter)
 	ACGameState->SetBossCharacter(InBossCharacter);
 	ACGameState->SetBattleState(EACBattleState::BossBattleInProgress);
 
-	// 다음 보스를 스폰할 위치로 재사용
-	CachedBossSpawnTransform = InBossCharacter->GetActorTransform();
+	// 다음 보스를 스폰할 위치로 재사용 (Scale은 다음 보스 자신의 BP 기본값을 따르도록 제외)
+	CachedBossSpawnTransform = FTransform(InBossCharacter->GetActorRotation(), InBossCharacter->GetActorLocation());
 
 	if (!InBossCharacter->OnDeathDelegate.IsAlreadyBound(this, &ThisClass::HandleBossDeath))
 	{

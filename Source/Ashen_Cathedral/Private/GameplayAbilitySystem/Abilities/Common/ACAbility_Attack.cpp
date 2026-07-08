@@ -198,6 +198,11 @@ void UACAbility_Attack::ResetComboCount()
 	CurrentComboCount = 0;
 }
 
+void UACAbility_Attack::RequestSoftMontageCancel()
+{
+	bSoftCancelRequested = true;
+}
+
 void UACAbility_Attack::OnMontageEnded()
 {
 	if (!IsActive())
@@ -215,6 +220,16 @@ void UACAbility_Attack::OnMontageCancelled()
 {
 	if (!IsActive())
 	{
+		return;
+	}
+
+	// 이동/회피로 인한 조기 캔슬은 히트리액트 같은 강제 캔슬과 구분해
+	// 콤보를 즉시 리셋하지 않고 자연 완료(OnMontageEnded)와 동일하게 처리한다.
+	if (bSoftCancelRequested)
+	{
+		bSoftCancelRequested = false;
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+		HandleComboComplete();
 		return;
 	}
 
@@ -283,9 +298,14 @@ void UACAbility_Attack::PlayHitGameplayCue(const AActor* HitActor) const
 	}
 
 	// 대상이 Block/Parry 중이면 대상 쪽에서 별도의 Block/Parry GameplayCue가 재생되므로(TryTriggerSuccessfulBlockEvent → GA_Block)
-	// 일반 히트 사운드는 생략한다. ACCalculation_DamageTaken도 이 태그들을 기준으로 데미지를 보정하므로 판정 기준이 일치한다.
+	// 일반 히트 사운드는 생략한다. Invincible/Dead 상태는 ACAttributeSet::HandleDamageAndTriggerHitReact에서
+	// 데미지 자체가 0으로 무효화되므로("맞은 효과"가 없으므로) 마찬가지로 재생하지 않는다.
+	// ACCalculation_DamageTaken/ACAttributeSet도 이 태그들을 기준으로 데미지를 보정·무효화하므로 판정 기준이 일치한다.
 	const UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(const_cast<AActor*>(HitActor));
-	if (TargetASC && (TargetASC->HasMatchingGameplayTag(ACGameplayTags::Player_Status_Blocking) || TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Parry)))
+	if (TargetASC && (TargetASC->HasMatchingGameplayTag(ACGameplayTags::Player_Status_Blocking)
+		|| TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Parry)
+		|| TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Invincible)
+		|| TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Dead)))
 	{
 		return;
 	}
