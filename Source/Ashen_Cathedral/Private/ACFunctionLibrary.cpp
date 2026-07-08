@@ -7,6 +7,7 @@
 #include "Components/Combat/PawnCombatComponent.h"
 #include "Enums/ACEnums.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
+#include "GameplayAbilitySystem/Abilities/Common/ACAbility_Attack.h"
 #include "Interfaces/PawnCombatInterface.h"
 #include "Items/Weapon/ACWeaponBase.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -189,6 +190,20 @@ bool UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(const AActor* Attacker, 
 
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(HitActor, ACGameplayTags::Player_Event_SuccessfulBlock, EventData);
 	return true;
+}
+
+void UACFunctionLibrary::RequestAttackMontageSoftCancel(AActor* InActor)
+{
+	UACAbilitySystemComponent* ASC = NativeAbilitySystemComponentFromActor(InActor);
+	if (!ASC)
+	{
+		return;
+	}
+
+	if (UACAbility_Attack* AttackAbility = Cast<UACAbility_Attack>(ASC->GetAnimatingAbility()))
+	{
+		AttackAbility->RequestSoftMontageCancel();
+	}
 }
 
 FGameplayTag UACFunctionLibrary::DetermineHitReactionTag(const float& OutAngleDifference)

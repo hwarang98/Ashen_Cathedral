@@ -131,6 +131,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Ashen Cathdral|FunctionLibrary")
 	static bool TryTriggerSuccessfulBlockEvent(const AActor* Attacker, AActor* HitActor);
 
+	/**
+	 * @brief 콤보를 유지해야 하는 공격 몽타주 조기 캔슬(이동 등) 직전에 호출한다.
+	 * InActor에서 현재 애니메이팅 중인 어빌리티를 찾아 UACAbility_Attack이면 콤보 즉시 리셋을 막도록 표시한다.
+	 * ANS_EarlyBlend가 Montage_Stop 호출 직전에 사용한다.
+	 *
+	 * @param InActor 몽타주를 재생 중인 액터
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Ashen Cathdral|FunctionLibrary")
+	static void RequestAttackMontageSoftCancel(AActor* InActor);
+
 private:
 	/* 주어진 각도 차이를 바탕으로 히트 반응 태그를 결정 */
 	static FGameplayTag DetermineHitReactionTag(const float& OutAngleDifference);

@@ -25,6 +25,15 @@ public:
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const override;
 
+	/**
+	 * @brief 콤보를 유지해야 하는 몽타주 조기 캔슬(이동/회피 등)을 알린다.
+	 * ANS_EarlyBlend가 Montage_Stop을 호출하기 직전, 혹은 Roll 어빌리티가 새 몽타주로
+	 * 현재 몽타주를 덮어쓰기 직전에 호출한다. 이 플래그가 설정되면 OnMontageCancelled가
+	 * 히트리액트 등의 강제 캔슬과 달리 즉시 리셋 대신 자연 완료(HandleComboComplete)와
+	 * 동일하게 처리해 리셋 타이머로 넘긴다.
+	 */
+	void RequestSoftMontageCancel();
+
 protected:
 	#pragma region Combo
 	/**
@@ -131,6 +140,9 @@ private:
 	/** 현재 콤보 횟수 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Combo", meta = (AllowPrivateAccess = "true"))
 	int32 CurrentComboCount = 0;
+
+	/** RequestSoftMontageCancel()이 설정한다. OnMontageCancelled에서 소비 후 false로 초기화한다. */
+	bool bSoftCancelRequested = false;
 
 	/**
 	 * ActivateAbility 시점에 판정한 카운터어택 여부를 캐시한다.

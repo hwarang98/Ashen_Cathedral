@@ -198,6 +198,11 @@ void UACAbility_Attack::ResetComboCount()
 	CurrentComboCount = 0;
 }
 
+void UACAbility_Attack::RequestSoftMontageCancel()
+{
+	bSoftCancelRequested = true;
+}
+
 void UACAbility_Attack::OnMontageEnded()
 {
 	if (!IsActive())
@@ -215,6 +220,16 @@ void UACAbility_Attack::OnMontageCancelled()
 {
 	if (!IsActive())
 	{
+		return;
+	}
+
+	// 이동/회피로 인한 조기 캔슬은 히트리액트 같은 강제 캔슬과 구분해
+	// 콤보를 즉시 리셋하지 않고 자연 완료(OnMontageEnded)와 동일하게 처리한다.
+	if (bSoftCancelRequested)
+	{
+		bSoftCancelRequested = false;
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+		HandleComboComplete();
 		return;
 	}
 
