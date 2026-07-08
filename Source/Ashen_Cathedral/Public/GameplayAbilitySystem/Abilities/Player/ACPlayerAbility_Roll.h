@@ -33,10 +33,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Roll Settings")
 	float DefaultRollDistance = 400.0f;
 
-	/** 롤링 중 무적 여부를 결정하는 GameplayEffect */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
-	TSubclassOf<UGameplayEffect> InvincibilityEffect;
-
 	/** 모션 워핑 타겟 이름 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Motion Warping")
 	FName WarpTargetName = "RollTarget";
@@ -53,9 +49,6 @@ private:
 	/** 현재 재생 중인 몽타주 태스크 */
 	UPROPERTY()
 	TObjectPtr<UAbilityTask_PlayMontageAndWait> MontageTask;
-
-	/** 적용된 무적 이펙트 핸들 */
-	FActiveGameplayEffectHandle InvincibilityEffectHandle;
 
 	UFUNCTION()
 	void OnMontageCompleted();
@@ -74,9 +67,6 @@ private:
 
 	/** 무기 장착 상태에 따라 재생할 몽타주를 선택 */
 	UAnimMontage* SelectMontage(ERollDirection Direction, bool bIsWeaponEquipped) const;
-
-	/** 무적 GameplayEffect를 자신에게 적용 */
-	void ApplyInvincibilityEffect();
 
 	/** 몽타주 태스크를 생성하고 실행 */
 	void PlayRollMontage(UAnimMontage* Montage);

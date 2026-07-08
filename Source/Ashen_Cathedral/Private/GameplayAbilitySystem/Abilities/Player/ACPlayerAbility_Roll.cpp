@@ -9,7 +9,6 @@
 #include "Character/Player/ACPlayerCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/Combat/PlayerCombatComponent.h"
-#include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 
 UACPlayerAbility_Roll::UACPlayerAbility_Roll()
 {
@@ -60,7 +59,6 @@ void UACPlayerAbility_Roll::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	const FVector TargetLocation = PlayerCharacter->GetActorLocation() + (WorldRollDirection * SafeDistance);
 
 	SetupMotionWarping(TargetLocation);
-	ApplyInvincibilityEffect();
 
 	// PlayRollMontage가 재생을 시작하면 진행 중이던 공격 몽타주가 같은 슬롯에서 자동으로 인터럽트된다.
 	// 콤보가 즉시 리셋되지 않고 자연 완료처럼 처리되도록 재생 직전에 소프트 캔슬을 알린다.
@@ -70,15 +68,6 @@ void UACPlayerAbility_Roll::ActivateAbility(const FGameplayAbilitySpecHandle Han
 
 void UACPlayerAbility_Roll::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-	if (InvincibilityEffectHandle.IsValid())
-	{
-		if (UACAbilitySystemComponent* ASC = GetACAbilitySystemComponentFromActorInfo())
-		{
-			ASC->RemoveActiveGameplayEffect(InvincibilityEffectHandle);
-		}
-		InvincibilityEffectHandle.Invalidate();
-	}
-
 	if (MontageTask && MontageTask->IsActive())
 	{
 		MontageTask->EndTask();
@@ -133,23 +122,6 @@ UAnimMontage* UACPlayerAbility_Roll::SelectMontage(ERollDirection Direction, boo
 	const TMap<ERollDirection, TObjectPtr<UAnimMontage>>& Montages = bIsWeaponEquipped ? DodgeMontages : RollMontages;
 	const TObjectPtr<UAnimMontage>* Found = Montages.Find(Direction);
 	return (Found && *Found) ? Found->Get() : nullptr;
-}
-
-void UACPlayerAbility_Roll::ApplyInvincibilityEffect()
-{
-	if (!InvincibilityEffect)
-	{
-		return;
-	}
-
-	if (UACAbilitySystemComponent* ASC = GetACAbilitySystemComponentFromActorInfo())
-	{
-		InvincibilityEffectHandle = ASC->ApplyGameplayEffectToSelf(
-			InvincibilityEffect->GetDefaultObject<UGameplayEffect>(),
-			1.0f,
-			ASC->MakeEffectContext()
-			);
-	}
 }
 
 void UACPlayerAbility_Roll::PlayRollMontage(UAnimMontage* Montage)
