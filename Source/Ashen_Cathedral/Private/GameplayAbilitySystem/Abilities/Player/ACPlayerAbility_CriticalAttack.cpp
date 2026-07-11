@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "GameplayAbilitySystem/Abilities/Player/ACPlayerAbility_Execution.h"
+#include "GameplayAbilitySystem/Abilities/Player/ACPlayerAbility_CriticalAttack.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
@@ -17,24 +17,24 @@
 #include "GameFramework/PlayerController.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 
-UACPlayerAbility_Execution::UACPlayerAbility_Execution()
+UACPlayerAbility_CriticalAttack::UACPlayerAbility_CriticalAttack()
 {
 	FGameplayTagContainer TagsToAdd;
-	TagsToAdd.AddTag(ACGameplayTags::Player_Ability_Execution);
+	TagsToAdd.AddTag(ACGameplayTags::Player_Ability_CriticalAttack);
 	SetAssetTags(TagsToAdd);
 
-	// 처형 실행 중 Player ASC에 부여되는 상태 태그
-	ActivationOwnedTags.AddTag(ACGameplayTags::Player_Status_Executing);
+	// 크리티컬 어택 실행 중 Player ASC에 부여되는 상태 태그
+	ActivationOwnedTags.AddTag(ACGameplayTags::Player_Status_CriticalAttacking);
 
-	// 아래 태그가 Player ASC에 있으면 처형 발동 불가
+	// 아래 태그가 Player ASC에 있으면 크리티컬 어택 발동 불가
 	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_Dead);
 	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_HitReact);   // 피격 중
 	ActivationBlockedTags.AddTag(ACGameplayTags::Player_Status_Rolling);    // 회피 중
-	ActivationBlockedTags.AddTag(ACGameplayTags::Player_Status_Executing);  // 이미 처형 중 (중복 방지)
+	ActivationBlockedTags.AddTag(ACGameplayTags::Player_Status_CriticalAttacking);  // 이미 크리티컬 어택 중 (중복 방지)
 	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_SuperArmor); // 공격 중 (Attack ActivationOwnedTags)
-	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_Groggy);     // 그로기 중
+	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_PostureBroken);     // 체간 붕괴 중
 
-	// 처형 중 다른 플레이어 어빌리티 차단
+	// 크리티컬 어택 중 다른 플레이어 어빌리티 차단
 	BlockAbilitiesWithTag.AddTag(ACGameplayTags::Player_Ability_Attack_Light);
 	BlockAbilitiesWithTag.AddTag(ACGameplayTags::Player_Ability_Attack_Heavy);
 	BlockAbilitiesWithTag.AddTag(ACGameplayTags::Player_Ability_Roll);
@@ -46,7 +46,7 @@ UACPlayerAbility_Execution::UACPlayerAbility_Execution()
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 }
 
-bool UACPlayerAbility_Execution::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
+bool UACPlayerAbility_CriticalAttack::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {
 	if (!Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags))
 	{
@@ -59,14 +59,14 @@ bool UACPlayerAbility_Execution::CanActivateAbility(const FGameplayAbilitySpecHa
 		return false;
 	}
 
-	return FindExecutableTarget(PlayerCharacter) != nullptr;
+	return FindCriticalAttackTarget(PlayerCharacter) != nullptr;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ActivateAbility
 // ─────────────────────────────────────────────────────────────────────────────
 
-void UACPlayerAbility_Execution::ActivateAbility(
+void UACPlayerAbility_CriticalAttack::ActivateAbility(
 	const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo,
@@ -74,7 +74,7 @@ void UACPlayerAbility_Execution::ActivateAbility(
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	bExecutionFinished = false;
+	bCriticalAttackFinished = false;
 
 	AACPlayerCharacter* PlayerCharacter = GetPlayerCharacterFromActorInfo();
 	if (!PlayerCharacter)
@@ -84,8 +84,8 @@ void UACPlayerAbility_Execution::ActivateAbility(
 	}
 
 	// CanActivateAbility와 ActivateAbility 사이에 상태가 바뀔 수 있으므로 재탐색
-	AACEnemyCharacter* TargetEnemy = FindExecutableTarget(PlayerCharacter);
-	if (!TargetEnemy || !PlayerExecutionMontage || !EnemyExecutedMontage)
+	AACEnemyCharacter* TargetEnemy = FindCriticalAttackTarget(PlayerCharacter);
+	if (!TargetEnemy || !PlayerCriticalAttackMontage || !EnemyCriticalAttackedMontage)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -93,8 +93,8 @@ void UACPlayerAbility_Execution::ActivateAbility(
 
 	CachedTargetEnemy = TargetEnemy;
 
-	// 1. Enemy 상태 잠금 (Executed 태그 부여 → Groggy 취소 → 이동 잠금 → BT 정지)
-	LockEnemyForExecution(TargetEnemy);
+	// 1. Enemy 상태 잠금 (Executed 태그 부여 → 체간 붕괴 취소 → 이동 잠금 → BT 정지)
+	LockEnemyForCriticalAttack(TargetEnemy);
 
 	// 2. Player 입력 잠금 + 현재 속도 즉시 정지
 	//    DisableMovement()는 MOVE_None으로 바꿔 루트 모션을 차단하므로 사용하지 않음
@@ -108,31 +108,33 @@ void UACPlayerAbility_Execution::ActivateAbility(
 	}
 
 	// 3. MotionWarping 타겟 등록 + Enemy 회전 보정
-	//    Player의 실제 이동은 처형 몽타주의 루트 모션 + MotionWarping이 담당
-	SetupExecutionMotionWarp(PlayerCharacter, TargetEnemy);
+	//    Player의 실제 이동은 크리티컬 어택 몽타주의 루트 모션 + MotionWarping이 담당
+	SetupCriticalAttackMotionWarp(PlayerCharacter, TargetEnemy);
 
-	// 4. Shared.Event.ExecutionDamage 이벤트 대기 (AnimNotify가 이 이벤트를 발송해야 함)
+	// 4. Shared.Event.CriticalAttackDamage 이벤트 대기 (AnimNotify가 이 이벤트를 발송해야 함)
 	WaitDamageEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
 		this,
-		ACGameplayTags::Shared_Event_ExecutionDamage,
+		ACGameplayTags::Shared_Event_CriticalAttackDamage,
 		nullptr,
 		true // OnlyTriggerOnce
 		);
-	WaitDamageEventTask->EventReceived.AddDynamic(this, &ThisClass::OnExecutionDamageEventReceived);
+	WaitDamageEventTask->EventReceived.AddDynamic(this, &ThisClass::OnCriticalAttackDamageEventReceived);
 	WaitDamageEventTask->ReadyForActivation();
 
-	// 5. Enemy 처형 당하는 몽타주 재생 — 종료 시 이동/BT 복구
+	// 5. Enemy 크리티컬 어택 당하는 몽타주 재생 — 종료 시 이동/BT 복구
 	if (UAnimInstance* EnemyAnim = TargetEnemy->GetMesh() ? TargetEnemy->GetMesh()->GetAnimInstance() : nullptr)
 	{
-		EnemyAnim->Montage_Play(EnemyExecutedMontage, 1.0f);
+		// 동일 Enemy에게 반복 발동될 경우 이전 활성화에서 남은 바인딩이 중복 등록되지 않도록 먼저 해제한다.
+		EnemyAnim->OnMontageEnded.RemoveDynamic(this, &ThisClass::OnEnemyMontageEnded);
+		EnemyAnim->Montage_Play(EnemyCriticalAttackedMontage, 1.0f);
 		EnemyAnim->OnMontageEnded.AddDynamic(this, &ThisClass::OnEnemyMontageEnded);
 	}
 
-	// 6. Player 처형 몽타주 재생 (AbilityTask로 종료 콜백 처리)
+	// 6. Player 크리티컬 어택 몽타주 재생 (AbilityTask로 종료 콜백 처리)
 	PlayerMontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this,
 		NAME_None,
-		PlayerExecutionMontage,
+		PlayerCriticalAttackMontage,
 		1.0f,
 		NAME_None,
 		false
@@ -143,7 +145,7 @@ void UACPlayerAbility_Execution::ActivateAbility(
 	PlayerMontageTask->ReadyForActivation();
 }
 
-void UACPlayerAbility_Execution::EndAbility(
+void UACPlayerAbility_CriticalAttack::EndAbility(
 	const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo,
@@ -174,7 +176,7 @@ void UACPlayerAbility_Execution::EndAbility(
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
-AACEnemyCharacter* UACPlayerAbility_Execution::FindExecutableTarget(const AACPlayerCharacter* InPlayer) const
+AACEnemyCharacter* UACPlayerAbility_CriticalAttack::FindCriticalAttackTarget(const AACPlayerCharacter* InPlayer) const
 {
 	if (!InPlayer)
 	{
@@ -198,7 +200,7 @@ AACEnemyCharacter* UACPlayerAbility_Execution::FindExecutableTarget(const AACPla
 		PlayerLocation,
 		FQuat::Identity,
 		ECC_Pawn,
-		FCollisionShape::MakeSphere(ExecutionDistance),
+		FCollisionShape::MakeSphere(CriticalAttackDistance),
 		QueryParams
 		);
 
@@ -220,7 +222,7 @@ AACEnemyCharacter* UACPlayerAbility_Execution::FindExecutableTarget(const AACPla
 		}
 
 		// Enemy 상태 조건
-		if (!EnemyASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Groggy))
+		if (!EnemyASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_PostureBroken))
 		{
 			continue;
 		}
@@ -241,7 +243,7 @@ AACEnemyCharacter* UACPlayerAbility_Execution::FindExecutableTarget(const AACPla
 		const FVector EnemyToPlayer = (PlayerLocation - Enemy->GetActorLocation()).GetSafeNormal();
 		const float DotValue = FVector::DotProduct(Enemy->GetActorForwardVector(), EnemyToPlayer);
 
-		if (DotValue < ExecutionFrontDotThreshold)
+		if (DotValue < CriticalAttackFrontDotThreshold)
 		{
 			continue;
 		}
@@ -258,7 +260,7 @@ AACEnemyCharacter* UACPlayerAbility_Execution::FindExecutableTarget(const AACPla
 	return BestTarget;
 }
 
-void UACPlayerAbility_Execution::LockEnemyForExecution(const AACEnemyCharacter* Enemy) const
+void UACPlayerAbility_CriticalAttack::LockEnemyForCriticalAttack(const AACEnemyCharacter* Enemy) const
 {
 	if (!Enemy)
 	{
@@ -271,13 +273,13 @@ void UACPlayerAbility_Execution::LockEnemyForExecution(const AACEnemyCharacter* 
 		return;
 	}
 
-	// Shared.Status.Executed 부여 -> Groggy EndAbility에서 이동 복구를 건너뜀
+	// Shared.Status.Executed 부여 -> 체간 붕괴 EndAbility에서 이동 복구를 건너뜀
 	EnemyASC->AddLooseGameplayTag(ACGameplayTags::Shared_Status_Executed);
 
-	// Groggy 어빌리티 취소 (Executed 태그 덕분에 EndAbility에서 이동 복구 스킵)
-	FGameplayTagContainer GroggyFilter;
-	GroggyFilter.AddTag(ACGameplayTags::Shared_Ability_Groggy);
-	EnemyASC->CancelAbilities(&GroggyFilter);
+	// 체간 붕괴 어빌리티 취소 (Executed 태그 덕분에 EndAbility에서 이동 복구 스킵)
+	FGameplayTagContainer PostureBrokenFilter;
+	PostureBrokenFilter.AddTag(ACGameplayTags::Shared_Ability_PostureBroken);
+	EnemyASC->CancelAbilities(&PostureBrokenFilter);
 
 	// 이동 명시적 잠금 (이중 안전망)
 	if (UCharacterMovementComponent* Movement = Enemy->GetCharacterMovement())
@@ -296,7 +298,7 @@ void UACPlayerAbility_Execution::LockEnemyForExecution(const AACEnemyCharacter* 
 	}
 }
 
-void UACPlayerAbility_Execution::SetupExecutionMotionWarp(const AACPlayerCharacter* Player, AACEnemyCharacter* Enemy) const
+void UACPlayerAbility_CriticalAttack::SetupCriticalAttackMotionWarp(const AACPlayerCharacter* Player, AACEnemyCharacter* Enemy) const
 {
 	if (!Player || !Enemy)
 	{
@@ -309,8 +311,8 @@ void UACPlayerAbility_Execution::SetupExecutionMotionWarp(const AACPlayerCharact
 		return;
 	}
 
-	// Warp 도달 목표 위치 = Enemy 전방 ExecutionSnapOffset, Z는 Player 현재값 유지
-	FVector WarpLocation = Enemy->GetActorLocation() + Enemy->GetActorForwardVector() * ExecutionSnapOffset;
+	// Warp 도달 목표 위치 = Enemy 전방 CriticalAttackSnapOffset, Z는 Player 현재값 유지
+	FVector WarpLocation = Enemy->GetActorLocation() + Enemy->GetActorForwardVector() * CriticalAttackSnapOffset;
 	WarpLocation.Z = Player->GetActorLocation().Z;
 
 	// Warp 완료 시 Player가 Enemy를 바라보는 방향
@@ -329,7 +331,7 @@ void UACPlayerAbility_Execution::SetupExecutionMotionWarp(const AACPlayerCharact
 	}
 }
 
-void UACPlayerAbility_Execution::UnlockEnemy(const AACEnemyCharacter* Enemy)
+void UACPlayerAbility_CriticalAttack::UnlockEnemy(const AACEnemyCharacter* Enemy)
 {
 	if (!IsValid(Enemy))
 	{
@@ -348,15 +350,15 @@ void UACPlayerAbility_Execution::UnlockEnemy(const AACEnemyCharacter* Enemy)
 		}
 	}
 
-	// 몽타주가 아직 재생 중이면 중단 — OnEnemyMontageEnded에서 이동/BT 복구
-	if (EnemyExecutedMontage)
+	// 몽타주가 아직 재생 중이면 강제로 끊지 않고 자연 종료를 기다린다 — OnEnemyMontageEnded에서 이동/BT 복구.
+	// Player/Enemy 몽타주 길이가 서로 달라도, 어느 한쪽이 먼저 끝났다고 다른 쪽을 잘라내지 않는다.
+	if (EnemyCriticalAttackedMontage)
 	{
 		if (UAnimInstance* EnemyAnim = Enemy->GetMesh() ? Enemy->GetMesh()->GetAnimInstance() : nullptr)
 		{
-			if (EnemyAnim->Montage_IsPlaying(EnemyExecutedMontage))
+			if (EnemyAnim->Montage_IsPlaying(EnemyCriticalAttackedMontage))
 			{
-				EnemyAnim->Montage_Stop(0.2f, EnemyExecutedMontage);
-				return; // OnMontageEnded 콜백에서 이동/BT 복구
+				return; // OnMontageEnded 콜백이 자연 종료 시 이동/BT 복구를 처리한다
 			}
 		}
 	}
@@ -375,13 +377,13 @@ void UACPlayerAbility_Execution::UnlockEnemy(const AACEnemyCharacter* Enemy)
 	}
 }
 
-void UACPlayerAbility_Execution::FinishExecution(bool bWasCancelled)
+void UACPlayerAbility_CriticalAttack::FinishCriticalAttack(bool bWasCancelled)
 {
-	if (bExecutionFinished)
+	if (bCriticalAttackFinished)
 	{
 		return;
 	}
-	bExecutionFinished = true;
+	bCriticalAttackFinished = true;
 
 	// Enemy 상태 복구
 	// CachedTargetEnemy는 리셋하지 않음 — OnEnemyMontageEnded 콜백이 이후에 발화할 수 있음
@@ -393,25 +395,25 @@ void UACPlayerAbility_Execution::FinishExecution(bool bWasCancelled)
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, bWasCancelled);
 }
 
-void UACPlayerAbility_Execution::OnPlayerMontageCompleted()
+void UACPlayerAbility_CriticalAttack::OnPlayerMontageCompleted()
 {
 	if (!IsActive())
 	{
 		return;
 	}
-	FinishExecution(false);
+	FinishCriticalAttack(false);
 }
 
-void UACPlayerAbility_Execution::OnPlayerMontageCancelled()
+void UACPlayerAbility_CriticalAttack::OnPlayerMontageCancelled()
 {
 	if (!IsActive())
 	{
 		return;
 	}
-	FinishExecution(true);
+	FinishCriticalAttack(true);
 }
 
-void UACPlayerAbility_Execution::OnExecutionDamageEventReceived(FGameplayEventData Payload)
+void UACPlayerAbility_CriticalAttack::OnCriticalAttackDamageEventReceived(FGameplayEventData Payload)
 {
 	if (!IsActive() || !CachedTargetEnemy.IsValid())
 	{
@@ -426,11 +428,11 @@ void UACPlayerAbility_Execution::OnExecutionDamageEventReceived(FGameplayEventDa
 	}
 
 	// CameraShake
-	if (ExecutionCameraShakeClass)
+	if (CriticalAttackCameraShakeClass)
 	{
 		if (APlayerController* PC = Cast<APlayerController>(CurrentActorInfo->PlayerController.Get()))
 		{
-			PC->ClientStartCameraShake(ExecutionCameraShakeClass);
+			PC->ClientStartCameraShake(CriticalAttackCameraShakeClass);
 		}
 	}
 
@@ -451,13 +453,13 @@ void UACPlayerAbility_Execution::OnExecutionDamageEventReceived(FGameplayEventDa
 		}
 	}
 
-	// 처형 데미지 적용
-	if (!ExecutionDamageEffect)
+	// 크리티컬 어택 데미지 적용
+	if (!CriticalAttackDamageEffect)
 	{
 		return;
 	}
 
-	const FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(ExecutionDamageEffect, GetAbilityLevel());
+	const FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(CriticalAttackDamageEffect, GetAbilityLevel());
 	if (!SpecHandle.IsValid())
 	{
 		return;
@@ -467,7 +469,7 @@ void UACPlayerAbility_Execution::OnExecutionDamageEventReceived(FGameplayEventDa
 	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(
 		SpecHandle,
 		ACGameplayTags::Shared_SetByCaller_BaseDamage,
-		ExecutionDamage
+		CriticalAttackDamage
 		);
 
 	GetACAbilitySystemComponentFromActorInfo()->ApplyGameplayEffectSpecToTarget(
@@ -476,7 +478,7 @@ void UACPlayerAbility_Execution::OnExecutionDamageEventReceived(FGameplayEventDa
 		);
 }
 
-void UACPlayerAbility_Execution::RestoreEnemyTimeDilation()
+void UACPlayerAbility_CriticalAttack::RestoreEnemyTimeDilation()
 {
 	HitStopTimerHandle.Invalidate();
 
@@ -486,9 +488,9 @@ void UACPlayerAbility_Execution::RestoreEnemyTimeDilation()
 	}
 }
 
-void UACPlayerAbility_Execution::OnEnemyMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+void UACPlayerAbility_CriticalAttack::OnEnemyMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	if (Montage != EnemyExecutedMontage || !CachedTargetEnemy.IsValid())
+	if (Montage != EnemyCriticalAttackedMontage || !CachedTargetEnemy.IsValid())
 	{
 		return;
 	}
