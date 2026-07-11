@@ -53,6 +53,15 @@ private:
 	TSubclassOf<UGameplayEffect> Phase2StatsEffect;
 
 	/**
+	 * Phase2 진입 시 체력을 완전 회복시키는 Instant GE.
+	 * Health 모디파이어를 Override + Attribute Based(Backing Attribute = MaxHealth, Coefficient = 1)로 구성하면
+	 * Phase2StatsEffect 적용 후 상승한 MaxHealth 값으로 Health를 채운다.
+	 * BP에서 GE_AshenKnight_Phase2FullHeal 할당.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Phase2|Effects", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UGameplayEffect> Phase2FullHealEffect;
+
+	/**
 	 * Phase2 전환 몽타주. 이 몽타주의 AnimNotify에서 VisualActivateEventTag 이벤트를 발송해야 합니다.
 	 * None으로 설정하면 몽타주 없이 즉시 비주얼을 적용합니다.
 	 */
@@ -93,6 +102,9 @@ private:
 
 	/** Phase2 스탯 GE를 소유 ASC에 Infinite 타입으로 적용한다. */
 	void ApplyPhase2StatsEffect(const FGameplayAbilitySpecHandle& Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo& ActivationInfo) const;
+
+	/** Phase2FullHealEffect를 적용해 체력을 MaxHealth까지 완전 회복시킨다. */
+	void ApplyPhase2FullHealEffect(const FGameplayAbilitySpecHandle& Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo& ActivationInfo) const;
 
 	/** 이벤트 수신 시 호출. 머티리얼 교체 + Niagara 부착을 수행한다. */
 	UFUNCTION()

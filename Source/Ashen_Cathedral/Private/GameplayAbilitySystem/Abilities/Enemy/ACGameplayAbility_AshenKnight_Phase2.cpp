@@ -43,6 +43,9 @@ void UACGameplayAbility_AshenKnight_Phase2::ActivateAbility(
 	// 1. 스탯 강화 GE 즉시 적용 (Infinite — 몽타주와 무관하게 바로 발동)
 	ApplyPhase2StatsEffect(Handle, ActorInfo, ActivationInfo);
 
+	// 1-1. 체력 완전 회복 (스탯 GE로 상승한 MaxHealth 기준으로 채움)
+	ApplyPhase2FullHealEffect(Handle, ActorInfo, ActivationInfo);
+
 	// 2. 몽타주가 설정된 경우: 재생 후 이벤트 수신 시 비주얼 적용
 	if (Phase2TransitionMontage)
 	{
@@ -177,6 +180,21 @@ void UACGameplayAbility_AshenKnight_Phase2::ApplyPhase2StatsEffect(const FGamepl
 	}
 
 	const FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(Phase2StatsEffect, GetAbilityLevel());
+	if (SpecHandle.IsValid())
+	{
+		ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
+	}
+}
+
+void UACGameplayAbility_AshenKnight_Phase2::ApplyPhase2FullHealEffect(const FGameplayAbilitySpecHandle& Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo& ActivationInfo) const
+{
+	if (!Phase2FullHealEffect)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Phase2] Phase2FullHealEffect가 설정되지 않았습니다. 체력 회복이 적용되지 않습니다: %s"), *GetName());
+		return;
+	}
+
+	const FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(Phase2FullHealEffect, GetAbilityLevel());
 	if (SpecHandle.IsValid())
 	{
 		ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
