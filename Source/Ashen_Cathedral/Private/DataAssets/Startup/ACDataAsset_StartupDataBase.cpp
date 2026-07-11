@@ -22,6 +22,9 @@ void UACDataAsset_StartupDataBase::GiveToAbilitySystemComponent(UACAbilitySystem
 			InASCToGive->ApplyGameplayEffectToSelf(EffectClassDefaultObject, ApplyLevel, InASCToGive->MakeEffectContext());
 		}
 	}
+
+	// 체간 자연 감소 지연 GE 레퍼런스를 ASC에 전달 (AttributeSet의 런타임 접근용)
+	InASCToGive->PostureDecayDelayEffectClass = PostureDecayDelayEffectClass;
 }
 
 void UACDataAsset_StartupDataBase::GrantAbilities(const TArray<TSubclassOf<UACGameplayAbility>>& InAbilitiesToGive, UACAbilitySystemComponent* InASCToGive, int32 ApplyLevel)

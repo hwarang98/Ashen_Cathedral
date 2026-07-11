@@ -13,8 +13,9 @@ class ASHEN_CATHEDRAL_API UEnemyCombatComponent : public UPawnCombatComponent
 
 public:
 	virtual float GetCurrentWeaponBaseDamage() const override;
-	virtual float GetCurrentWeaponHeavyAttackGroggyDamage() const override;
-	virtual float GetCurrentWeaponCounterAttackGroggyDamage() const override;
+	virtual float GetCurrentWeaponLightAttackPostureDamage() const override;
+	virtual float GetCurrentWeaponHeavyAttackPostureDamage() const override;
+	virtual float GetCurrentWeaponCounterAttackPostureDamage() const override;
 	virtual float GetCurrentWeaponAttackSpeed() const override;
 
 private:

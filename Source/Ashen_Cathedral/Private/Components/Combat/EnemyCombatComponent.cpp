@@ -27,20 +27,29 @@ float UEnemyCombatComponent::GetCurrentWeaponBaseDamage() const
 	return 0.f;
 }
 
-float UEnemyCombatComponent::GetCurrentWeaponHeavyAttackGroggyDamage() const
+float UEnemyCombatComponent::GetCurrentWeaponLightAttackPostureDamage() const
 {
 	if (const FACWeaponStatRow* Row = GetCurrentWeaponStatRow())
 	{
-		return Row->HeavyAttackGroggyDamage;
+		return Row->LightAttackPostureDamage;
 	}
 	return 0.f;
 }
 
-float UEnemyCombatComponent::GetCurrentWeaponCounterAttackGroggyDamage() const
+float UEnemyCombatComponent::GetCurrentWeaponHeavyAttackPostureDamage() const
 {
 	if (const FACWeaponStatRow* Row = GetCurrentWeaponStatRow())
 	{
-		return Row->CounterAttackGroggyDamage;
+		return Row->HeavyAttackPostureDamage;
+	}
+	return 0.f;
+}
+
+float UEnemyCombatComponent::GetCurrentWeaponCounterAttackPostureDamage() const
+{
+	if (const FACWeaponStatRow* Row = GetCurrentWeaponStatRow())
+	{
+		return Row->CounterAttackPostureDamage;
 	}
 	return 0.f;
 }

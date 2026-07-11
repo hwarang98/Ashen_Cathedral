@@ -58,9 +58,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "PressureCounter|AOE", meta = (ClampMin = "0.0"))
 	float AOEBaseDamageMultiplier = 1.f;
 
-	/** AOE 히트 시 각 타겟에게 주입할 그로기 데미지. 0이면 주입하지 않는다 (Instant/Sustained 공통) */
+	/** AOE 히트 시 각 타겟에게 주입할 체간 데미지. 0이면 주입하지 않는다 (Instant/Sustained 공통) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "PressureCounter|AOE", meta = (ClampMin = "0.0"))
-	float AOEGroggyDamage = 0.f;
+	float AOEPostureDamage = 0.f;
 
 	/** true면 AOE 판정 범위(단발 스피어 / 지속형 스윕 경로)를 디버그로 표시한다 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "PressureCounter|AOE")
@@ -123,10 +123,10 @@ private:
 	 *
 	 * @param TargetActor   적중된 대상 액터
 	 * @param BaseDamage    Shared_SetByCaller_BaseDamage로 주입할 기본 데미지
-	 * @param GroggyDamage  Shared_SetByCaller_GroggyDamage로 주입할 그로기 데미지. 0 이하면 주입하지 않는다.
+	 * @param PostureDamage  Shared_SetByCaller_PostureDamage로 주입할 체간 데미지. 0 이하면 주입하지 않는다.
 	 * @return 타겟 ASC를 찾아 Spec을 적용했으면 true
 	 */
-	bool ApplyDamageEffectSpecToTarget(const AActor* TargetActor, float BaseDamage, float GroggyDamage);
+	bool ApplyDamageEffectSpecToTarget(const AActor* TargetActor, float BaseDamage, float PostureDamage);
 
 	/**
 	 * @brief HitGameplayCueTag를 HitActor 위치/방향으로 재생한다.

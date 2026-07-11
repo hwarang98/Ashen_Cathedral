@@ -22,11 +22,11 @@ UACAttributeSet::UACAttributeSet()
 	InitMaxStamina(1.f);
 	InitStaminaRegenRate(1.f);
 
-	// Groggy
-	InitGroggyGauge(1.f);
-	InitMaxGroggyGauge(1.f);
-	InitGroggyResistance(1.f);
-	InitGroggyDamageTaken(0.f);
+	// Posture
+	InitPosture(1.f);
+	InitMaxPosture(1.f);
+	InitPostureResistance(1.f);
+	InitPostureDamageTaken(0.f);
 
 	// Combat
 	InitAttackPower(1.f); // 배율
@@ -64,12 +64,12 @@ void UACAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, fl
 		NewValue = FMath::Max(NewValue, 0.f);
 	}
 
-	// Groggy — 게이지는 0과 최대값 사이로 클램프
-	else if (Attribute == GetGroggyGaugeAttribute())
+	// Posture — 게이지는 0과 최대값 사이로 클램프
+	else if (Attribute == GetPostureAttribute())
 	{
-		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxGroggyGauge());
+		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxPosture());
 	}
-	else if (Attribute == GetGroggyResistanceAttribute())
+	else if (Attribute == GetPostureResistanceAttribute())
 	{
 		NewValue = FMath::Max(NewValue, 0.f);
 	}
@@ -92,6 +92,23 @@ void UACAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, fl
 	else if (Attribute == GetAttackSpeedAttribute())
 	{
 		NewValue = FMath::Max(NewValue, 0.f);
+	}
+}
+
+void UACAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
+{
+	Super::PreAttributeBaseChange(Attribute, NewValue);
+
+	// GE_PostureDecay 같은 주기형(Periodic) Additive Modifier는 BaseValue를 직접 변경하므로,
+	// PreAttributeChange(CurrentValue 클램프)만으로는 BaseValue의 음수 드리프트를 막지 못한다.
+	if (Attribute == GetPostureAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxPosture());
+	}
+	// GE_StaminaRegen도 동일하게 주기형 AddBase 모디파이어를 사용하므로 안전망 차원에서 함께 클램프한다.
+	else if (Attribute == GetStaminaAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxStamina());
 	}
 }
 
@@ -123,17 +140,23 @@ void UACAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 		SetStamina(FMath::Clamp(GetStamina(), 0.f, GetMaxStamina()));
 		PawnUIComponent->OnCurrentStaminaChanged.Broadcast(GetStamina() / GetMaxStamina());
 	}
+	else if (Data.EvaluatedData.Attribute == GetPostureAttribute())
+	{
+		// GE_PostureDecay 같은 주기형 GE가 Posture를 직접 변경할 때도 UI에 비율 전달
+		SetPosture(FMath::Clamp(GetPosture(), 0.f, GetMaxPosture()));
+		PawnUIComponent->OnPostureChanged.Broadcast(GetPosture() / GetMaxPosture());
+	}
 	else if (Data.EvaluatedData.Attribute == GetDamageTakenAttribute())
 	{
 		// 피해 처리 및 HitReact 트리거
 		HandleDamageAndTriggerHitReact(Data);
 		PawnUIComponent->OnCurrentHealthChanged.Broadcast(GetHealth() / GetMaxHealth());
 	}
-	else if (Data.EvaluatedData.Attribute == GetGroggyDamageTakenAttribute())
+	else if (Data.EvaluatedData.Attribute == GetPostureDamageTakenAttribute())
 	{
-		// 그로기 피해 처리 (누적량에 따라 그로기 상태 진입 여부 결정)
-		HandleGroggyDamage(Data);
-		PawnUIComponent->OnGroggyStaminaChanged.Broadcast(GetGroggyGauge() / GetMaxGroggyGauge());
+		// 체간 피해 처리 (누적량에 따라 체간 붕괴 상태 진입 여부 결정)
+		HandlePostureDamage(Data);
+		PawnUIComponent->OnPostureChanged.Broadcast(GetPosture() / GetMaxPosture());
 	}
 	else if (Data.EvaluatedData.Attribute == GetStaminaCostAttribute())
 	{
@@ -165,26 +188,26 @@ void UACAttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, f
 	}
 }
 
-void UACAttributeSet::HandleGroggyDamage(const FGameplayEffectModCallbackData& Data)
+void UACAttributeSet::HandlePostureDamage(const FGameplayEffectModCallbackData& Data)
 {
-	const float GroggyDamage = GetGroggyDamageTaken();
-	SetGroggyDamageTaken(0.f);
+	const float PostureDamage = GetPostureDamageTaken();
+	SetPostureDamageTaken(0.f);
 
 	UAbilitySystemComponent* TargetASC = GetOwningAbilitySystemComponent();
 
-	// 사망 상태라면 그로기 누적 불필요
+	// 사망 상태라면 체간 누적 불필요
 	if (TargetASC && TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Dead))
 	{
 		return;
 	}
 
-	// 이미 그로기 상태라면 누적하지 않음
-	if (TargetASC && TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Groggy))
+	// 이미 체간 붕괴 상태라면 누적하지 않음
+	if (TargetASC && TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_PostureBroken))
 	{
 		return;
 	}
 
-	// 처형 중에는 그로기 누적 불필요
+	// 처형 중에는 체간 누적 불필요
 	if (TargetASC && TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Executed))
 	{
 		return;
@@ -196,33 +219,56 @@ void UACAttributeSet::HandleGroggyDamage(const FGameplayEffectModCallbackData& D
 	const float HeavyComboCount = Data.EffectSpec.GetSetByCallerMagnitude(ACGameplayTags::Shared_SetByCaller_AttackType_Heavy, false, 0.f);
 	const bool bIsHeavyAttack = HeavyComboCount > 0.f;
 
-	// 무적 태그는 항상 그로기 무효화
+	// 무적 태그는 항상 체간 데미지 무효화
 	if (TargetASC && TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Invincible))
 	{
 		return;
 	}
 
-	// 슈퍼아머는 카운터/강공격이 아닐 때만 그로기 무효화
+	// 슈퍼아머는 카운터/강공격이 아닐 때만 체간 데미지 무효화
 	if (!bIsCounterAttack && !bIsHeavyAttack && TargetASC && TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_SuperArmor))
 	{
 		return;
 	}
 
-	const float ReducedDamage = FMath::Max(GroggyDamage - GetGroggyResistance(), 0.f);
-	const float OldGroggy = GetGroggyGauge();
-	const float NewGroggy = FMath::Clamp(OldGroggy + ReducedDamage, 0.f, GetMaxGroggyGauge());
-	SetGroggyGauge(NewGroggy);
+	float ReducedDamage = FMath::Max(PostureDamage - GetPostureResistance(), 0.f);
 
-	if (NewGroggy >= GetMaxGroggyGauge())
+	// 체력 비율에 따른 체간 취약도: 체력이 절반 이하이면 체간 데미지를 1.25배 가중한다.
+	// TODO: 추후 Posture Recovery 시스템이 도입되면, 이 취약도 로직은 회복 속도 감소 방식으로 분리한다.
+	const float HealthRatio = GetMaxHealth() > 0.f ? GetHealth() / GetMaxHealth() : 1.f;
+	if (HealthRatio <= 0.5f)
 	{
-		// GA_Groggy를 통해 그로기 상태 처리
+		ReducedDamage *= 1.25f;
+	}
+
+	const float OldPosture = GetPosture();
+	const float NewPosture = FMath::Clamp(OldPosture + ReducedDamage, 0.f, GetMaxPosture());
+	SetPosture(NewPosture);
+
+	// 체간 자연 감소 지연 타이머 리셋 — 실제로 게이지가 증가했을 때만, 마지막 피해 시점부터 유예시간 이후 감소가 재개된다.
+	// GE의 Stacking(Refresh on Successful Application)이 Duration을 자동 리셋하므로 재적용만으로 충분하다.
+	if (ReducedDamage > 0.f)
+	{
+		if (UACAbilitySystemComponent* ACTargetASC = Cast<UACAbilitySystemComponent>(TargetASC))
+		{
+			if (ACTargetASC->PostureDecayDelayEffectClass)
+			{
+				const UGameplayEffect* DecayDelayGE = ACTargetASC->PostureDecayDelayEffectClass->GetDefaultObject<UGameplayEffect>();
+				ACTargetASC->ApplyGameplayEffectToSelf(DecayDelayGE, 1, ACTargetASC->MakeEffectContext());
+			}
+		}
+	}
+
+	if (NewPosture >= GetMaxPosture())
+	{
+		// 체간 붕괴 어빌리티(GA_Groggy)를 통해 체간 붕괴 상태 처리
 		FGameplayEventData Payload;
-		Payload.EventTag = ACGameplayTags::Shared_Event_GroggyTriggered;
+		Payload.EventTag = ACGameplayTags::Shared_Event_PostureBrokenTriggered;
 		Payload.Target = Data.Target.GetAvatarActor();
 
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
 			Data.Target.GetAvatarActor(),
-			ACGameplayTags::Shared_Event_GroggyTriggered,
+			ACGameplayTags::Shared_Event_PostureBrokenTriggered,
 			Payload
 			);
 	}
@@ -281,7 +327,7 @@ void UACAttributeSet::HandleDamageAndTriggerHitReact(const FGameplayEffectModCal
 		HitReactImmunityTags.AddTag(ACGameplayTags::Shared_Status_Invincible);
 		HitReactImmunityTags.AddTag(ACGameplayTags::Shared_Status_SuperArmor);
 		HitReactImmunityTags.AddTag(ACGameplayTags::Shared_Status_Executed);
-		HitReactImmunityTags.AddTag(ACGameplayTags::Shared_Status_Groggy);
+		HitReactImmunityTags.AddTag(ACGameplayTags::Shared_Status_PostureBroken);
 	}
 
 	//  HitReact 차단

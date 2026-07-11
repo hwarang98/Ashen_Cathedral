@@ -24,7 +24,7 @@ UACEnemyAbility_PressureCounter::UACEnemyAbility_PressureCounter()
 	ActivationOwnedTags.AddTag(ACGameplayTags::Enemy_Status_PressureCountering);
 
 	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_Dead);
-	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_Groggy);
+	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_PostureBroken);
 	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_Executed);
 	ActivationBlockedTags.AddTag(ACGameplayTags::Enemy_Status_Dodging);
 
@@ -165,14 +165,14 @@ void UACEnemyAbility_PressureCounter::OnInstantAOEEventReceived(FGameplayEventDa
 	}
 
 	const float BaseDamage = CombatComponent->GetCurrentWeaponBaseDamage() * AOEBaseDamageMultiplier;
-	const float GroggyDamage = AOEGroggyDamage;
+	const float PostureDamage = AOEPostureDamage;
 
 	AOEComponent->TriggerInstantAOE(InstantAOERadius, InstantAOEForwardOffset, bDebugDrawAOE,
-		[this, OwnerCharacter, BaseDamage, GroggyDamage](AActor* TargetActor)
+		[this, OwnerCharacter, BaseDamage, PostureDamage](AActor* TargetActor)
 		{
 			// 무기 콜리전 근접 공격과 동일하게, 유효한 블록이면 대상에게 Block/Parry GameplayCue를 발동시킨다.
 			UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(OwnerCharacter, TargetActor);
-			ApplyDamageEffectSpecToTarget(TargetActor, BaseDamage, GroggyDamage);
+			ApplyDamageEffectSpecToTarget(TargetActor, BaseDamage, PostureDamage);
 		});
 }
 
@@ -192,14 +192,14 @@ void UACEnemyAbility_PressureCounter::OnSustainedAOEStartReceived(FGameplayEvent
 	}
 
 	const float BaseDamage = CombatComponent->GetCurrentWeaponBaseDamage() * AOEBaseDamageMultiplier;
-	const float GroggyDamage = AOEGroggyDamage;
+	const float PostureDamage = AOEPostureDamage;
 
 	AOEComponent->StartSustainedAOE(SustainedAOERadius, SustainedAOEForwardOffset, SustainedAOEDamageInterval, bDebugDrawAOE,
-		[this, OwnerCharacter, BaseDamage, GroggyDamage](AActor* TargetActor)
+		[this, OwnerCharacter, BaseDamage, PostureDamage](AActor* TargetActor)
 		{
 			// 무기 콜리전 근접 공격과 동일하게, 유효한 블록이면 대상에게 Block/Parry GameplayCue를 발동시킨다.
 			UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(OwnerCharacter, TargetActor);
-			ApplyDamageEffectSpecToTarget(TargetActor, BaseDamage, GroggyDamage);
+			ApplyDamageEffectSpecToTarget(TargetActor, BaseDamage, PostureDamage);
 		});
 }
 
@@ -232,7 +232,7 @@ UAOEDamageComponent* UACEnemyAbility_PressureCounter::GetOrCreateAOEDamageCompon
 	return NewComponent;
 }
 
-bool UACEnemyAbility_PressureCounter::ApplyDamageEffectSpecToTarget(const AActor* TargetActor, float BaseDamage, float GroggyDamage)
+bool UACEnemyAbility_PressureCounter::ApplyDamageEffectSpecToTarget(const AActor* TargetActor, float BaseDamage, float PostureDamage)
 {
 	UACAbilitySystemComponent* ASC = GetACAbilitySystemComponentFromActorInfo();
 	if (!ASC || !TargetActor || !DamageEffect)
@@ -248,9 +248,9 @@ bool UACEnemyAbility_PressureCounter::ApplyDamageEffectSpecToTarget(const AActor
 
 	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, ACGameplayTags::Shared_SetByCaller_BaseDamage, BaseDamage);
 
-	if (GroggyDamage > 0.f)
+	if (PostureDamage > 0.f)
 	{
-		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, ACGameplayTags::Shared_SetByCaller_GroggyDamage, GroggyDamage);
+		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, ACGameplayTags::Shared_SetByCaller_PostureDamage, PostureDamage);
 	}
 
 	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(const_cast<AActor*>(TargetActor));

@@ -21,11 +21,14 @@ struct ASHEN_CATHEDRAL_API FACWeaponStatRow : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, DisplayName = "데미지")
 	float Damage = 0.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, DisplayName = "강공격 그로기 데미지")
-	float HeavyAttackGroggyDamage = 0.f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, DisplayName = "약공격 체간 데미지")
+	float LightAttackPostureDamage = 0.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, DisplayName = "카운터 그로기 데미지")
-	float CounterAttackGroggyDamage = 0.f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, DisplayName = "강공격 체간 데미지")
+	float HeavyAttackPostureDamage = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, DisplayName = "카운터 체간 데미지")
+	float CounterAttackPostureDamage = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, DisplayName = "공격 속도")
 	float AttackSpeed = 1.f;

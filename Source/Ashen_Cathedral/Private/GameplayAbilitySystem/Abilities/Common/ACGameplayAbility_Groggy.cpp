@@ -13,19 +13,19 @@ UACGameplayAbility_Groggy::UACGameplayAbility_Groggy()
 {
 	// 에셋 식별 태그 — CancelAbilities 에서 자신을 제외할 때 사용
 	FGameplayTagContainer TagsToAdd;
-	TagsToAdd.AddTag(ACGameplayTags::Shared_Ability_Groggy);
+	TagsToAdd.AddTag(ACGameplayTags::Shared_Ability_PostureBroken);
 	SetAssetTags(TagsToAdd);
 
-	// 어빌리티 활성 중 Shared_Status_Groggy 자동 부여, EndAbility 시 자동 제거
-	ActivationOwnedTags.AddTag(ACGameplayTags::Shared_Status_Groggy);
-	// 사망 상태에서는 그로기 진입 차단 (AttributeSet에서도 체크하지만 이중 안전망)
+	// 어빌리티 활성 중 Shared_Status_PostureBroken 자동 부여, EndAbility 시 자동 제거
+	ActivationOwnedTags.AddTag(ACGameplayTags::Shared_Status_PostureBroken);
+	// 사망 상태에서는 체간 붕괴 진입 차단 (AttributeSet에서도 체크하지만 이중 안전망)
 	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_Dead);
 
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 
-	// Shared.Event.GroggyTriggered 이벤트를 받으면 자동 트리거
+	// Shared.Event.PostureBrokenTriggered 이벤트를 받으면 자동 트리거
 	FAbilityTriggerData TriggerData;
-	TriggerData.TriggerTag = ACGameplayTags::Shared_Event_GroggyTriggered;
+	TriggerData.TriggerTag = ACGameplayTags::Shared_Event_PostureBrokenTriggered;
 	TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
 	AbilityTriggers.Add(TriggerData);
 }
@@ -111,12 +111,12 @@ void UACGameplayAbility_Groggy::EndAbility(const FGameplayAbilitySpecHandle Hand
 		}
 	}
 
-	// 3. GroggyGauge 초기화 — 그로기 종료 후 다음 누적을 0부터 다시 시작
+	// 3. Posture 초기화 — 체간 붕괴 종료 후 다음 누적을 0부터 다시 시작
 	if (const UACAbilitySystemComponent* ASC = GetACAbilitySystemComponentFromActorInfo())
 	{
 		if (UACAttributeSet* AttributeSet = const_cast<UACAttributeSet*>(ASC->GetSet<UACAttributeSet>()))
 		{
-			AttributeSet->SetGroggyGauge(0.f);
+			AttributeSet->SetPosture(0.f);
 		}
 	}
 

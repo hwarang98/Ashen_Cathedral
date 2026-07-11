@@ -54,15 +54,15 @@ void UACEnemyAbility_Attack::ModifyDamageSpec(const FGameplayEffectSpecHandle& S
 		}
 	}
 
-	// 그로기 데미지 배율: 기존 Spec의 GroggyDamage × ScalableFloat(DifficultyLevel)
+	// 체간 데미지 배율: 기존 Spec의 PostureDamage × ScalableFloat(DifficultyLevel)
 	{
-		const float GroggyMultiplier = GroggyDamageMultiplierCurve.GetValueAtLevel(DifficultyLevel);
-		if (GroggyMultiplier > 0.f)
+		const float PostureMultiplier = PostureDamageMultiplierCurve.GetValueAtLevel(DifficultyLevel);
+		if (PostureMultiplier > 0.f)
 		{
-			const float CurrentGroggyDamage = SpecHandle.Data->GetSetByCallerMagnitude(ACGameplayTags::Shared_SetByCaller_GroggyDamage, false, 0.f);
-			if (CurrentGroggyDamage > 0.f)
+			const float CurrentPostureDamage = SpecHandle.Data->GetSetByCallerMagnitude(ACGameplayTags::Shared_SetByCaller_PostureDamage, false, 0.f);
+			if (CurrentPostureDamage > 0.f)
 			{
-				UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, ACGameplayTags::Shared_SetByCaller_GroggyDamage, CurrentGroggyDamage * GroggyMultiplier);
+				UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, ACGameplayTags::Shared_SetByCaller_PostureDamage, CurrentPostureDamage * PostureMultiplier);
 			}
 		}
 	}

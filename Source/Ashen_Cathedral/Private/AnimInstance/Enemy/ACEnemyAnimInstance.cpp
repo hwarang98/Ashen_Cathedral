@@ -14,6 +14,6 @@ void UACEnemyAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		return;
 	}
 
-	bIsGroggy = DoesOwnerHaveTag(ACGameplayTags::Shared_Status_Groggy);
+	bIsPostureBroken = DoesOwnerHaveTag(ACGameplayTags::Shared_Status_PostureBroken);
 	bIsDead = DoesOwnerHaveTag(ACGameplayTags::Shared_Status_Dead);
 }

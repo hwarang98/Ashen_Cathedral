@@ -11,12 +11,12 @@ void UACAbilitySystemComponent::OnAbilityInputPressed(const FGameplayTag& InputT
 		return;
 	}
 
-	// LightAttack 입력 시 처형 어빌리티가 발동 가능하면 먼저 활성화하고 LightAttack을 건너뜀
+	// LightAttack 입력 시 크리티컬 어택 어빌리티가 발동 가능하면 먼저 활성화하고 LightAttack을 건너뜀
 	if (InputTag.MatchesTagExact(ACGameplayTags::InputTag_LightAttack))
 	{
 		for (FGameplayAbilitySpec& ExecSpec : GetActivatableAbilities())
 		{
-			if (!ExecSpec.GetDynamicSpecSourceTags().HasTagExact(ACGameplayTags::Player_Ability_Execution))
+			if (!ExecSpec.GetDynamicSpecSourceTags().HasTagExact(ACGameplayTags::Player_Ability_CriticalAttack))
 			{
 				continue;
 			}

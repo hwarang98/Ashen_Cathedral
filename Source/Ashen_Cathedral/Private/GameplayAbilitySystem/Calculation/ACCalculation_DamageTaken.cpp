@@ -3,7 +3,9 @@
 
 #include "GameplayAbilitySystem/Calculation/ACCalculation_DamageTaken.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystemBlueprintLibrary.h"
 #include "ACGameplayTags.h"
+#include "GameplayAbilitySystem/GameplayEffects/ACGameplayEffect_PostureCounter.h"
 #include "Structs/ACStructTypes.h"
 
 static FCADamageCapture& GetDamageCapture()
@@ -17,7 +19,7 @@ UACCalculation_DamageTaken::UACCalculation_DamageTaken()
 	RelevantAttributesToCapture.Add(GetDamageCapture().AttackPowerDef);
 	RelevantAttributesToCapture.Add(GetDamageCapture().DefensePowerDef);
 	RelevantAttributesToCapture.Add(GetDamageCapture().DamageTakenDef);
-	RelevantAttributesToCapture.Add(GetDamageCapture().GroggyDamageTakenDef);
+	RelevantAttributesToCapture.Add(GetDamageCapture().PostureDamageTakenDef);
 	RelevantAttributesToCapture.Add(GetDamageCapture().BurnAccumulationDef);
 }
 
@@ -40,7 +42,7 @@ void UACCalculation_DamageTaken::Execute_Implementation(const FGameplayEffectCus
 
 	// SetByCaller로 전달된 동적 값들 가져오기
 	float BaseDamage = 0.f;
-	float BaseGroggyDamage = 0.f;
+	float BasePostureDamage = 0.f;
 	float CounterAttackBonus = 0.f; // 카운터 공격이 아니면 0
 	float FireBonusDamage = 0.f;
 	float BurnBuildUp = 0.f;
@@ -67,9 +69,9 @@ void UACCalculation_DamageTaken::Execute_Implementation(const FGameplayEffectCus
 		{
 			CounterAttackBonus = MagnitudeValue;
 		}
-		if (TagMagnitude.Key.MatchesTagExact(ACGameplayTags::Shared_SetByCaller_GroggyDamage))
+		if (TagMagnitude.Key.MatchesTagExact(ACGameplayTags::Shared_SetByCaller_PostureDamage))
 		{
-			BaseGroggyDamage = MagnitudeValue;
+			BasePostureDamage = MagnitudeValue;
 		}
 		if (TagMagnitude.Key.MatchesTagExact(ACGameplayTags::Shared_SetByCaller_FireBonusDamage))
 		{
@@ -114,16 +116,47 @@ void UACCalculation_DamageTaken::Execute_Implementation(const FGameplayEffectCus
 		FinalDamageDone *= CounterAttackBonus;
 	}
 
-	// 패링/블락 상태 데미지 보정
+	// 패링/블록 상태에 따른 데미지 보정 및 체간(Posture) 처리
+	// - 패링 성공: 피격 데미지 0, 방어자 체간 누적 없음, 공격자(Source)에게 체간 역공(BasePostureDamage * 1.5) 전송
+	// - 블록 성공: 피격 데미지 90% 감소, 방어자 본인에게 체간 데미지(BasePostureDamage * 0.8) 누적
+	float FinalPostureDamage = BasePostureDamage;
 	if (const UAbilitySystemComponent* TargetASC = ExecutionParams.GetTargetAbilitySystemComponent())
 	{
 		if (TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Parry))
 		{
 			FinalDamageDone = 0.f;
+			FinalPostureDamage = 0.f;
+
+			// Execution 출력(AddOutputModifier)은 Target만 수정 가능하므로, Source(공격자) 본인에게는
+			// 체간 역공 GE(UACGameplayEffect_PostureCounter)를 직접 적용한다.
+			// 흡혈/반사 데미지와 동일하게 널리 쓰이는 GAS 패턴이며, 어빌리티 부여 여부와 무관하게
+			// ASC를 가진 모든 액터에 예외 없이 적용되므로 부여 누락에 의한 사일런트 실패가 없다.
+			if (BasePostureDamage > 0.f)
+			{
+				if (const UAbilitySystemComponent* SourceASCConst = ExecutionParams.GetSourceAbilitySystemComponent())
+				{
+					if (AActor* SourceActor = SourceASCConst->GetAvatarActor())
+					{
+						if (UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(SourceActor))
+						{
+							const FGameplayEffectSpecHandle CounterSpecHandle = SourceASC->MakeOutgoingSpec(UACGameplayEffect_PostureCounter::StaticClass(), 1.f, SourceASC->MakeEffectContext());
+							if (CounterSpecHandle.IsValid())
+							{
+								UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(CounterSpecHandle, ACGameplayTags::Shared_SetByCaller_PostureDamage, BasePostureDamage * 1.5f);
+								// 패링 역공은 카운터 성격이므로, 공격 중(SuperArmor) 상태인 공격자에게도 체간 데미지가 적용되도록
+								// CounterAttackBonus SetByCaller를 부여해 HandlePostureDamage의 슈퍼아머 무효화 가드를 우회한다.
+								UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(CounterSpecHandle, ACGameplayTags::Shared_SetByCaller_CounterAttackBonus, 1.f);
+								SourceASC->ApplyGameplayEffectSpecToSelf(*CounterSpecHandle.Data.Get());
+							}
+						}
+					}
+				}
+			}
 		}
 		else if (TargetASC->HasMatchingGameplayTag(ACGameplayTags::Player_Status_Blocking))
 		{
-			FinalDamageDone *= 0.3f;
+			FinalDamageDone *= 0.1f;
+			FinalPostureDamage = BasePostureDamage * 0.8f;
 		}
 	}
 
@@ -159,16 +192,16 @@ void UACCalculation_DamageTaken::Execute_Implementation(const FGameplayEffectCus
 		OutExecutionOutput.AddOutputModifier(ModifierEvaluatedData);
 	}
 
-	// 그로기 누적
-	if (BaseGroggyDamage > 0.f)
+	// 체간 누적 (패링/블록 보정이 반영된 최종 체간 데미지)
+	if (FinalPostureDamage > 0.f)
 	{
-		const FGameplayModifierEvaluatedData GroggyModifier(
-			GetDamageCapture().GroggyDamageTakenProperty,
+		const FGameplayModifierEvaluatedData PostureModifier(
+			GetDamageCapture().PostureDamageTakenProperty,
 			EGameplayModOp::Additive,
-			BaseGroggyDamage
+			FinalPostureDamage
 			);
 
-		OutExecutionOutput.AddOutputModifier(GroggyModifier);
+		OutExecutionOutput.AddOutputModifier(PostureModifier);
 	}
 
 	// 화상 축적 — BurnAccumulation 메타 Attribute에 출력, PostGameplayEffectExecute에서 BurnGauge에 반영

@@ -60,7 +60,7 @@ void UACPressureDetectionComponent::OnHitReactEventReceived(const FGameplayEvent
 		return;
 	}
 
-	if (bIgnoreDuringStagger && ASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Groggy))
+	if (bIgnoreDuringStagger && ASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_PostureBroken))
 	{
 		return;
 	}

@@ -32,21 +32,26 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Ashen Cathedral|Weapon|Damage")
 	float GetPlayerCurrentEquippedWeaponDamageAtLevel() const;
 
-	// 현재 장착 무기의 강공격 그로기 데미지를 반환
-	UFUNCTION(BlueprintPure, Category = "Ashen Cathedral|Weapon|Groggy")
-	float GetPlayerCurrentWeaponHeavyGroggyDamage() const;
+	// 현재 장착 무기의 약공격 체간 데미지를 반환
+	UFUNCTION(BlueprintPure, Category = "Ashen Cathedral|Weapon|Posture")
+	float GetPlayerCurrentWeaponLightPostureDamage() const;
 
-	// 현재 장착 무기의 카운터 그로기 데미지를 반환
-	UFUNCTION(BlueprintPure, Category = "Ashen Cathedral|Weapon|Groggy")
-	float GetPlayerCurrentWeaponCounterGroggyDamage() const;
+	// 현재 장착 무기의 강공격 체간 데미지를 반환
+	UFUNCTION(BlueprintPure, Category = "Ashen Cathedral|Weapon|Posture")
+	float GetPlayerCurrentWeaponHeavyPostureDamage() const;
+
+	// 현재 장착 무기의 카운터 체간 데미지를 반환
+	UFUNCTION(BlueprintPure, Category = "Ashen Cathedral|Weapon|Posture")
+	float GetPlayerCurrentWeaponCounterPostureDamage() const;
 
 	// 현재 장착 무기의 타입을 반환
 	UFUNCTION(BlueprintPure, Category = "Ashen Cathedral|Weapon")
 	EACWeaponType GetPlayerCurrentWeaponType() const;
 
 	virtual float GetCurrentWeaponBaseDamage() const override;
-	virtual float GetCurrentWeaponHeavyAttackGroggyDamage() const override;
-	virtual float GetCurrentWeaponCounterAttackGroggyDamage() const override;
+	virtual float GetCurrentWeaponLightAttackPostureDamage() const override;
+	virtual float GetCurrentWeaponHeavyAttackPostureDamage() const override;
+	virtual float GetCurrentWeaponCounterAttackPostureDamage() const override;
 	virtual float GetCurrentWeaponAttackSpeed() const override;
 
 private:

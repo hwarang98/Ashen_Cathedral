@@ -237,7 +237,7 @@ void UACAbility_Attack::OnMontageCancelled()
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }
 
-FGameplayEffectSpecHandle UACAbility_Attack::CreateDamageEffectSpec(float BaseDamage, float GroggyDamage)
+FGameplayEffectSpecHandle UACAbility_Attack::CreateDamageEffectSpec(float BaseDamage, float PostureDamage)
 {
 	if (!DamageEffect)
 	{
@@ -256,9 +256,9 @@ FGameplayEffectSpecHandle UACAbility_Attack::CreateDamageEffectSpec(float BaseDa
 	// ACCalculation_DamageTaken에서 이 태그들을 키로 값을 꺼내 최종 데미지를 계산한다.
 	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, ACGameplayTags::Shared_SetByCaller_BaseDamage, BaseDamage);
 
-	if (GroggyDamage > 0.f)
+	if (PostureDamage > 0.f)
 	{
-		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, ACGameplayTags::Shared_SetByCaller_GroggyDamage, GroggyDamage);
+		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, ACGameplayTags::Shared_SetByCaller_PostureDamage, PostureDamage);
 	}
 
 	return SpecHandle;
@@ -277,7 +277,7 @@ bool UACAbility_Attack::ApplyDamageEffectSpecToTarget(const FGameplayEffectSpecH
 
 	// 적용 순서: ApplyGameplayEffectSpecToTarget
 	//           → ACCalculation_DamageTaken::Execute (SetByCaller 값으로 최종 데미지 계산)
-	//           → ACAttributeSet::PostGameplayEffectExecute (DamageTaken → Health 차감, GroggyGauge 증가)
+	//           → ACAttributeSet::PostGameplayEffectExecute (DamageTaken → Health 차감, Posture 증가)
 	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(const_cast<AActor*>(HitActor));
 	if (!TargetASC)
 	{
@@ -345,17 +345,21 @@ void UACAbility_Attack::OnHitTarget(FGameplayEventData Payload)
 	// ActivateAbility에서 태그를 이미 소모했으므로, 여기서 태그를 다시 조회하지 않고 캐시된 값을 사용한다.
 	const bool bIsCounterAttack = bWasCounterAttack;
 
-	float GroggyDamage = 0.f;
+	float PostureDamage = 0.f;
 	if (bIsCounterAttack)
 	{
-		GroggyDamage = CombatComponent->GetCurrentWeaponCounterAttackGroggyDamage();
+		PostureDamage = CombatComponent->GetCurrentWeaponCounterAttackPostureDamage();
 	}
 	else if (ComboAttackTypeTag.MatchesTagExact(ACGameplayTags::Shared_SetByCaller_AttackType_Heavy))
 	{
-		GroggyDamage = CombatComponent->GetCurrentWeaponHeavyAttackGroggyDamage();
+		PostureDamage = CombatComponent->GetCurrentWeaponHeavyAttackPostureDamage();
+	}
+	else if (ComboAttackTypeTag.MatchesTagExact(ACGameplayTags::Shared_SetByCaller_AttackType_Light))
+	{
+		PostureDamage = CombatComponent->GetCurrentWeaponLightAttackPostureDamage();
 	}
 
-	const FGameplayEffectSpecHandle SpecHandle = CreateDamageEffectSpec(BaseDamage, GroggyDamage);
+	const FGameplayEffectSpecHandle SpecHandle = CreateDamageEffectSpec(BaseDamage, PostureDamage);
 	if (!SpecHandle.IsValid())
 	{
 		return;
@@ -426,15 +430,15 @@ void UACAbility_Attack::OnInstantAOEEventReceived(FGameplayEventData Payload)
 
 	// virtual dispatch를 통해 Player/Enemy 각자의 DataTable 값을 가져온다
 	const float BaseDamage = CombatComponent->GetCurrentWeaponBaseDamage() * AOEBaseDamageMultiplier;
-	const float GroggyDamage = AOEGroggyDamage;
+	const float PostureDamage = AOEPostureDamage;
 
 	AOEComponent->TriggerInstantAOE(InstantAOERadius, InstantAOEForwardOffset, bDebugDrawAOE,
-		[this, OwnerCharacter, BaseDamage, GroggyDamage](AActor* TargetActor)
+		[this, OwnerCharacter, BaseDamage, PostureDamage](AActor* TargetActor)
 		{
 			// 무기 콜리전 근접 공격과 동일하게, 유효한 블록이면 대상에게 Block/Parry GameplayCue를 발동시킨다.
 			UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(OwnerCharacter, TargetActor);
 
-			const FGameplayEffectSpecHandle SpecHandle = CreateDamageEffectSpec(BaseDamage, GroggyDamage);
+			const FGameplayEffectSpecHandle SpecHandle = CreateDamageEffectSpec(BaseDamage, PostureDamage);
 			if (ApplyDamageEffectSpecToTarget(SpecHandle, TargetActor, BaseDamage))
 			{
 				PlayHitGameplayCue(TargetActor);
@@ -460,15 +464,15 @@ void UACAbility_Attack::OnSustainedAOEStartReceived(FGameplayEventData Payload)
 
 	// virtual dispatch를 통해 Player/Enemy 각자의 DataTable 값을 가져온다
 	const float BaseDamage = CombatComponent->GetCurrentWeaponBaseDamage() * AOEBaseDamageMultiplier;
-	const float GroggyDamage = AOEGroggyDamage;
+	const float PostureDamage = AOEPostureDamage;
 
 	AOEComponent->StartSustainedAOE(SustainedAOERadius, SustainedAOEForwardOffset, SustainedAOEDamageInterval, bDebugDrawAOE,
-		[this, OwnerCharacter, BaseDamage, GroggyDamage](AActor* TargetActor)
+		[this, OwnerCharacter, BaseDamage, PostureDamage](AActor* TargetActor)
 		{
 			// 무기 콜리전 근접 공격과 동일하게, 유효한 블록이면 대상에게 Block/Parry GameplayCue를 발동시킨다.
 			UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(OwnerCharacter, TargetActor);
 
-			const FGameplayEffectSpecHandle SpecHandle = CreateDamageEffectSpec(BaseDamage, GroggyDamage);
+			const FGameplayEffectSpecHandle SpecHandle = CreateDamageEffectSpec(BaseDamage, PostureDamage);
 			if (ApplyDamageEffectSpecToTarget(SpecHandle, TargetActor, BaseDamage))
 			{
 				PlayHitGameplayCue(TargetActor);

@@ -15,9 +15,9 @@ public:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 protected:
-	// GAS 태그(Shared_Status_Groggy)로 그로기 상태 여부를 추적
+	// GAS 태그(Shared_Status_PostureBroken)로 체간 붕괴 상태 여부를 추적
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Combat")
-	bool bIsGroggy = false;
+	bool bIsPostureBroken = false;
 
 	// GAS 태그(Shared_Status_Dead)로 사망 상태 여부를 추적
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Combat")
