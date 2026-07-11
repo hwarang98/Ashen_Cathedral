@@ -11,6 +11,7 @@
 
 class UWidgetComponent;
 class UEnemyUIComponent;
+class UACDataAsset_BossReward;
 
 UCLASS()
 class ASHEN_CATHEDRAL_API AACEnemyCharacter : public AACCharacterBase, public IPawnDeathInterface
@@ -27,10 +28,16 @@ public:
 	virtual UEnemyUIComponent* GetEnemyUIComponent() const override;
 	virtual void OnDeath() override;
 
+	FORCEINLINE UACDataAsset_BossReward* GetBossRewardData() const { return BossRewardData; }
+
 private:
 	// 보스 개체 여부 — true면 BeginPlay에서 플레이어의 RewardCardComponent에 자동 등록되어 사망 시 카드 보상을 트리거한다
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RewardCard", meta = (AllowPrivateAccess = "true"))
 	bool bIsBoss = false;
+
+	// 이 보스를 처치했을 때 지급할 성흔 조각 보상 정의. 사망 연출 완료 시 AACGameMode가 조회해 MetaProgressionSubsystem에 전달한다
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "MetaProgression", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UACDataAsset_BossReward> BossRewardData;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UEnemyCombatComponent> EnemyCombatComponent;

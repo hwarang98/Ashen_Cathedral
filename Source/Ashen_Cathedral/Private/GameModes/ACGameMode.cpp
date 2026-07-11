@@ -7,6 +7,7 @@
 #include "Character/ACCharacterBase.h"
 #include "Character/Enemy/ACEnemyCharacter.h"
 #include "Character/Player/ACPlayerCharacter.h"
+#include "Subsystems/ACMetaProgressionSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 
 AACGameMode::AACGameMode()
@@ -148,6 +149,15 @@ void AACGameMode::HandleBossBattleCompleted(AACCharacterBase* DeadCharacter)
 	}
 
 	ACGameState->SetBattleState(EACBattleState::Completed);
+
+	if (AACEnemyCharacter* DeadBoss = Cast<AACEnemyCharacter>(DeadCharacter))
+	{
+		if (UACMetaProgressionSubsystem* MetaProgressionSubsystem = GetGameInstance()->GetSubsystem<UACMetaProgressionSubsystem>())
+		{
+			MetaProgressionSubsystem->GrantBossReward(DeadBoss->GetBossRewardData(), DeadBoss);
+		}
+	}
+
 	OnBossBattleCompletedDelegate.Broadcast(IsFinalBossPending());
 }
 
