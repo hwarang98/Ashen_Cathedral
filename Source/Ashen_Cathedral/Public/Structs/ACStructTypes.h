@@ -98,7 +98,7 @@ struct FCADamageCapture
 	DECLARE_ATTRIBUTE_CAPTUREDEF(AttackPower)
 	DECLARE_ATTRIBUTE_CAPTUREDEF(DefensePower)
 	DECLARE_ATTRIBUTE_CAPTUREDEF(DamageTaken)
-	DECLARE_ATTRIBUTE_CAPTUREDEF(GroggyDamageTaken)
+	DECLARE_ATTRIBUTE_CAPTUREDEF(PostureDamageTaken)
 	DECLARE_ATTRIBUTE_CAPTUREDEF(BurnAccumulation)
 
 	FCADamageCapture()
@@ -106,7 +106,7 @@ struct FCADamageCapture
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UACAttributeSet, AttackPower, Source, false);
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UACAttributeSet, DefensePower, Target, false);
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UACAttributeSet, DamageTaken, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UACAttributeSet, GroggyDamageTaken, Target, false);
+		DEFINE_ATTRIBUTE_CAPTUREDEF(UACAttributeSet, PostureDamageTaken, Target, false);
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UACAttributeSet, BurnAccumulation, Target, false);
 	}
 };

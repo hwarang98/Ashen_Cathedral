@@ -51,9 +51,9 @@ private:
 	FScalableFloat BurnBuildUpAmountCurve;
 
 	/**
-	 * Phase2 그로기 데미지 배율 커브.
-	 * 기존 GroggyDamage에 이 배율을 곱해 Phase2 강화 그로기를 적용합니다.
+	 * Phase2 체간 데미지 배율 커브.
+	 * 기존 PostureDamage에 이 배율을 곱해 Phase2 강화 체간 데미지를 적용합니다.
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Phase2", meta = (AllowPrivateAccess = "true"))
-	FScalableFloat GroggyDamageMultiplierCurve;
+	FScalableFloat PostureDamageMultiplierCurve;
 };

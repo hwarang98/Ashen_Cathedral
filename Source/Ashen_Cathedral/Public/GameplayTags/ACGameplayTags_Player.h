@@ -15,7 +15,7 @@ namespace ACGameplayTags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Ability_Block);
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Ability_Roll);
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Ability_TargetLock);
-	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Ability_Execution);
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Ability_CriticalAttack);
 	#pragma endregion
 
 	#pragma region Player Weapon Tags
@@ -30,8 +30,8 @@ namespace ACGameplayTags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Status_Blocking);
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Status_Rolling);
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Status_TargetLock);
-	// 플레이어가 처형을 실행 중인 동안 부여되는 상태 태그
-	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Status_Executing);
+	// 플레이어가 크리티컬 어택을 실행 중인 동안 부여되는 상태 태그
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Status_CriticalAttacking);
 	// ANS_ComboWindow Begin/End에 맞춰 추가·제거 — 콤보 체인 허용 구간 표시
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Status_ComboWindow);
 	#pragma endregion

@@ -24,5 +24,5 @@ public:
 	FOnPercentChangedDelegate OnCurrentStaminaChanged;
 
 	UPROPERTY(BlueprintAssignable)
-	FOnPercentChangedDelegate OnGroggyStaminaChanged;
+	FOnPercentChangedDelegate OnPostureChanged;
 };

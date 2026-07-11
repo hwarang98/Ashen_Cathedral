@@ -87,14 +87,14 @@ protected:
 
 	#pragma region Damage Effect Helpers
 	/**
-	 * @brief DamageEffect Spec을 생성하고 BaseDamage/GroggyDamage SetByCaller 값을 주입한다.
+	 * @brief DamageEffect Spec을 생성하고 BaseDamage/PostureDamage SetByCaller 값을 주입한다.
 	 * OnHitTarget, OnInstantAOEEventReceived, OnSustainedAOEStartReceived가 공통으로 사용하는 GE 생성 로직이다.
 	 *
-	 * @param BaseDamage    Shared_SetByCaller_BaseDamage로 주입할 기본 데미지
-	 * @param GroggyDamage  Shared_SetByCaller_GroggyDamage로 주입할 그로기 데미지. 0 이하면 주입하지 않는다.
+	 * @param BaseDamage     Shared_SetByCaller_BaseDamage로 주입할 기본 데미지
+	 * @param PostureDamage  Shared_SetByCaller_PostureDamage로 주입할 체간 데미지. 0 이하면 주입하지 않는다.
 	 * @return DamageEffect가 없거나 Spec 생성에 실패하면 Invalid 핸들을 반환한다.
 	 */
-	FGameplayEffectSpecHandle CreateDamageEffectSpec(float BaseDamage, float GroggyDamage);
+	FGameplayEffectSpecHandle CreateDamageEffectSpec(float BaseDamage, float PostureDamage);
 
 	/**
 	 * @brief ModifyDamageSpec 확장 포인트를 호출한 뒤 Spec을 타겟 ASC에 적용한다.
@@ -195,9 +195,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AOE", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
 	float AOEBaseDamageMultiplier = 1.f;
 
-	/** AOE 히트 시 각 타겟에게 주입할 그로기 데미지. 0이면 주입하지 않는다 (Instant/Sustained 공통) */
+	/** AOE 히트 시 각 타겟에게 주입할 체간 데미지. 0이면 주입하지 않는다 (Instant/Sustained 공통) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AOE", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
-	float AOEGroggyDamage = 0.f;
+	float AOEPostureDamage = 0.f;
 
 	/** true면 AOE 판정 범위(단발 스피어 / 지속형 스윕 경로)를 디버그로 표시한다. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AOE", meta = (AllowPrivateAccess = "true"))

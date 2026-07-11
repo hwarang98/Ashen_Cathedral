@@ -44,5 +44,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "StartUpData")
 	TArray<TSubclassOf<UGameplayEffect>> StartUpGameplayEffects;
 
+	/** 체간(Posture) 피해 시 재적용할 자연 감소 지연 GE. Player/Enemy 공통으로 ASC에 전달되어 런타임에 사용됩니다. */
+	UPROPERTY(EditDefaultsOnly, Category = "StartUpData|Posture")
+	TSubclassOf<UGameplayEffect> PostureDecayDelayEffectClass;
+
 	void GrantAbilities(const TArray<TSubclassOf<UACGameplayAbility>>& InAbilitiesToGive, UACAbilitySystemComponent* InASCToGive, int32 ApplyLevel = 1);
 };

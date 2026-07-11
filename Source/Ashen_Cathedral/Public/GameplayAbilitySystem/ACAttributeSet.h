@@ -37,6 +37,8 @@ class ASHEN_CATHEDRAL_API UACAttributeSet : public UAttributeSet
 public:
 	UACAttributeSet();
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
+	/** GE_PostureDecay 같은 주기형 Additive Modifier가 BaseValue를 직접 변경할 때도 음수로 드리프트하지 않도록 클램프한다. */
+	virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
 	/** MoveSpeed 변경(GE 적용·제거 모두) 시 CharacterMovement 와 동기화 */
 	virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
@@ -73,21 +75,21 @@ public:
 	ATTRIBUTE_ACCESSORS(UACAttributeSet, StaminaRegenRate);
 	#pragma endregion
 
-	#pragma region Groggy - 그로기 게이지
-	/** 현재 그로기 누적 수치. 피격 시 증가하며 MaxGroggyGauge에 도달하면 그로기 상태에 진입합니다. */
-	UPROPERTY(BlueprintReadOnly, Category = "Attribute|Groggy")
-	FGameplayAttributeData GroggyGauge;
-	ATTRIBUTE_ACCESSORS(UACAttributeSet, GroggyGauge);
+	#pragma region Posture - 체간 게이지
+	/** 현재 체간(Posture) 누적 수치. 피격 시 증가하며 MaxPosture에 도달하면 체간 붕괴 상태에 진입합니다. */
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute|Posture")
+	FGameplayAttributeData Posture;
+	ATTRIBUTE_ACCESSORS(UACAttributeSet, Posture);
 
-	/** 최대 그로기 게이지. GroggyGauge의 상한선이 됩니다. */
-	UPROPERTY(BlueprintReadOnly, Category = "Attribute|Groggy")
-	FGameplayAttributeData MaxGroggyGauge;
-	ATTRIBUTE_ACCESSORS(UACAttributeSet, MaxGroggyGauge);
+	/** 최대 체간 게이지. Posture의 상한선이 됩니다. */
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute|Posture")
+	FGameplayAttributeData MaxPosture;
+	ATTRIBUTE_ACCESSORS(UACAttributeSet, MaxPosture);
 
-	/** 그로기 저항력. 피격 시 GroggyGauge 증가량을 감소시킵니다. */
-	UPROPERTY(BlueprintReadOnly, Category = "Attribute|Groggy")
-	FGameplayAttributeData GroggyResistance;
-	ATTRIBUTE_ACCESSORS(UACAttributeSet, GroggyResistance);
+	/** 체간 저항력. 피격 시 Posture 증가량을 감소시킵니다. */
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute|Posture")
+	FGameplayAttributeData PostureResistance;
+	ATTRIBUTE_ACCESSORS(UACAttributeSet, PostureResistance);
 
 	#pragma endregion
 
@@ -112,10 +114,10 @@ public:
 	FGameplayAttributeData DamageTaken;
 	ATTRIBUTE_ACCESSORS(UACAttributeSet, DamageTaken);
 
-	/** 그로기 데미지를 받은 수치. PostGameplayEffectExecute에서 소비 후 초기화되는 메타 Attribute입니다. */
-	UPROPERTY(BlueprintReadOnly, Category = "Attribute|Groggy")
-	FGameplayAttributeData GroggyDamageTaken;
-	ATTRIBUTE_ACCESSORS(UACAttributeSet, GroggyDamageTaken);
+	/** 체간 데미지를 받은 수치. PostGameplayEffectExecute에서 소비 후 초기화되는 메타 Attribute입니다. */
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute|Posture")
+	FGameplayAttributeData PostureDamageTaken;
+	ATTRIBUTE_ACCESSORS(UACAttributeSet, PostureDamageTaken);
 
 	/** 스태미나 소비량. PostGameplayEffectExecute에서 소비 후 초기화되는 메타 Attribute. */
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute|Combat")
@@ -141,7 +143,7 @@ public:
 	#pragma endregion
 
 private:
-	void HandleGroggyDamage(const FGameplayEffectModCallbackData& Data);
+	void HandlePostureDamage(const FGameplayEffectModCallbackData& Data);
 	void HandleDamageAndTriggerHitReact(const FGameplayEffectModCallbackData& Data);
 	void HandleStaminaConsumption(const FGameplayEffectModCallbackData& Data);
 	void HandleBurnBuildUp(const FGameplayEffectModCallbackData& Data);

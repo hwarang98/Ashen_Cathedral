@@ -50,20 +50,29 @@ float UPlayerCombatComponent::GetPlayerCurrentEquippedWeaponDamageAtLevel() cons
 	return 0.f;
 }
 
-float UPlayerCombatComponent::GetPlayerCurrentWeaponHeavyGroggyDamage() const
+float UPlayerCombatComponent::GetPlayerCurrentWeaponLightPostureDamage() const
 {
 	if (const FACWeaponStatRow* Row = GetCurrentWeaponStatRow())
 	{
-		return Row->HeavyAttackGroggyDamage;
+		return Row->LightAttackPostureDamage;
 	}
 	return 0.f;
 }
 
-float UPlayerCombatComponent::GetPlayerCurrentWeaponCounterGroggyDamage() const
+float UPlayerCombatComponent::GetPlayerCurrentWeaponHeavyPostureDamage() const
 {
 	if (const FACWeaponStatRow* Row = GetCurrentWeaponStatRow())
 	{
-		return Row->CounterAttackGroggyDamage;
+		return Row->HeavyAttackPostureDamage;
+	}
+	return 0.f;
+}
+
+float UPlayerCombatComponent::GetPlayerCurrentWeaponCounterPostureDamage() const
+{
+	if (const FACWeaponStatRow* Row = GetCurrentWeaponStatRow())
+	{
+		return Row->CounterAttackPostureDamage;
 	}
 	return 0.f;
 }
@@ -82,14 +91,19 @@ float UPlayerCombatComponent::GetCurrentWeaponBaseDamage() const
 	return GetPlayerCurrentEquippedWeaponDamageAtLevel();
 }
 
-float UPlayerCombatComponent::GetCurrentWeaponHeavyAttackGroggyDamage() const
+float UPlayerCombatComponent::GetCurrentWeaponLightAttackPostureDamage() const
 {
-	return GetPlayerCurrentWeaponHeavyGroggyDamage();
+	return GetPlayerCurrentWeaponLightPostureDamage();
 }
 
-float UPlayerCombatComponent::GetCurrentWeaponCounterAttackGroggyDamage() const
+float UPlayerCombatComponent::GetCurrentWeaponHeavyAttackPostureDamage() const
 {
-	return GetPlayerCurrentWeaponCounterGroggyDamage();
+	return GetPlayerCurrentWeaponHeavyPostureDamage();
+}
+
+float UPlayerCombatComponent::GetCurrentWeaponCounterAttackPostureDamage() const
+{
+	return GetPlayerCurrentWeaponCounterPostureDamage();
 }
 
 float UPlayerCombatComponent::GetCurrentWeaponAttackSpeed() const

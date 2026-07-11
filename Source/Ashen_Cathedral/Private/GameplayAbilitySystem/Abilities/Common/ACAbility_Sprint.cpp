@@ -19,9 +19,9 @@ UACAbility_Sprint::UACAbility_Sprint()
 	// 활성화 중 부여할 태그 -> AnimInstance 의 IsSprinting 갱신에 사용
 	ActivationOwnedTags.AddTag(ACGameplayTags::Shared_Status_Sprinting);
 
-	// 사망, 그로기 상태에서 Sprint 차단
+	// 사망, 체간 붕괴 상태에서 Sprint 차단
 	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_Dead);
-	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_Groggy);
+	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_PostureBroken);
 }
 
 bool UACAbility_Sprint::CanActivateAbility(

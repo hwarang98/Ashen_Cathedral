@@ -10,7 +10,7 @@ UACGameplayAbility_Block::UACGameplayAbility_Block()
 	ActivationOwnedTags.AddTag(ACGameplayTags::Player_Status_Blocking);
 
 	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_Dead);
-	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_Groggy);
+	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_PostureBroken);
 
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 }
