@@ -26,6 +26,11 @@ void UACMetaProgressionSubsystem::LoadSlot(int32 SlotIndex)
 	{
 		SaveGameInstance = Cast<UACSaveGame_MetaProgression>(UGameplayStatics::LoadGameFromSlot(SlotName, SaveUserIndex));
 	}
+	else
+	{
+		// 이전에 로드해둔 다른 슬롯의 SaveGameInstance가 남아있으면 안 되므로 명시적으로 비운다
+		SaveGameInstance = nullptr;
+	}
 
 	if (!SaveGameInstance)
 	{
