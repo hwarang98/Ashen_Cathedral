@@ -330,8 +330,19 @@ void UACAttributeSet::HandleDamageAndTriggerHitReact(const FGameplayEffectModCal
 		HitReactImmunityTags.AddTag(ACGameplayTags::Shared_Status_PostureBroken);
 	}
 
+	// Enemy가 실제로 Block에 성공한 피격은 일반 HitReact 이벤트를 보내지 않는다
+	// — HitReact 몽타주가 Block 몽타주를 중단시켜 Block 어빌리티가 풀리는 것을 막는다.
+	// 실제 성공 여부는 데미지 감쇄(ACCalculation_DamageTaken)와 동일한 공통 판정(IsSuccessfulBlock)을 사용하므로,
+	// 뒤/측면 공격이나 Unblockable 공격, 공격자 불명(Attacker=nullptr)인 피격은 기존처럼 HitReact가 발송된다.
+	// Enemy.Status.Blocking 게이트는 Player에게 부여되지 않는 태그이므로 Player HitReact 흐름에는 영향이 없다
+	// (Player는 기존처럼 UACPlayerGameplayAbility_HitReact의 ActivationBlockedTags가 Blocking 중 HitReact를 막는다).
+	const AActor* HitAttacker = Data.EffectSpec.GetEffectContext().GetInstigator();
+	const bool bEnemyBlockedHit = TargetASC
+		&& TargetASC->HasMatchingGameplayTag(ACGameplayTags::Enemy_Status_Blocking)
+		&& UACFunctionLibrary::IsSuccessfulBlock(HitAttacker, Data.Target.GetAvatarActor(), Data.EffectSpec.GetDynamicAssetTags());
+
 	//  HitReact 차단
-	if (TargetASC && !TargetASC->HasAnyMatchingGameplayTags(HitReactImmunityTags))
+	if (TargetASC && !bEnemyBlockedHit && !TargetASC->HasAnyMatchingGameplayTags(HitReactImmunityTags))
 	{
 		FGameplayEventData HitPayload;
 		HitPayload.EventTag = ACGameplayTags::Shared_Event_HitReact;

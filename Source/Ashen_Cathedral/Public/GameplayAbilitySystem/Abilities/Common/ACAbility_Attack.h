@@ -34,6 +34,18 @@ public:
 	 */
 	void RequestSoftMontageCancel();
 
+	// 방어/패링 원본 데이터는 오직 UACAnimNotify_IncomingAttackWarning의 AttackDefenseTags/ExpectedHitTime/ThreatLevel이다.
+	UFUNCTION(BlueprintPure, Category = "Combo|Attack")
+	FGameplayTag GetComboAttackTypeTag() const { return ComboAttackTypeTag; }
+
+	/** UACAnimNotify_IncomingAttackWarning이 Notify 발생 시 호출해 현재 타격의 방어 가능 속성을 기록한다 */
+	UFUNCTION(BlueprintCallable, Category = "Combat|Defense")
+	void SetCurrentAttackDefenseTags(const FGameplayTagContainer& InTags) { CurrentAttackDefenseTags = InTags; }
+
+	/** CreateDamageEffectSpec이 DynamicAssetTags에 주입할 때 사용하는 현재 타격의 방어 가능 속성 */
+	UFUNCTION(BlueprintPure, Category = "Combat|Defense")
+	const FGameplayTagContainer& GetCurrentAttackDefenseTags() const { return CurrentAttackDefenseTags; }
+
 protected:
 	#pragma region Combo
 	/**
@@ -109,9 +121,13 @@ protected:
 	/**
 	 * @brief MeleeAttackSoundCueTag GameplayCue를 HitActor 위치/방향으로 재생한다.
 	 * OnHitTarget, OnInstantAOEEventReceived, OnSustainedAOEStartReceived가 GE 적용 성공 후 공통으로 호출한다.
-	 * @note Parry/Block으로 최종 데미지가 0이거나 감소해도 큐는 재생된다 — 명중 자체에 대한 피드백이기 때문이다.
+	 * @param HitActor      적중된 대상 액터
+	 * @param bParrySuccess GE 적용 '전'에 판정한 Parry 성공 여부 — 성공이면 일반 히트 큐를 생략한다
+	 * @param bBlockSuccess GE 적용 '전'에 판정한 Block 성공 여부 — 성공이면 일반 히트 큐를 생략한다
+	 * @note Parry/Block 판정을 인자로 받는 이유: GE 적용이 동기적으로 대상의 Parry 상태 태그를 소모(적 Parry 어빌리티가
+	 *       성공 이벤트 수신 시 즉시 제거)할 수 있어, 적용 후 재조회하면 성공을 놓치기 때문이다.
 	 */
-	void PlayHitGameplayCue(const AActor* HitActor) const;
+	void PlayHitGameplayCue(const AActor* HitActor, bool bParrySuccess, bool bBlockSuccess) const;
 	#pragma endregion
 
 	#pragma region Montage
@@ -159,6 +175,15 @@ private:
 	/** 카운터 어택 성공 시 데미지에 곱해지는 배율 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combo|Attack", meta = (AllowPrivateAccess = "true"))
 	float CounterAttackDamageMultiplier = 1.5f;
+	#pragma endregion
+
+	#pragma region Combat Defense
+	/**
+	 * 현재 재생 중인 타격의 방어 가능 속성(런타임 값). UACAnimNotify_IncomingAttackWarning이 Notify 발생 시
+	 * SetCurrentAttackDefenseTags로 채워 넣고, CreateDamageEffectSpec이 이 값을 DynamicAssetTags에 주입한다.
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Combat|Defense", meta = (AllowPrivateAccess = "true"))
+	FGameplayTagContainer CurrentAttackDefenseTags;
 	#pragma endregion
 
 	#pragma region GameplayCue & Camera

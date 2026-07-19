@@ -15,6 +15,8 @@ UACPlayerAbility_Block::UACPlayerAbility_Block()
 	FGameplayTagContainer TagsToAdd;
 	TagsToAdd.AddTag(ACGameplayTags::Player_Ability_Block);
 	SetAssetTags(TagsToAdd);
+
+	ActivationOwnedTags.AddTag(ACGameplayTags::Player_Status_Blocking);
 }
 
 void UACPlayerAbility_Block::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)

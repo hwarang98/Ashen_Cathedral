@@ -241,6 +241,11 @@ bool UACRewardCardComponent::CanCardBeOffered(const FACRewardCardData& Card) con
 		return false;
 	}
 
+	if (bOnlyOfferMVPCards && !Card.bIsMVP)
+	{
+		return false;
+	}
+
 	// MaxStack 도달 여부 확인
 	const int32* CurrentStack = AcquiredStacks.Find(Card.CardID);
 	if (CurrentStack && *CurrentStack >= Card.MaxStack)

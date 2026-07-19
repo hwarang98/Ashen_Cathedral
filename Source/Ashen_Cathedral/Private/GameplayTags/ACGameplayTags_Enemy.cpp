@@ -12,6 +12,7 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Status_UnderAttack, "Enemy.Status.UnderAttack")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Status_PressureCountering, "Enemy.Status.PressureCountering")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Status_Attacking, "Enemy.Status.Attacking")
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Status_Blocking, "Enemy.Status.Blocking")
 
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Melee, "Enemy.Ability.Melee")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Dodge, "Enemy.Ability.Dodge")
@@ -21,6 +22,9 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_AttackType_Special_01, "Enemy.Ability.AttackType.Special.01")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_AttackType_Special_02, "Enemy.Ability.AttackType.Special.02")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_AttackType_Special_03, "Enemy.Ability.AttackType.Special.03")
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Block, "Enemy.Ability.Block")
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Parry, "Enemy.Ability.Parry")
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Parry_CounterAttack, "Enemy.Ability.Parry.CounterAttack")
 
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Event_Dodge, "Enemy.Event.Dodge")
 
@@ -36,4 +40,6 @@ namespace ACGameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Event_PressureDetected, "Enemy.Event.PressureDetected")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_PressureReady, "Enemy.State.PressureReady")
+
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Event_ParrySuccess, "Enemy.Event.ParrySuccess")
 }

@@ -43,6 +43,7 @@ void AACEnemyController::OnPossess(APawn* InPawn)
 	if (UACAbilitySystemComponent* ASC = CachedEnemyCharacter ? CachedEnemyCharacter->GetACAbilitySystemComponent() : nullptr)
 	{
 		ASC->RegisterGameplayTagEvent(ACGameplayTags::Enemy_State_PressureReady, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::OnPressureReadyTagChanged);
+		ASC->GenericGameplayEventCallbacks.FindOrAdd(ACGameplayTags::Shared_Event_Combat_IncomingAttack).AddUObject(this, &ThisClass::OnIncomingAttackEventReceived);
 	}
 }
 
@@ -80,5 +81,66 @@ void AACEnemyController::OnPressureReadyTagChanged(const FGameplayTag Tag, int32
 	if (UBlackboardComponent* BlackboardComponent = GetBlackboardComponent())
 	{
 		BlackboardComponent->SetValueAsBool(FName("bPressureResponseRequested"), NewCount > 0);
+	}
+}
+
+void AACEnemyController::OnIncomingAttackEventReceived(const FGameplayEventData* Payload)
+{
+	UACAbilitySystemComponent* ASC = CachedEnemyCharacter ? CachedEnemyCharacter->GetACAbilitySystemComponent() : nullptr;
+	if (!Payload || !ASC)
+	{
+		return;
+	}
+
+	// 사망/체간 붕괴/공격 중/페이즈 전환 중이면 예고를 무시한다 (ACPressureDetectionComponent와 동일한 가드 스타일)
+	if (ASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Dead)
+		|| ASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_PostureBroken)
+		|| ASC->HasMatchingGameplayTag(ACGameplayTags::Enemy_Status_Attacking)
+		|| ASC->HasMatchingGameplayTag(ACGameplayTags::Enemy_State_Phase2))
+	{
+		ResetIncomingAttackBlackboard();
+		return;
+	}
+
+	UBlackboardComponent* BlackboardComponent = GetBlackboardComponent();
+	if (!BlackboardComponent)
+	{
+		return;
+	}
+
+	const bool bParryable = Payload->InstigatorTags.HasTag(ACGameplayTags::Shared_Attack_Parryable) && !Payload->InstigatorTags.HasTag(ACGameplayTags::Shared_Attack_Unparryable);
+	const bool bBlockable = Payload->InstigatorTags.HasTag(ACGameplayTags::Shared_Attack_Blockable) && !Payload->InstigatorTags.HasTag(ACGameplayTags::Shared_Attack_Unblockable);
+
+	BlackboardComponent->SetValueAsObject(FName("IncomingAttackActor"), const_cast<AActor*>(Payload->Instigator.Get()));
+	BlackboardComponent->SetValueAsFloat(FName("IncomingAttackTimeToImpact"), Payload->EventMagnitude);
+	BlackboardComponent->SetValueAsBool(FName("bIncomingAttackParryable"), bParryable);
+	BlackboardComponent->SetValueAsBool(FName("bIncomingAttackBlockable"), bBlockable);
+
+	const int32 WarningId = ++IncomingAttackWarningId;
+	const float ClearDelay = FMath::Max(static_cast<float>(Payload->EventMagnitude) + IncomingAttackBlackboardGraceTime, 0.01f);
+	FTimerDelegate ClearDelegate = FTimerDelegate::CreateUObject(this, &ThisClass::ClearIncomingAttackBlackboard, WarningId);
+	GetWorldTimerManager().SetTimer(IncomingAttackClearTimerHandle, ClearDelegate, ClearDelay, false);
+}
+
+void AACEnemyController::ClearIncomingAttackBlackboard(int32 ExpectedWarningId)
+{
+	if (ExpectedWarningId != IncomingAttackWarningId)
+	{
+		return;
+	}
+
+	ResetIncomingAttackBlackboard();
+}
+
+void AACEnemyController::ResetIncomingAttackBlackboard()
+{
+	GetWorldTimerManager().ClearTimer(IncomingAttackClearTimerHandle);
+
+	if (UBlackboardComponent* BlackboardComponent = GetBlackboardComponent())
+	{
+		BlackboardComponent->ClearValue(FName("IncomingAttackActor"));
+		BlackboardComponent->SetValueAsFloat(FName("IncomingAttackTimeToImpact"), 0.f);
+		BlackboardComponent->SetValueAsBool(FName("bIncomingAttackParryable"), false);
+		BlackboardComponent->SetValueAsBool(FName("bIncomingAttackBlockable"), false);
 	}
 }

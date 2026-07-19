@@ -14,6 +14,8 @@
 #include "DataAssets/Items/Weapon/ACDataAsset_WeaponData.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
+#include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
+#include "GameplayAbilitySystem/Abilities/Common/ACAbility_Attack.h"
 #include "GameplayTags/ACGameplayTags_Shared.h"
 #include "Items/Weapon/ACWeapon.h"
 #include "Structs/ACStructTypes.h"
@@ -65,7 +67,17 @@ void UPawnCombatComponent::OnHitTargetActor(AActor* HitActor)
 
 	OverlappedActors.AddUnique(HitActor);
 
-	UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(GetOwningPawn(), HitActor);
+	// Notify(AN_IncomingAttackWarning)가 기록해둔 현재 공격의 방어 가능 속성을 가져와 Block/Parry 판정에 사용한다.
+	FGameplayTagContainer CurrentAttackDefenseTags;
+	if (UACAbilitySystemComponent* ASC = UACFunctionLibrary::NativeAbilitySystemComponentFromActor(GetOwningPawn()))
+	{
+		if (const UACAbility_Attack* AttackAbility = Cast<UACAbility_Attack>(ASC->GetAnimatingAbility()))
+		{
+			CurrentAttackDefenseTags = AttackAbility->GetCurrentAttackDefenseTags();
+		}
+	}
+
+	UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(GetOwningPawn(), HitActor, CurrentAttackDefenseTags);
 
 	FGameplayEventData EventData;
 	EventData.Instigator = GetOwningPawn();

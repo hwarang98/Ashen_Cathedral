@@ -167,19 +167,83 @@ bool UACFunctionLibrary::IsValidBlock(const AActor* InAttacker, const AActor* In
 {
 	check(InAttacker && InDefender);
 
-	const float DotResult = FVector::DotProduct(InAttacker->GetActorForwardVector(), InDefender->GetActorForwardVector());
+	// 위치 기반 정면 판정: 방어자 Forward와 방어자→공격자 방향의 각도가 AngleThreshold(도) 이내여야 한다.
+	// (Forward끼리 비교하는 방식은 공격자가 방어자 뒤에 있어도 통과할 수 있어 부정확하다)
+	const FVector DefenderForward = InDefender->GetActorForwardVector();
+	const FVector DefenderToAttacker = (InAttacker->GetActorLocation() - InDefender->GetActorLocation()).GetSafeNormal();
+	const float DotResult = FVector::DotProduct(DefenderForward, DefenderToAttacker);
 
-	return DotResult < -0.1;
+	return DotResult >= FMath::Cos(FMath::DegreesToRadians(AngleThreshold));
 }
 
-bool UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(const AActor* Attacker, AActor* HitActor)
+bool UACFunctionLibrary::IsActorBlocking(const AActor* InActor)
 {
-	if (!Attacker || !NativeDoesActorHaveTag(HitActor, ACGameplayTags::Player_Status_Blocking))
+	return NativeDoesActorHaveTag(const_cast<AActor*>(InActor), ACGameplayTags::Player_Status_Blocking)
+		|| NativeDoesActorHaveTag(const_cast<AActor*>(InActor), ACGameplayTags::Enemy_Status_Blocking);
+}
+
+bool UACFunctionLibrary::IsAttackBlockable(const FGameplayTagContainer& AttackTags)
+{
+	return AttackTags.HasTag(ACGameplayTags::Shared_Attack_Blockable) && !AttackTags.HasTag(ACGameplayTags::Shared_Attack_Unblockable);
+}
+
+bool UACFunctionLibrary::IsAttackParryable(const FGameplayTagContainer& AttackTags)
+{
+	return AttackTags.HasTag(ACGameplayTags::Shared_Attack_Parryable) && !AttackTags.HasTag(ACGameplayTags::Shared_Attack_Unparryable);
+}
+
+bool UACFunctionLibrary::IsSuccessfulBlock(const AActor* Attacker, const AActor* Defender, const FGameplayTagContainer& AttackTags)
+{
+	if (!IsValid(Attacker) || !IsValid(Defender))
 	{
 		return false;
 	}
 
-	if (!IsValidBlock(Attacker, HitActor))
+	if (!IsAttackBlockable(AttackTags))
+	{
+		return false;
+	}
+
+	if (!IsActorBlocking(Defender))
+	{
+		return false;
+	}
+
+	return IsValidBlock(Attacker, Defender);
+}
+
+bool UACFunctionLibrary::IsSuccessfulParry(const AActor* Attacker, const AActor* Defender, const FGameplayTagContainer& AttackTags)
+{
+	if (!IsValid(Attacker) || !IsValid(Defender))
+	{
+		return false;
+	}
+
+	if (!IsAttackParryable(AttackTags))
+	{
+		return false;
+	}
+
+	if (!NativeDoesActorHaveTag(const_cast<AActor*>(Defender), ACGameplayTags::Shared_Status_Parry))
+	{
+		return false;
+	}
+
+	return IsValidBlock(Attacker, Defender);
+}
+
+bool UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(const AActor* Attacker, AActor* HitActor, const FGameplayTagContainer& AttackDefenseTags)
+{
+	if (!Attacker || !HitActor)
+	{
+		return false;
+	}
+
+	// Parry/Block 성공: 데미지 계산·HitReact 억제·Hit Cue 억제와 동일한 공통 판정을 사용한다.
+	const bool bParrySuccess = IsSuccessfulParry(Attacker, HitActor, AttackDefenseTags);
+	const bool bBlockSuccess = IsSuccessfulBlock(Attacker, HitActor, AttackDefenseTags);
+
+	if (!bParrySuccess && !bBlockSuccess)
 	{
 		return false;
 	}

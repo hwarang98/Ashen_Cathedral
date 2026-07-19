@@ -120,16 +120,70 @@ public:
 	static bool IsValidBlock(const AActor* InAttacker, const AActor* InDefender, const float AngleThreshold = 60.0f);
 
 	/**
-	 * @brief HitActor가 유효한 각도에서 블록 중이면 Player.Event.SuccessfulBlock 이벤트를 HitActor에게 보낸다.
+	 * @brief Actor가 Player.Status.Blocking 또는 Enemy.Status.Blocking 중 하나라도 가지고 있는지 확인한다.
+	 * Player 전용 Blocking 태그를 리네임하지 않고 Boss(Enemy) Blocking 태그와 함께 검사할 수 있도록
+	 * TryTriggerSuccessfulBlockEvent/ACAbility_Attack/ACCalculation_DamageTaken이 공유하는 판정 진입점이다.
+	 *
+	 * @param InActor 검사 대상 Actor
+	 * @return 둘 중 하나라도 있으면 true
+	 */
+	UFUNCTION(BlueprintPure, Category = "Ashen Cathdral|FunctionLibrary")
+	static bool IsActorBlocking(const AActor* InActor);
+
+	/** 공격 태그에 Shared.Attack.Blockable이 있고 Shared.Attack.Unblockable이 없으면 true */
+	UFUNCTION(BlueprintPure, Category = "Ashen Cathdral|FunctionLibrary")
+	static bool IsAttackBlockable(const FGameplayTagContainer& AttackTags);
+
+	/** 공격 태그에 Shared.Attack.Parryable이 있고 Shared.Attack.Unparryable이 없으면 true */
+	UFUNCTION(BlueprintPure, Category = "Ashen Cathdral|FunctionLibrary")
+	static bool IsAttackParryable(const FGameplayTagContainer& AttackTags);
+
+	/**
+	 * @brief 실제 Block 성공 여부를 판정하는 공통 진입점.
+	 * 데미지 감쇄(ACCalculation_DamageTaken), HitReact 억제(ACAttributeSet), SuccessfulBlock 이벤트 발송
+	 * (TryTriggerSuccessfulBlockEvent)이 전부 이 판정을 공유해 서로 어긋나지 않게 한다.
+	 *
+	 * 성공 조건: Attacker/Defender 유효 && 공격이 Blockable(Unblockable 아님) && Defender가 Blocking 상태
+	 * && Attacker가 Defender의 정면 방어 각도(IsValidBlock) 안에 있음.
+	 *
+	 * @param Attacker   공격자
+	 * @param Defender   방어자
+	 * @param AttackTags 현재 공격의 방어 가능 속성(Shared.Attack.*)
+	 * @return 위 조건을 모두 만족하면 true
+	 */
+	UFUNCTION(BlueprintPure, Category = "Ashen Cathdral|FunctionLibrary")
+	static bool IsSuccessfulBlock(const AActor* Attacker, const AActor* Defender, const FGameplayTagContainer& AttackTags);
+
+	/**
+	 * @brief 실제 Parry 성공 여부를 판정하는 공통 진입점 (IsSuccessfulBlock의 Parry 버전).
+	 * 데미지 무효화/역공(ACCalculation_DamageTaken), SuccessfulBlock 이벤트 발송(TryTriggerSuccessfulBlockEvent),
+	 * 일반 Hit GameplayCue 억제(UACAbility_Attack)가 전부 이 판정을 공유해 서로 어긋나지 않게 한다.
+	 *
+	 * 성공 조건: Attacker/Defender 유효 && 공격이 Parryable(Unparryable 아님) && Defender가 Shared.Status.Parry 상태
+	 * && Attacker가 Defender의 정면 방어 각도(IsValidBlock) 안에 있음.
+	 *
+	 * @param Attacker   공격자
+	 * @param Defender   방어자
+	 * @param AttackTags 현재 공격의 방어 가능 속성(Shared.Attack.*)
+	 * @return 위 조건을 모두 만족하면 true
+	 */
+	UFUNCTION(BlueprintPure, Category = "Ashen Cathdral|FunctionLibrary")
+	static bool IsSuccessfulParry(const AActor* Attacker, const AActor* Defender, const FGameplayTagContainer& AttackTags);
+
+	/**
+	 * @brief HitActor가 유효한 각도에서 Parry/Block 중이고, 이 공격이 그걸 허용하는 태그를 가지고 있으면
+	 * Player.Event.SuccessfulBlock 이벤트를 HitActor에게 보낸다.
 	 * GA_Block이 이 이벤트를 받아 Block/Parry GameplayCue 재생, 넉백, 카운터어택 윈도우 부여를 처리한다.
 	 * 무기 콜리전 기반 근접 공격(PawnCombatComponent)과 AOE 판정이 공통으로 사용한다.
 	 *
 	 * @param Attacker 공격자
 	 * @param HitActor 피격된 대상 액터
-	 * @return 이벤트를 보냈으면(=유효한 블록이었으면) true
+	 * @param AttackDefenseTags 현재 공격의 방어 가능 속성(Shared.Attack.Parryable/Blockable/Unparryable/Unblockable).
+	 * 비어있으면 Parry/Block 둘 다 성공하지 않는다.
+	 * @return 이벤트를 보냈으면(=유효한 Parry 또는 Block이었으면) true
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Ashen Cathdral|FunctionLibrary")
-	static bool TryTriggerSuccessfulBlockEvent(const AActor* Attacker, AActor* HitActor);
+	static bool TryTriggerSuccessfulBlockEvent(const AActor* Attacker, AActor* HitActor, const FGameplayTagContainer& AttackDefenseTags);
 
 	/**
 	 * @brief 콤보를 유지해야 하는 공격 몽타주 조기 캔슬(이동 등) 직전에 호출한다.

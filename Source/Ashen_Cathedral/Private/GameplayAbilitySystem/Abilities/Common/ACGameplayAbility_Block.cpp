@@ -7,8 +7,8 @@
 
 UACGameplayAbility_Block::UACGameplayAbility_Block()
 {
-	ActivationOwnedTags.AddTag(ACGameplayTags::Player_Status_Blocking);
-
+	// Blocking 상태 태그는 Player/Enemy가 서로 다르므로(Player.Status.Blocking / Enemy.Status.Blocking)
+	// 공용 베이스가 아니라 각 서브클래스(UACPlayerAbility_Block / UACEnemyAbility_Block) 생성자에서 부여한다.
 	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_Dead);
 	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_PostureBroken);
 
