@@ -141,7 +141,11 @@ private:
 	/**
 	 * @brief HitGameplayCueTag를 HitActor 위치/방향으로 재생한다.
 	 * ApplyDamageEffectSpecToTarget이 GE 적용 성공 후 공통으로 호출한다.
-	 * @note 실제 Parry/Block 성공이거나 Invincible/Dead 상태이면 일반 Hit GameplayCue를 재생하지 않는다 — 실제로 맞은 효과가 없기 때문이다.
+	 * @param HitActor      적중된 대상 액터
+	 * @param bParrySuccess GE 적용 '전'에 판정한 Parry 성공 여부 — 성공이면 일반 히트 큐를 생략한다
+	 * @param bBlockSuccess GE 적용 '전'에 판정한 Block 성공 여부 — 성공이면 일반 히트 큐를 생략한다
+	 * @note Parry/Block 판정을 인자로 받는 이유: GE 적용이 동기적으로 대상의 Parry 상태 태그를 소모할 수 있어,
+	 *       적용 후 재조회하면 성공을 놓치기 때문이다.
 	 */
-	void PlayHitGameplayCue(const AActor* HitActor) const;
+	void PlayHitGameplayCue(const AActor* HitActor, bool bParrySuccess, bool bBlockSuccess) const;
 };

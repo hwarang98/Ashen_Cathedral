@@ -301,7 +301,7 @@ bool UACAbility_Attack::ApplyDamageEffectSpecToTarget(const FGameplayEffectSpecH
 	return true;
 }
 
-void UACAbility_Attack::PlayHitGameplayCue(const AActor* HitActor) const
+void UACAbility_Attack::PlayHitGameplayCue(const AActor* HitActor, bool bParrySuccess, bool bBlockSuccess) const
 {
 	AACCharacterBase* OwnerCharacter = GetACCharacterFromActorInfo();
 	UACAbilitySystemComponent* ASC = GetACAbilitySystemComponentFromActorInfo();
@@ -312,14 +312,13 @@ void UACAbility_Attack::PlayHitGameplayCue(const AActor* HitActor) const
 
 	// 실제 Parry/Block 성공(ACCalculation_DamageTaken, TryTriggerSuccessfulBlockEvent와 동일 기준: CurrentAttackDefenseTags
 	// 태그가 있어야 성공)일 때만 별도의 Block/Parry GameplayCue가 재생되므로 일반 히트 사운드를 생략한다.
+	// bParrySuccess/bBlockSuccess는 GE 적용 '전'에 판정한 값을 호출부에서 넘겨받는다 — 적용 시점에 Parry 상태 태그가
+	// 소모될 수 있어 여기서 재조회하면 성공을 놓치기 때문이다.
 	// Invincible/Dead 상태는 ACAttributeSet::HandleDamageAndTriggerHitReact에서 데미지 자체가 0으로 무효화되므로
 	// ("맞은 효과"가 없으므로) 마찬가지로 재생하지 않는다.
 	const UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(const_cast<AActor*>(HitActor));
 	if (TargetASC)
 	{
-		const bool bParrySuccess = UACFunctionLibrary::IsSuccessfulParry(OwnerCharacter, HitActor, CurrentAttackDefenseTags);
-		const bool bBlockSuccess = UACFunctionLibrary::IsSuccessfulBlock(OwnerCharacter, HitActor, CurrentAttackDefenseTags);
-
 		if (bParrySuccess || bBlockSuccess
 			|| TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Invincible)
 			|| TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Dead))
@@ -395,9 +394,14 @@ void UACAbility_Attack::OnHitTarget(FGameplayEventData Payload)
 		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, ACGameplayTags::Shared_SetByCaller_CounterAttackBonus, CounterAttackDamageMultiplier);
 	}
 
+	// GE 적용은 동기적으로 ACCalculation_DamageTaken을 실행하며, 이 과정에서 적 Parry 어빌리티가 성공 이벤트를 받아
+	// 대상의 Parry 상태 태그를 즉시 제거할 수 있다. 따라서 Parry/Block 성공 판정은 반드시 적용 '전'에 캡처해 큐 억제에 쓴다.
+	const bool bParrySuccess = UACFunctionLibrary::IsSuccessfulParry(OwnerCharacter, HitActor, CurrentAttackDefenseTags);
+	const bool bBlockSuccess = UACFunctionLibrary::IsSuccessfulBlock(OwnerCharacter, HitActor, CurrentAttackDefenseTags);
+
 	if (ApplyDamageEffectSpecToTarget(SpecHandle, HitActor, BaseDamage))
 	{
-		PlayHitGameplayCue(HitActor);
+		PlayHitGameplayCue(HitActor, bParrySuccess, bBlockSuccess);
 	}
 
 	if (HitCameraShakeClass)
@@ -456,10 +460,14 @@ void UACAbility_Attack::OnInstantAOEEventReceived(FGameplayEventData Payload)
 			// 무기 콜리전 근접 공격과 동일하게, 유효한 블록이면 대상에게 Block/Parry GameplayCue를 발동시킨다.
 			UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(OwnerCharacter, TargetActor, CurrentAttackDefenseTags);
 
+			// GE 적용이 Parry 상태 태그를 소모하므로, 큐 억제용 판정은 적용 전에 캡처한다.
+			const bool bParrySuccess = UACFunctionLibrary::IsSuccessfulParry(OwnerCharacter, TargetActor, CurrentAttackDefenseTags);
+			const bool bBlockSuccess = UACFunctionLibrary::IsSuccessfulBlock(OwnerCharacter, TargetActor, CurrentAttackDefenseTags);
+
 			const FGameplayEffectSpecHandle SpecHandle = CreateDamageEffectSpec(BaseDamage, PostureDamage);
 			if (ApplyDamageEffectSpecToTarget(SpecHandle, TargetActor, BaseDamage))
 			{
-				PlayHitGameplayCue(TargetActor);
+				PlayHitGameplayCue(TargetActor, bParrySuccess, bBlockSuccess);
 			}
 		});
 }
@@ -490,10 +498,14 @@ void UACAbility_Attack::OnSustainedAOEStartReceived(FGameplayEventData Payload)
 			// 무기 콜리전 근접 공격과 동일하게, 유효한 블록이면 대상에게 Block/Parry GameplayCue를 발동시킨다.
 			UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(OwnerCharacter, TargetActor, CurrentAttackDefenseTags);
 
+			// GE 적용이 Parry 상태 태그를 소모하므로, 큐 억제용 판정은 적용 전에 캡처한다.
+			const bool bParrySuccess = UACFunctionLibrary::IsSuccessfulParry(OwnerCharacter, TargetActor, CurrentAttackDefenseTags);
+			const bool bBlockSuccess = UACFunctionLibrary::IsSuccessfulBlock(OwnerCharacter, TargetActor, CurrentAttackDefenseTags);
+
 			const FGameplayEffectSpecHandle SpecHandle = CreateDamageEffectSpec(BaseDamage, PostureDamage);
 			if (ApplyDamageEffectSpecToTarget(SpecHandle, TargetActor, BaseDamage))
 			{
-				PlayHitGameplayCue(TargetActor);
+				PlayHitGameplayCue(TargetActor, bParrySuccess, bBlockSuccess);
 			}
 		});
 }
