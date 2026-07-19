@@ -306,7 +306,9 @@ Hit 순간 한 프레임 안에서 동기적으로 처리됩니다.
 IsSuccessfulParry == true
    ├─ FinalDamageDone = 0, FinalPostureDamage = 0
    ├─ 공격자(Source)에게 UACGameplayEffect_PostureCounter 적용
-   │    (BasePostureDamage × 1.5, CounterAttackBonus SetByCaller로 슈퍼아머 가드 우회)
+   │    (BasePostureDamage × 1.5 — 슈퍼아머는 HitReact 모션만 생략할 뿐 체간 누적을 막지 않으므로
+   │     별도 우회 없이 그대로 누적된다. Dead/PostureBroken/Executed/Invincible일 때만
+   │     HandlePostureDamage에서 누적이 무효화됨)
    ├─ 공격자에게 StaggerEffectClass(BP GE) 적용
    │    (Shared.SetByCaller.StaggerDuration = FRandRange(Min, Max) 주입
    │     → Shared.Status.Stagger 부여 → 공격 어빌리티 ActivationBlockedTags가 재공격 잠금)
