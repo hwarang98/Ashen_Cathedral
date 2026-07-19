@@ -91,7 +91,7 @@ DamageTaken 메타 어트리뷰트 감지
 
 ```
 GroggyDamageTaken 메타 어트리뷰트 감지
-   ├─ Dead / Groggy / Invincible / SuperArmor 태그 보유 → 누적 생략
+   ├─ Dead / Groggy / Invincible 태그 보유 → 누적 생략 (SuperArmor는 누적됨)
    └─ 정상 처리
          → ReducedDamage = Max(GroggyDamage - GroggyResistance, 0)
          → GroggyGauge += ReducedDamage

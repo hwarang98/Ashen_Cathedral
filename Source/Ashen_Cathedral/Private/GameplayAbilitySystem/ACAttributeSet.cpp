@@ -213,23 +213,13 @@ void UACAttributeSet::HandlePostureDamage(const FGameplayEffectModCallbackData& 
 		return;
 	}
 
-	const float CounterBonus = Data.EffectSpec.GetSetByCallerMagnitude(ACGameplayTags::Shared_SetByCaller_CounterAttackBonus, false, 0.f);
-	const bool bIsCounterAttack = CounterBonus > 0.f;
-
-	const float HeavyComboCount = Data.EffectSpec.GetSetByCallerMagnitude(ACGameplayTags::Shared_SetByCaller_AttackType_Heavy, false, 0.f);
-	const bool bIsHeavyAttack = HeavyComboCount > 0.f;
-
 	// 무적 태그는 항상 체간 데미지 무효화
 	if (TargetASC && TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Invincible))
 	{
 		return;
 	}
 
-	// 슈퍼아머는 카운터/강공격이 아닐 때만 체간 데미지 무효화
-	if (!bIsCounterAttack && !bIsHeavyAttack && TargetASC && TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_SuperArmor))
-	{
-		return;
-	}
+	// 슈퍼아머는 HitReact 모션만 생략시키며, 체간 데미지는 그대로 누적된다.
 
 	float ReducedDamage = FMath::Max(PostureDamage - GetPostureResistance(), 0.f);
 
