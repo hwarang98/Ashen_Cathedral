@@ -93,6 +93,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "RewardCard|Config")
 	TSubclassOf<UACRewardCardSelectionWidget> SelectionWidgetClass;
 
+	// 켜면 bIsMVP가 true인 카드만 후보로 제공한다 (테스트/우선 검증용)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "RewardCard|Config")
+	bool bOnlyOfferMVPCards = false;
+
 	#pragma region Rarity Weights
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "RewardCard|Rarity", meta = (ClampMin = 0.f))
 	float CommonWeight = 60.f;
