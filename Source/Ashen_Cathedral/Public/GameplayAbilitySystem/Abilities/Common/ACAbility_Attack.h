@@ -34,6 +34,18 @@ public:
 	 */
 	void RequestSoftMontageCancel();
 
+	// 방어/패링 원본 데이터는 오직 UACAnimNotify_IncomingAttackWarning의 AttackDefenseTags/ExpectedHitTime/ThreatLevel이다.
+	UFUNCTION(BlueprintPure, Category = "Combo|Attack")
+	FGameplayTag GetComboAttackTypeTag() const { return ComboAttackTypeTag; }
+
+	/** UACAnimNotify_IncomingAttackWarning이 Notify 발생 시 호출해 현재 타격의 방어 가능 속성을 기록한다 */
+	UFUNCTION(BlueprintCallable, Category = "Combat|Defense")
+	void SetCurrentAttackDefenseTags(const FGameplayTagContainer& InTags) { CurrentAttackDefenseTags = InTags; }
+
+	/** CreateDamageEffectSpec이 DynamicAssetTags에 주입할 때 사용하는 현재 타격의 방어 가능 속성 */
+	UFUNCTION(BlueprintPure, Category = "Combat|Defense")
+	const FGameplayTagContainer& GetCurrentAttackDefenseTags() const { return CurrentAttackDefenseTags; }
+
 protected:
 	#pragma region Combo
 	/**
@@ -159,6 +171,15 @@ private:
 	/** 카운터 어택 성공 시 데미지에 곱해지는 배율 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combo|Attack", meta = (AllowPrivateAccess = "true"))
 	float CounterAttackDamageMultiplier = 1.5f;
+	#pragma endregion
+
+	#pragma region Combat Defense
+	/**
+	 * 현재 재생 중인 타격의 방어 가능 속성(런타임 값). UACAnimNotify_IncomingAttackWarning이 Notify 발생 시
+	 * SetCurrentAttackDefenseTags로 채워 넣고, CreateDamageEffectSpec이 이 값을 DynamicAssetTags에 주입한다.
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Combat|Defense", meta = (AllowPrivateAccess = "true"))
+	FGameplayTagContainer CurrentAttackDefenseTags;
 	#pragma endregion
 
 	#pragma region GameplayCue & Camera

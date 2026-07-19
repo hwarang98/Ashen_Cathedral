@@ -14,7 +14,7 @@
  * 게임플레이 효과 시스템에서 실행되며, 주어진 입력값에 따라 최종 피해량을 계산하도록 설계한다.
  * 피해량 계산의 커스터마이징 및 확장을 위해 사용한다.
  */
-UCLASS()
+UCLASS(Blueprintable)
 class ASHEN_CATHEDRAL_API UACCalculation_DamageTaken : public UGameplayEffectExecutionCalculation
 {
 	GENERATED_BODY()
@@ -39,4 +39,20 @@ public:
 	 * 피해량 계산 결과와 변경된 값을 이 객체에 기록하여 게임플레이에 반영한다.
 	 */
 	virtual void Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const override;
+
+private:
+	/** 패링 성공 시 공격자에게 부여할 Stagger(경직) 지속시간의 최소값(초) */
+	UPROPERTY(EditDefaultsOnly, Category = "Parry")
+	float StaggerDurationMin = 0.5f;
+
+	/** 패링 성공 시 공격자에게 부여할 Stagger(경직) 지속시간의 최대값(초) */
+	UPROPERTY(EditDefaultsOnly, Category = "Parry")
+	float StaggerDurationMax = 0.8f;
+
+	/**
+	 * 패링 성공 시 공격자에게 적용할 Stagger GameplayEffect (BP, Duration=HasDuration/SetByCaller,
+	 * GrantedTags에 Shared.Status.Stagger 포함하도록 에디터에서 구성).
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Parry")
+	TSubclassOf<UGameplayEffect> StaggerEffectClass;
 };

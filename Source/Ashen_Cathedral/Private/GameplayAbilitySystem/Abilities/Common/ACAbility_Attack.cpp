@@ -19,6 +19,9 @@ UACAbility_Attack::UACAbility_Attack()
 	// 사망 상태에서는 공격 불가
 	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_Dead);
 
+	// 패링당해 경직 상태이면 재공격 불가 (Boss Parry 성공 시 부여되는 락아웃)
+	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_Stagger);
+
 	// 공격 중에는 슈퍼아머 부여 (피격 시 HitReact 무시)
 	ActivationOwnedTags.AddTag(ACGameplayTags::Shared_Status_SuperArmor);
 
@@ -33,6 +36,9 @@ void UACAbility_Attack::ActivateAbility(
 	const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+
+	// 이전 공격의 Blockable/Parryable 태그가 남지 않도록 초기화한다. Notify가 없는 공격은 기본적으로 Block/Parry 불가여야 한다.
+	CurrentAttackDefenseTags.Reset();
 
 	if (AttackMontages.IsEmpty())
 	{
@@ -261,6 +267,13 @@ FGameplayEffectSpecHandle UACAbility_Attack::CreateDamageEffectSpec(float BaseDa
 		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, ACGameplayTags::Shared_SetByCaller_PostureDamage, PostureDamage);
 	}
 
+	// CurrentAttackDefenseTags(Notify가 SetCurrentAttackDefenseTags로 채워둔 값)를 Spec의 DynamicAssetTags에 실어,
+	// ACCalculation_DamageTaken이 Hit 시점에 Parryable/Blockable/Unparryable/Unblockable 여부를 판정할 수 있게 한다.
+	if (!CurrentAttackDefenseTags.IsEmpty() && SpecHandle.Data.IsValid())
+	{
+		SpecHandle.Data->AppendDynamicAssetTags(CurrentAttackDefenseTags);
+	}
+
 	return SpecHandle;
 }
 
@@ -297,17 +310,22 @@ void UACAbility_Attack::PlayHitGameplayCue(const AActor* HitActor) const
 		return;
 	}
 
-	// 대상이 Block/Parry 중이면 대상 쪽에서 별도의 Block/Parry GameplayCue가 재생되므로(TryTriggerSuccessfulBlockEvent → GA_Block)
-	// 일반 히트 사운드는 생략한다. Invincible/Dead 상태는 ACAttributeSet::HandleDamageAndTriggerHitReact에서
-	// 데미지 자체가 0으로 무효화되므로("맞은 효과"가 없으므로) 마찬가지로 재생하지 않는다.
-	// ACCalculation_DamageTaken/ACAttributeSet도 이 태그들을 기준으로 데미지를 보정·무효화하므로 판정 기준이 일치한다.
+	// 실제 Parry/Block 성공(ACCalculation_DamageTaken, TryTriggerSuccessfulBlockEvent와 동일 기준: CurrentAttackDefenseTags
+	// 태그가 있어야 성공)일 때만 별도의 Block/Parry GameplayCue가 재생되므로 일반 히트 사운드를 생략한다.
+	// Invincible/Dead 상태는 ACAttributeSet::HandleDamageAndTriggerHitReact에서 데미지 자체가 0으로 무효화되므로
+	// ("맞은 효과"가 없으므로) 마찬가지로 재생하지 않는다.
 	const UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(const_cast<AActor*>(HitActor));
-	if (TargetASC && (TargetASC->HasMatchingGameplayTag(ACGameplayTags::Player_Status_Blocking)
-		|| TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Parry)
-		|| TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Invincible)
-		|| TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Dead)))
+	if (TargetASC)
 	{
-		return;
+		const bool bParrySuccess = UACFunctionLibrary::IsSuccessfulParry(OwnerCharacter, HitActor, CurrentAttackDefenseTags);
+		const bool bBlockSuccess = UACFunctionLibrary::IsSuccessfulBlock(OwnerCharacter, HitActor, CurrentAttackDefenseTags);
+
+		if (bParrySuccess || bBlockSuccess
+			|| TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Invincible)
+			|| TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Dead))
+		{
+			return;
+		}
 	}
 
 	const UPawnCombatComponent* CombatComponent = OwnerCharacter->GetPawnCombatComponent();
@@ -436,7 +454,7 @@ void UACAbility_Attack::OnInstantAOEEventReceived(FGameplayEventData Payload)
 		[this, OwnerCharacter, BaseDamage, PostureDamage](AActor* TargetActor)
 		{
 			// 무기 콜리전 근접 공격과 동일하게, 유효한 블록이면 대상에게 Block/Parry GameplayCue를 발동시킨다.
-			UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(OwnerCharacter, TargetActor);
+			UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(OwnerCharacter, TargetActor, CurrentAttackDefenseTags);
 
 			const FGameplayEffectSpecHandle SpecHandle = CreateDamageEffectSpec(BaseDamage, PostureDamage);
 			if (ApplyDamageEffectSpecToTarget(SpecHandle, TargetActor, BaseDamage))
@@ -470,7 +488,7 @@ void UACAbility_Attack::OnSustainedAOEStartReceived(FGameplayEventData Payload)
 		[this, OwnerCharacter, BaseDamage, PostureDamage](AActor* TargetActor)
 		{
 			// 무기 콜리전 근접 공격과 동일하게, 유효한 블록이면 대상에게 Block/Parry GameplayCue를 발동시킨다.
-			UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(OwnerCharacter, TargetActor);
+			UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(OwnerCharacter, TargetActor, CurrentAttackDefenseTags);
 
 			const FGameplayEffectSpecHandle SpecHandle = CreateDamageEffectSpec(BaseDamage, PostureDamage);
 			if (ApplyDamageEffectSpecToTarget(SpecHandle, TargetActor, BaseDamage))

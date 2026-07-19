@@ -70,6 +70,16 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "PressureCounter|GameplayCue")
 	FGameplayTag HitGameplayCueTag;
 
+	/**
+	 * 이 반격 공격 전용 방어 가능 속성(Shared.Attack.*). UACAbility_Attack의 Notify 기반 CurrentAttackDefenseTags와는
+	 * 별개의 PressureCounter 전용 값이며, ApplyDamageEffectSpecToTarget이 DynamicAssetTags에 주입해
+	 * ACCalculation_DamageTaken/IsSuccessfulParry/IsSuccessfulBlock이 동일 기준으로 판정하게 한다.
+	 * 기본값은 "Parry 가능 / Block 불가"(Parryable + Unblockable) — Player가 그냥 Block하면 뚫리고,
+	 * 정확한 타이밍의 Parry만 성공해야 하는 압박 반격의 디자인 의도를 반영한다.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "PressureCounter|Defense", meta = (Categories = "Shared.Attack"))
+	FGameplayTagContainer PressureCounterDefenseTags;
+
 private:
 	UPROPERTY()
 	TObjectPtr<UAbilityTask_PlayMontageAndWait> MontageTask;
@@ -131,7 +141,7 @@ private:
 	/**
 	 * @brief HitGameplayCueTag를 HitActor 위치/방향으로 재생한다.
 	 * ApplyDamageEffectSpecToTarget이 GE 적용 성공 후 공통으로 호출한다.
-	 * @note 대상이 Block/Parry/Invincible/Dead 상태면 재생하지 않는다 — 실제로 맞은 효과가 없기 때문이다.
+	 * @note 실제 Parry/Block 성공이거나 Invincible/Dead 상태이면 일반 Hit GameplayCue를 재생하지 않는다 — 실제로 맞은 효과가 없기 때문이다.
 	 */
 	void PlayHitGameplayCue(const AActor* HitActor) const;
 };
