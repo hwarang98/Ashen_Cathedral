@@ -22,8 +22,7 @@ UACAbility_Attack::UACAbility_Attack()
 	// 패링당해 경직 상태이면 재공격 불가 (Boss Parry 성공 시 부여되는 락아웃)
 	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_Stagger);
 
-	// 공격 중에는 슈퍼아머 부여 (피격 시 HitReact 무시)
-	ActivationOwnedTags.AddTag(ACGameplayTags::Shared_Status_SuperArmor);
+	// 슈퍼아머는 어빌리티 전체 구간이 아니라 몽타주의 ANS_AddGameplayTag 구간에서만 부여한다.
 
 	// 콤보 카운트(CurrentComboCount)를 어빌리티 인스턴스에 유지하기 위해 InstancedPerActor 사용
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;

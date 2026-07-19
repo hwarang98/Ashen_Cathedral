@@ -151,9 +151,6 @@ void UACCalculation_DamageTaken::Execute_Implementation(const FGameplayEffectCus
 				if (CounterSpecHandle.IsValid())
 				{
 					UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(CounterSpecHandle, ACGameplayTags::Shared_SetByCaller_PostureDamage, BasePostureDamage * 1.5f);
-					// 패링 역공은 카운터 성격이므로, 공격 중(SuperArmor) 상태인 공격자에게도 체간 데미지가 적용되도록
-					// CounterAttackBonus SetByCaller를 부여해 HandlePostureDamage의 슈퍼아머 무효화 가드를 우회한다.
-					UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(CounterSpecHandle, ACGameplayTags::Shared_SetByCaller_CounterAttackBonus, 1.f);
 					SourceASC->ApplyGameplayEffectSpecToSelf(*CounterSpecHandle.Data.Get());
 				}
 			}

@@ -31,7 +31,7 @@ UACPlayerAbility_CriticalAttack::UACPlayerAbility_CriticalAttack()
 	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_HitReact);   // 피격 중
 	ActivationBlockedTags.AddTag(ACGameplayTags::Player_Status_Rolling);    // 회피 중
 	ActivationBlockedTags.AddTag(ACGameplayTags::Player_Status_CriticalAttacking);  // 이미 크리티컬 어택 중 (중복 방지)
-	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_SuperArmor); // 공격 중 (Attack ActivationOwnedTags)
+	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_SuperArmor); // 몽타주/특수 상태에서 슈퍼아머 보유 중
 	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_PostureBroken);     // 체간 붕괴 중
 
 	// 크리티컬 어택 중 다른 플레이어 어빌리티 차단
