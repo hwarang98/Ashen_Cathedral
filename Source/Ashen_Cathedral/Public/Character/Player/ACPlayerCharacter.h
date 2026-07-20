@@ -112,5 +112,6 @@ private:
 	FVector2D SwitchDirection = FVector2D::ZeroVector;
 
 	// 현재 오버랩 범위 안에 있어 상호작용 입력이 들어오면 호출할 대상
+	UPROPERTY()
 	TScriptInterface<IInteractableInterface> CurrentInteractable;
 };

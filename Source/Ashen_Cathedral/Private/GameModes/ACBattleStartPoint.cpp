@@ -23,6 +23,11 @@ void AACBattleStartPoint::Interact(APawn* InstigatorPawn)
 	}
 }
 
+FText AACBattleStartPoint::GetInteractionText() const
+{
+	return InteractionText;
+}
+
 void AACBattleStartPoint::OnInteractionSphereBeginOverlap(
 	UPrimitiveComponent* OverlappedComponent,
 	AActor* OtherActor,

@@ -255,6 +255,11 @@ void AACPlayerCharacter::Input_SwitchTargetCompleted(const FInputActionValue& In
 void AACPlayerCharacter::SetCurrentInteractable(TScriptInterface<IInteractableInterface> InInteractable)
 {
 	CurrentInteractable = InInteractable;
+
+	if (UPlayerUIComponent* UIComponent = GetPlayerUIComponent())
+	{
+		UIComponent->ShowInteractionPrompt(InInteractable ? InInteractable->GetInteractionText() : FText::GetEmpty());
+	}
 }
 
 void AACPlayerCharacter::ClearCurrentInteractable(TScriptInterface<IInteractableInterface> InInteractable)
@@ -262,6 +267,11 @@ void AACPlayerCharacter::ClearCurrentInteractable(TScriptInterface<IInteractable
 	if (CurrentInteractable == InInteractable)
 	{
 		CurrentInteractable = nullptr;
+
+		if (UPlayerUIComponent* UIComponent = GetPlayerUIComponent())
+		{
+			UIComponent->HideInteractionPrompt();
+		}
 	}
 }
 
