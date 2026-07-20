@@ -1,4 +1,4 @@
-// 보스 1체의 성흔 조각 보상 정보를 담는 DataAsset — 보스 캐릭터 BP가 자신의 BossRewardData로 직접 보유한다
+// 보스 1체의 메타 성장 재화 보상 정보를 담는 DataAsset — 보스 캐릭터 BP가 자신의 BossRewardData로 직접 보유한다
 
 #pragma once
 
@@ -8,10 +8,11 @@
 #include "ACDataAsset_BossReward.generated.h"
 
 /**
- * @brief 보스별 성흔 조각 보상 정의 DataAsset.
+ * @brief 보스별 메타 성장 재화 보상 정의 DataAsset.
  *
  * 보스 캐릭터 BP(AACEnemyCharacter 파생)의 BossRewardData 프로퍼티에 할당해 사용한다.
  * BossID는 UACSaveGame_MetaProgression::ClearedBossTags의 첫 클리어 판정 키로 쓰인다.
+ * 한 보스는 RewardCurrency로 지정한 한 종류의 재화만 지급한다.
  */
 UCLASS(BlueprintType)
 class ASHEN_CATHEDRAL_API UACDataAsset_BossReward : public UDataAsset
@@ -23,11 +24,15 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MetaProgression", meta = (Categories = "MetaProgression.BossID"))
 	FGameplayTag BossID;
 
-	// 이 보스를 처음 처치했을 때 지급할 성흔 조각 수
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MetaProgression", meta = (ClampMin = 0))
-	int32 FirstClearScarFragments = 0;
+	// 이 보스가 지급할 재화 종류. 비어 있으면 보상이 지급되지 않는다 (예: MetaProgression.Currency.CathedralSigil)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MetaProgression", meta = (Categories = "MetaProgression.Currency"))
+	FGameplayTag RewardCurrency;
 
-	// 이 보스를 반복 처치했을 때 지급할 성흔 조각 수
+	// 이 보스를 처음 처치했을 때 지급할 재화량
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MetaProgression", meta = (ClampMin = 0))
-	int32 RepeatClearScarFragments = 0;
+	int32 FirstClearRewardAmount = 0;
+
+	// 이 보스를 반복 처치했을 때 지급할 재화량
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MetaProgression", meta = (ClampMin = 0))
+	int32 RepeatClearRewardAmount = 0;
 };
