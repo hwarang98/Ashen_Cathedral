@@ -49,7 +49,7 @@ public:
 	bool IsFinalBossPending() const;
 
 	/**
-	 * @brief Boss Clear UI의 진행 버튼(Next Boss / Return To Lobby) 클릭 시 UI가 호출한다.
+	 * @brief 아레나의 스테이지 출구 오브젝트(AACStageExitPoint)에 상호작용했을 때 호출된다.
 	 * 중복 요청을 막고, 이전 보스 참조를 정리한 뒤, 시퀀스에 따라 다음 보스를 스폰하거나 Lobby로 이동한다.
 	 */
 	void RequestProgressAfterBossClear();
@@ -74,9 +74,6 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Battle")
 	FOnBossBattleCompleted OnBossBattleCompletedDelegate;
 
-	FORCEINLINE const FText& GetNextBossButtonText() const { return NextBossButtonText; }
-	FORCEINLINE const FText& GetReturnToLobbyButtonText() const { return ReturnToLobbyButtonText; }
-
 protected:
 	// 이번 Run에서 순서대로 스폰할 보스 클래스 목록(첫 보스 포함). 비어있으면 레벨에 배치된 보스가 곧 최종 보스다.
 	UPROPERTY(EditDefaultsOnly, Category = "Battle|Sequence")
@@ -90,13 +87,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Battle|Sequence")
 	FName BossArenaLevelName;
 
-	// Boss Clear UI 진행 버튼에 표시할 문구 (일반 보스 / 최종 보스)
-	UPROPERTY(EditDefaultsOnly, Category = "Battle|UI")
-	FText NextBossButtonText = FText::FromString(TEXT("Next Boss"));
-
-	UPROPERTY(EditDefaultsOnly, Category = "Battle|UI")
-	FText ReturnToLobbyButtonText = FText::FromString(TEXT("Return To Lobby"));
-
 private:
 	UFUNCTION()
 	void HandleBossDeath(AACCharacterBase* DeadCharacter);
@@ -109,6 +99,9 @@ private:
 
 	// 레벨에 보스가 배치되어 있지 않을 때, AACBossSpawnPoint 위치에 NextBossSequence의 첫 보스를 스폰한다.
 	void SpawnInitialBossIfNeeded();
+
+	// 다음 보스를 스폰하기 전에 플레이어를 PlayerStart 위치로 되돌린다(같은 맵에서 스테이지가 이어지므로 수동 복귀가 필요).
+	void TeleportPlayerToPlayerStart();
 
 	// 다음 보스를 스폰할 위치 — 가장 최근 등록된 보스의 위치를 재사용
 	FTransform CachedBossSpawnTransform;

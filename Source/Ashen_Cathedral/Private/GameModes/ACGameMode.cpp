@@ -8,6 +8,8 @@
 #include "Character/Enemy/ACEnemyCharacter.h"
 #include "Character/Player/ACPlayerCharacter.h"
 #include "Subsystems/ACMetaProgressionSubsystem.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 
 AACGameMode::AACGameMode()
@@ -97,7 +99,50 @@ void AACGameMode::RequestProgressAfterBossClear()
 	}
 
 	bProgressRequested = false;
+
+	// 보스를 스폰하기 전에 플레이어를 먼저 옮겨, 새 보스가 등장할 때 아레나 초기 배치가 재현되도록 한다.
+	TeleportPlayerToPlayerStart();
+
 	GetWorld()->SpawnActor<AACEnemyCharacter>(NextBossClass, CachedBossSpawnTransform);
+}
+
+void AACGameMode::TeleportPlayerToPlayerStart()
+{
+	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+	if (!PlayerController)
+	{
+		return;
+	}
+
+	APawn* PlayerPawn = PlayerController->GetPawn();
+	if (!PlayerPawn)
+	{
+		return;
+	}
+
+	AActor* PlayerStart = FindPlayerStart(PlayerController);
+	if (!PlayerStart)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[AACGameMode] PlayerStart가 없어 플레이어를 시작 위치로 되돌리지 못했습니다."));
+		return;
+	}
+
+	// 이동 직후 남은 속도로 미끄러지지 않도록 정지시킨다.
+	if (ACharacter* PlayerCharacter = Cast<ACharacter>(PlayerPawn))
+	{
+		if (UCharacterMovementComponent* MovementComponent = PlayerCharacter->GetCharacterMovement())
+		{
+			MovementComponent->StopMovementImmediately();
+		}
+	}
+
+	const FRotator StartRotation = PlayerStart->GetActorRotation();
+
+	// TeleportTo는 도착 지점이 막혀 있으면 인접한 빈 공간을 찾아준다.
+	PlayerPawn->TeleportTo(PlayerStart->GetActorLocation(), StartRotation);
+
+	// 카메라(컨트롤 회전)도 함께 맞춰야 플레이어가 보스 쪽을 바라보며 시작한다.
+	PlayerController->SetControlRotation(StartRotation);
 }
 
 void AACGameMode::RequestStartRun()

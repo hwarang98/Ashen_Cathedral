@@ -24,9 +24,15 @@ public:
 
 	virtual void Interact(APawn* InstigatorPawn) override;
 
+	virtual FText GetInteractionText() const override;
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
 	TObjectPtr<USphereComponent> InteractionSphere;
+
+	// 상호작용 프롬프트에 표시할 문구
+	UPROPERTY(EditAnywhere, Category = "Interaction")
+	FText InteractionText = FText::FromString(TEXT("보스 아레나로 향한다"));
 
 private:
 	UFUNCTION()

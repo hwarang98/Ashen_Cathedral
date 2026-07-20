@@ -28,4 +28,7 @@ public:
 	 * @param InstigatorPawn 상호작용을 시작한 Pawn
 	 */
 	virtual void Interact(APawn* InstigatorPawn) = 0;
+
+	// 상호작용 범위에 들어왔을 때 프롬프트 UI에 표시할 문구. 비어 있으면 프롬프트를 띄우지 않는다.
+	virtual FText GetInteractionText() const { return FText::GetEmpty(); }
 };
