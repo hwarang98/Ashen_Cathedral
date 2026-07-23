@@ -7,6 +7,7 @@
 namespace ACGameplayTags
 {
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_AshenKnight_Weapon_Sword)
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ordan_Weapon_Lance)
 
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Status_Strafing)
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Status_Dodging)
@@ -20,6 +21,7 @@ namespace ACGameplayTags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Dodge)
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Phase2)
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_AttackType_Run)
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_AttackType_BackDash)
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Pressure_Counter)
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_AttackType_Special_01)
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_AttackType_Special_02)
@@ -46,4 +48,14 @@ namespace ACGameplayTags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_PressureReady)	// 압박 반응이 요청된 상태(BT 진입 조건). PressureDetection이 부여하고, 실제로 반응 Ability(Counter/Dodge)가 시작되면 그 Ability가 제거한다.
 
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Event_ParrySuccess)	// ACCalculation_DamageTaken이 Boss의 Shared.Status.Parry 판정 성공 시 발송하는 이벤트. GA_BossParry가 WaitGameplayEvent로 대기한다.
+
+	// StateTree 기반 보스(보스2 이후)가 사용하는 전이 이벤트 태그. AACBossStateTreeController가 발송하고 StateTree의 Transition에서 수신한다.
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_StateTree_Event_TargetAcquired)
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_StateTree_Event_TargetLost)
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_StateTree_Event_PressureReady)
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_StateTree_Event_IncomingAttack)
+
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Cooldown_Attack)
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Cooldown_DashAttack)
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Cooldown_BackDashAttack)
 }

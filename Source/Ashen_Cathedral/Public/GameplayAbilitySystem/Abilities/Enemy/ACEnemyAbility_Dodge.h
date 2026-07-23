@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayAbilitySystem/Abilities/Enemy/ACEnemyGameplayAbility.h"
+#include "Enums/ACEnums.h"
 #include "ACEnemyAbility_Dodge.generated.h"
 
 class UAbilityTask_PlayMontageAndWait;
@@ -36,18 +37,16 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Montage")
 	TObjectPtr<UAnimMontage> RightDodgeMontage;
 
-private:
-	/** BT가 SendGameplayEvent로 전달하는 4방향 닷지 의도 */
-	enum class EDodgeDirection : uint8
-	{
-		Forward  = 0,
-		Backward = 1,
-		Left     = 2,
-		Right    = 3
-	};
+	/** 회피 중 부여할 무적 GE(Shared.Status.Invincible 등). 비워두면 무적 없이 기존과 동일하게 동작한다. */
+	UPROPERTY(EditDefaultsOnly, Category = "Dodge|Effects")
+	TSubclassOf<UGameplayEffect> InvincibilityEffect;
 
+private:
 	UPROPERTY()
 	TObjectPtr<UAbilityTask_PlayMontageAndWait> MontageTask;
+
+	// 적용한 무적 GE 핸들. 회피가 어떻게 끝나든 EndAbility에서 제거해 무적이 남지 않게 한다.
+	FActiveGameplayEffectHandle InvincibilityEffectHandle;
 
 	UFUNCTION()
 	void OnMontageCompleted();
@@ -55,11 +54,11 @@ private:
 	UFUNCTION()
 	void OnMontageCancelled();
 
-	/** EventMagnitude 값을 EDodgeDirection으로 변환 (범위 외 값은 Backward로 처리) */
-	static EDodgeDirection ParseDirection(float EventMagnitude);
+	/** EventMagnitude 값을 EACDodgeDirection으로 변환 (범위 외 값은 Backward로 처리) */
+	static EACDodgeDirection ParseDirection(float EventMagnitude);
 
 	/** 방향에 해당하는 몽타주 반환 */
-	UAnimMontage* SelectMontage(EDodgeDirection Direction) const;
+	UAnimMontage* SelectMontage(EACDodgeDirection Direction) const;
 
 	/** 몽타주 태스크를 생성하고 실행 */
 	void PlayDodgeMontage(UAnimMontage* Montage);

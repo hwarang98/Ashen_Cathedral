@@ -39,6 +39,7 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_AttackType_Heavy, "Shared.SetByCaller.AttackType.Heavy")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_FireBonusDamage, "Shared.SetByCaller.FireBonusDamage")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_BurnBuildUp, "Shared.SetByCaller.BurnBuildUp")
+	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_CooldownDuration, "Shared.SetByCaller.CooldownDuration")
 	#pragma endregion
 
 	#pragma region Shared Abilies Tags

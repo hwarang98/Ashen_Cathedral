@@ -25,4 +25,13 @@ public:
 	virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference) override;
 	virtual void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
 	virtual FString GetNotifyName_Implementation() const override;
+
+private:
+	// true면 이 구간 동안 같은 대상을 ReHitInterval 간격으로 반복 타격한다. false면 대상당 한 번만 히트한다.
+	UPROPERTY(EditAnywhere, Category = "AOE")
+	bool bMultiHit = false;
+
+	// 다단히트 재타격 간격(초). bMultiHit이 true일 때만 사용된다. Start 이벤트의 EventMagnitude로 전달된다.
+	UPROPERTY(EditAnywhere, Category = "AOE", meta = (EditCondition = "bMultiHit", ClampMin = "0.0", Units = "s"))
+	float ReHitInterval = 0.3f;
 };

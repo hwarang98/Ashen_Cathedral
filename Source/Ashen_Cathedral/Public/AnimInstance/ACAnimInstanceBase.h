@@ -46,9 +46,16 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Locomotion")
 	bool bHasAcceleration = false;
 
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Locomotion")
+	bool bIsStarting = false;
+
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "AnimData|Locomotion")
 	FVector Velocity = FVector::ZeroVector;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Locomotion")
 	float LocomotionDirection;
+
+private:
+	/** bIsStarting 판정을 위해 직전 프레임의 가속 여부를 기억한다 */
+	bool bWasAcceleratingLastFrame = false;
 };

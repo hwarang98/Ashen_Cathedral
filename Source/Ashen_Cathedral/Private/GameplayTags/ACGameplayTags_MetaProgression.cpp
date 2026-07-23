@@ -7,6 +7,7 @@ namespace ACGameplayTags
 {
 	#pragma region MetaProgression BossID Tags
 	UE_DEFINE_GAMEPLAY_TAG(MetaProgression_BossID_AshenKnight, "MetaProgression.BossID.AshenKnight")
+	UE_DEFINE_GAMEPLAY_TAG(MetaProgression_BossID_Ordan, "MetaProgression.BossID.Ordan")
 	#pragma endregion
 
 	#pragma region MetaProgression Currency Tags

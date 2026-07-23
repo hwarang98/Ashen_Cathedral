@@ -4,9 +4,11 @@
 #include "AnimInstance/ACAnimInstanceBase.h"
 
 #include "ACFunctionLibrary.h"
+#include "ACGameplayDebugHelper.h"
 #include "GameplayTagContainer.h"
 #include "KismetAnimationLibrary.h"
 #include "Character/ACCharacterBase.h"
+#include "Character/Enemy/ACEnemyCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 void UACAnimInstanceBase::NativeInitializeAnimation()
@@ -32,6 +34,8 @@ void UACAnimInstanceBase::NativeUpdateAnimation(float DeltaSeconds)
 	GroundSpeed = OwningCharacter->GetVelocity().Size2D();
 	IsFalling = OwningMovementComponent->IsFalling();
 	bHasAcceleration = OwningMovementComponent->GetCurrentAcceleration().SizeSquared() > KINDA_SMALL_NUMBER;
+	bIsStarting = bHasAcceleration && !bWasAcceleratingLastFrame;
+	bWasAcceleratingLastFrame = bHasAcceleration;
 	Velocity = OwningCharacter->GetVelocity();
 	LocomotionDirection = UKismetAnimationLibrary::CalculateDirection(OwningCharacter->GetVelocity(), OwningCharacter->GetActorRotation());
 }

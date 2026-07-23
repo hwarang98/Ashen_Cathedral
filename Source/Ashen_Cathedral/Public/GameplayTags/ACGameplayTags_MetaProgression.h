@@ -9,6 +9,7 @@ namespace ACGameplayTags
 	#pragma region MetaProgression BossID Tags
 	// 보스 처치 시 첫 클리어 여부를 판정하는 세이브 키. UACDataAsset_BossReward::BossID에 할당해 사용한다.
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MetaProgression_BossID_AshenKnight);
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MetaProgression_BossID_Ordan);
 	#pragma endregion
 
 	#pragma region MetaProgression Currency Tags

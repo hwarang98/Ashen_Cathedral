@@ -48,6 +48,8 @@ namespace ACGameplayTags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_SetByCaller_FireBonusDamage);
 	// Phase2 화상 축적량. DamageCalculation에서 BurnAccumulation 메타 Attribute에 출력됩니다.
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_SetByCaller_BurnBuildUp);
+	// 다이나믹 쿨다운 GE의 Duration을 런타임에 주입하는 SetByCaller 태그
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_SetByCaller_CooldownDuration);
 	#pragma endregion
 
 	#pragma region Shared Abilies Tags

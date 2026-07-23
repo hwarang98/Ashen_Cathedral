@@ -6,6 +6,7 @@
 namespace ACGameplayTags
 {
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_AshenKnight_Weapon_Sword, "Enemy.AshenKnight.Weapon.Sword")
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ordan_Weapon_Lance, "Enemy.Ordan.Weapon.Lance")
 
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Status_Strafing, "Enemy.Status.Strafing")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Status_Dodging, "Enemy.Status.Dodging")
@@ -18,6 +19,7 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Dodge, "Enemy.Ability.Dodge")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Phase2, "Enemy.Ability.Phase2")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_AttackType_Run, "Enemy.Ability.AttackType.Run")
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_AttackType_BackDash, "Enemy.Ability.AttackType.BackDash")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Pressure_Counter, "Enemy.Ability.Pressure.Counter")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_AttackType_Special_01, "Enemy.Ability.AttackType.Special.01")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_AttackType_Special_02, "Enemy.Ability.AttackType.Special.02")
@@ -42,4 +44,13 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_PressureReady, "Enemy.State.PressureReady")
 
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Event_ParrySuccess, "Enemy.Event.ParrySuccess")
+
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_StateTree_Event_TargetAcquired, "Enemy.StateTree.Event.TargetAcquired")
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_StateTree_Event_TargetLost, "Enemy.StateTree.Event.TargetLost")
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_StateTree_Event_PressureReady, "Enemy.StateTree.Event.PressureReady")
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_StateTree_Event_IncomingAttack, "Enemy.StateTree.Event.IncomingAttack")
+
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Cooldown_Attack, "Enemy.Cooldown.Attack")
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Cooldown_DashAttack, "Enemy.Cooldown.DashAttack")
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Cooldown_BackDashAttack, "Enemy.Cooldown.BackDashAttack")
 }

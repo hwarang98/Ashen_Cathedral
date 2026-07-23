@@ -61,11 +61,11 @@ void UAOEDamageComponent::TriggerInstantAOE(float Radius, float ForwardOffset, b
 	}
 
 	// 단발형은 이번 호출 한정으로만 중복을 제거하면 된다.
-	TSet<TWeakObjectPtr<AActor>> LocalDedup;
-	BroadcastHostileTargets(Candidates, &LocalDedup, OnTargetFound);
+	TMap<TWeakObjectPtr<AActor>, double> LocalHitTimes;
+	BroadcastHostileTargets(Candidates, &LocalHitTimes, 0.f, OnTargetFound);
 }
 
-void UAOEDamageComponent::StartSustainedAOE(float Radius, float ForwardOffset, float Interval, bool bDebugDraw, TFunction<void(AActor*)> OnTargetFound)
+void UAOEDamageComponent::StartSustainedAOE(float Radius, float ForwardOffset, float Interval, bool bDebugDraw, TFunction<void(AActor*)> OnTargetFound, float ReHitInterval)
 {
 	AActor* Owner = GetOwner();
 	UWorld* World = GetWorld();
@@ -79,6 +79,7 @@ void UAOEDamageComponent::StartSustainedAOE(float Radius, float ForwardOffset, f
 
 	SustainedRadius = Radius;
 	SustainedForwardOffset = ForwardOffset;
+	SustainedReHitInterval = ReHitInterval;
 	bSustainedDebugDraw = bDebugDraw;
 	SustainedOnTargetFound = MoveTemp(OnTargetFound);
 	PreviousAOEOrigin = ComputeAOEOrigin(ForwardOffset);
@@ -93,7 +94,7 @@ void UAOEDamageComponent::StopSustainedAOE()
 	{
 		World->GetTimerManager().ClearTimer(SustainedTickTimerHandle);
 	}
-	SustainedHitActors.Reset();
+	SustainedHitTimes.Reset();
 	SustainedOnTargetFound = nullptr;
 }
 
@@ -142,18 +143,21 @@ void UAOEDamageComponent::TickSustainedAOE()
 		}
 	}
 
-	BroadcastHostileTargets(Candidates, &SustainedHitActors, SustainedOnTargetFound);
+	BroadcastHostileTargets(Candidates, &SustainedHitTimes, SustainedReHitInterval, SustainedOnTargetFound);
 
 	PreviousAOEOrigin = CurrentOrigin;
 }
 
-void UAOEDamageComponent::BroadcastHostileTargets(const TArray<AActor*>& CandidateActors, TSet<TWeakObjectPtr<AActor>>* DedupSet, const TFunction<void(AActor*)>& OnTargetFound) const
+void UAOEDamageComponent::BroadcastHostileTargets(const TArray<AActor*>& CandidateActors, TMap<TWeakObjectPtr<AActor>, double>* HitTimes, float ReHitInterval, const TFunction<void(AActor*)>& OnTargetFound) const
 {
 	const APawn* OwnerPawn = Cast<APawn>(GetOwner());
-	if (!OwnerPawn || !OnTargetFound)
+	const UWorld* World = GetWorld();
+	if (!OwnerPawn || !World || !OnTargetFound)
 	{
 		return;
 	}
+
+	const double Now = World->GetTimeSeconds();
 
 	for (AActor* Candidate : CandidateActors)
 	{
@@ -163,9 +167,16 @@ void UAOEDamageComponent::BroadcastHostileTargets(const TArray<AActor*>& Candida
 			continue;
 		}
 
-		if (DedupSet && DedupSet->Contains(OtherPawn))
+		if (HitTimes)
 		{
-			continue;
+			if (const double* LastHitTime = HitTimes->Find(OtherPawn))
+			{
+				// 재히트 간격이 없으면(단발/1회형) 이미 맞은 대상은 스킵, 있으면 간격이 지나야 다시 히트한다.
+				if (ReHitInterval <= 0.f || (Now - *LastHitTime) < ReHitInterval)
+				{
+					continue;
+				}
+			}
 		}
 
 		if (!UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherPawn))
@@ -178,9 +189,9 @@ void UAOEDamageComponent::BroadcastHostileTargets(const TArray<AActor*>& Candida
 			continue;
 		}
 
-		if (DedupSet)
+		if (HitTimes)
 		{
-			DedupSet->Add(OtherPawn);
+			HitTimes->Add(OtherPawn, Now);
 		}
 
 		OnTargetFound(OtherPawn);

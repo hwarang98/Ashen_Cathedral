@@ -208,7 +208,8 @@ void UACEnemyAbility_PressureCounter::OnSustainedAOEStartReceived(FGameplayEvent
 			// 무기 콜리전 근접 공격과 동일하게, 유효한 Parry/Block이면 대상에게 GameplayCue를 발동시킨다.
 			UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(OwnerCharacter, TargetActor, PressureCounterDefenseTags);
 			ApplyDamageEffectSpecToTarget(TargetActor, BaseDamage, PostureDamage);
-		});
+		},
+		Payload.EventMagnitude);
 }
 
 void UACEnemyAbility_PressureCounter::OnSustainedAOEEndReceived(FGameplayEventData Payload)

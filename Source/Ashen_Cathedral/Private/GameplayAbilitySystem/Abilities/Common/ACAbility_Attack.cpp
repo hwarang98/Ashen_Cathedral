@@ -506,7 +506,8 @@ void UACAbility_Attack::OnSustainedAOEStartReceived(FGameplayEventData Payload)
 			{
 				PlayHitGameplayCue(TargetActor, bParrySuccess, bBlockSuccess);
 			}
-		});
+		},
+		Payload.EventMagnitude);
 }
 
 void UACAbility_Attack::OnSustainedAOEEndReceived(FGameplayEventData Payload)
