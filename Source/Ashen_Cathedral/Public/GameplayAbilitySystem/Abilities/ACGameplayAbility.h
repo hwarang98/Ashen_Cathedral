@@ -45,7 +45,7 @@ protected:
 	float CooldownDurationSeconds = 0.f;
 
 	// 쿨다운 중임을 식별할 고유 태그. 어빌리티마다 다르게 지정하면 공격별 독립 쿨다운이 된다
-	UPROPERTY(EditDefaultsOnly, Category = "ACAbility|Cooldown", meta = (Categories = "Cooldown"))
+	UPROPERTY(EditDefaultsOnly, Category = "ACAbility|Cooldown", meta = (Categories = "Enemy.Cooldown"))
 	FGameplayTagContainer CooldownIdentifierTags;
 	#pragma endregion
 

@@ -39,7 +39,7 @@ void UACAbility_Attack::ActivateAbility(
 	// 이전 공격의 Blockable/Parryable 태그가 남지 않도록 초기화한다. Notify가 없는 공격은 기본적으로 Block/Parry 불가여야 한다.
 	CurrentAttackDefenseTags.Reset();
 
-	if (AttackMontages.IsEmpty())
+	if (!HasAnyAttackMontage())
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -201,6 +201,11 @@ void UACAbility_Attack::HandleComboCancelled()
 void UACAbility_Attack::ResetComboCount()
 {
 	CurrentComboCount = 0;
+}
+
+bool UACAbility_Attack::HasAnyAttackMontage() const
+{
+	return !AttackMontages.IsEmpty();
 }
 
 void UACAbility_Attack::RequestSoftMontageCancel()
