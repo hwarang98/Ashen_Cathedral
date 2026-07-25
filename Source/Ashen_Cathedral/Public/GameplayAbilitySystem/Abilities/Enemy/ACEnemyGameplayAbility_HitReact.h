@@ -3,11 +3,27 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "GameplayAbilitySystem/Abilities/Enemy/ACEnemyGameplayAbility.h"
 #include "ACEnemyGameplayAbility_HitReact.generated.h"
 
+/** 공격의 무게 태그와, 그 공격에 맞았을 때 재생할 히트리액트 몽타주를 짝지은 항목 */
+USTRUCT(BlueprintType)
+struct FACHitReactWeightMontage
+{
+	GENERATED_BODY()
+
+	/** 피격한 공격이 이 태그를 지니고 있으면 아래 몽타주를 재생한다 */
+	UPROPERTY(EditAnywhere, Category = "HitReact", meta = (Categories = "Shared.Attack.Weight"))
+	FGameplayTag WeightTag;
+
+	/** WeightTag가 일치할 때 방향별 몽타주 대신 재생할 몽타주 */
+	UPROPERTY(EditAnywhere, Category = "HitReact")
+	TObjectPtr<UAnimMontage> Montage;
+};
+
 /**
- * 
+ *
  */
 UCLASS()
 class ASHEN_CATHEDRAL_API UACEnemyGameplayAbility_HitReact : public UACEnemyGameplayAbility
@@ -33,6 +49,16 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UGameplayEffect> UnderAttackEffect;
+
+	/**
+	 * 강한 공격에 피격됐을 때 방향별 몽타주 대신 재생할 몽타주 목록. 위에서부터 검사해 처음 일치하는 항목을 사용한다.
+	 * 비워두면 항상 방향별 몽타주를 재생한다(기존 동작).
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Montage|Weight", meta = (AllowPrivateAccess = "true"))
+	TArray<FACHitReactWeightMontage> WeightHitReactMontages;
+
+	/** 공격에 실려 온 속성 태그로 대형 히트리액트 몽타주를 찾는다. 해당 항목이 없으면 nullptr */
+	UAnimMontage* SelectWeightHitReactMontage(const FGameplayTagContainer& AttackTags) const;
 
 	UFUNCTION()
 	void OnMontageEnded();

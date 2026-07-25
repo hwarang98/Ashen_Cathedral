@@ -339,6 +339,8 @@ void UACAttributeSet::HandleDamageAndTriggerHitReact(const FGameplayEffectModCal
 		HitPayload.Instigator = Data.EffectSpec.GetEffectContext().GetInstigator();
 		HitPayload.Target = Data.Target.GetAvatarActor();
 		HitPayload.EventMagnitude = DamageDone;
+		// 공격이 실어 보낸 속성 태그(Notify가 채운 CurrentAttackDefenseTags)를 그대로 넘겨, HitReact가 타격 무게에 따라 몽타주를 고를 수 있게 한다
+		HitPayload.InstigatorTags = Data.EffectSpec.GetDynamicAssetTags();
 
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Data.Target.GetAvatarActor(), ACGameplayTags::Shared_Event_HitReact, HitPayload);
 	}
