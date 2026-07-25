@@ -82,6 +82,17 @@ EStateTreeRunStatus FACSTTask_ActivateAbilityByTag::EnterState(FStateTreeExecuti
 			});
 	}
 
+	// TryActivateAbility 실행 도중 어빌리티가 동기적으로 즉시 끝났을 수 있다(예: 전환 몽타주가 같은 콜스택에서 완주).
+	// 그 경우 위에서 등록한 OnAbilityEnded/태그 이벤트는 이미 지나가서 다시 발화하지 않으므로, 여기서 즉시 완료한다.
+	// 판정은 반드시 '어빌리티 스펙 활성 여부'로만 한다 — WaitOwnedTag로 판정하면 안 된다.
+	// WaitOwnedTag(예: Enemy.Status.Attacking.Swing)는 몽타주 중간 구간에서야 부여될 수 있어 활성화 직후엔 아직 없는 게 정상이며,
+	// 그 부재를 종료로 오인하면 몽타주가 재생되기도 전에 태스크가 끝나버린다. ExitState가 방금 등록한 델리게이트를 정리한다.
+	const FGameplayAbilitySpec* ActivatedSpec = ASC->FindAbilitySpecFromHandle(FoundHandle);
+	if (!ActivatedSpec || !ActivatedSpec->IsActive())
+	{
+		return EStateTreeRunStatus::Succeeded;
+	}
+
 	if (MaxWaitTime > 0.f)
 	{
 		if (UWorld* World = EnemyCharacter->GetWorld())

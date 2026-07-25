@@ -47,7 +47,7 @@ private:
 	FGameplayTagContainer AbilityTagToActivate;
 
 	// 설정하면 GameplayAbilitySpec::IsActive() 대신 이 태그가 ASC에서 사라질 때까지 대기한다
-	UPROPERTY(EditAnywhere, Category = "Ability|Wait", meta = (Categories = "Enemy.Status"))
+	UPROPERTY(EditAnywhere, Category = "Ability|Wait", meta = (Categories = "Enemy.Status,Shared.Status"))
 	FGameplayTag WaitOwnedTag;
 
 	// 어빌리티를 찾지 못했거나 활성화가 실패하면 Failed로 끝낼지 여부
