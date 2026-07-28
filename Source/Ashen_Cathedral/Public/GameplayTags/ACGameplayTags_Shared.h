@@ -9,6 +9,7 @@ namespace ACGameplayTags
 	#pragma region Shared Event Tags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Event_MeleeHit);
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Event_PostureBrokenTriggered);
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Event_GuardBrokenTriggered); // GuardGauge가 최대치에 도달했을 때 AttributeSet이 발송한다. Block 어빌리티가 수신해 가드 브레이크를 실행한다
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Event_Death);
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Event_HitReact);
 	// 단발형 AOE 데미지 타이밍 이벤트 — 몽타주 AnimNotify가 1회 발송하면 즉시 범위 판정 후 DamageEffect를 적용한다
@@ -42,6 +43,7 @@ namespace ACGameplayTags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_SetByCaller_BaseDamage);
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_SetByCaller_CounterAttackBonus);
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_SetByCaller_PostureDamage);
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_SetByCaller_GuardDamage); // 막아낸 공격의 가드 부하량을 GuardDamageEffect에 전달한다
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_SetByCaller_AttackType_Light);
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_SetByCaller_AttackType_Heavy);
 	// Phase2 화염 추가 데미지. DamageCalculation에서 BaseDamage에 합산됩니다.

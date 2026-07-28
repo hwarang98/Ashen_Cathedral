@@ -251,6 +251,8 @@ bool UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(const AActor* Attacker, 
 	FGameplayEventData EventData;
 	EventData.Instigator = Attacker;
 	EventData.Target = HitActor;
+	// 막아낸 공격의 속성 태그를 함께 넘겨, 방어자가 공격 무게에 따라 가드 브레이크 등으로 분기할 수 있게 한다
+	EventData.InstigatorTags = AttackDefenseTags;
 
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(HitActor, ACGameplayTags::Player_Event_SuccessfulBlock, EventData);
 	return true;

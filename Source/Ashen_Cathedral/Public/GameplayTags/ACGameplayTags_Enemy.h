@@ -29,6 +29,8 @@ namespace ACGameplayTags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Block)
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Parry)
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Parry_CounterAttack)
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_CriticalAttack)  // 체간 붕괴한 플레이어를 처형하는 어빌리티의 AssetTag
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Status_CriticalAttacking) // 크리티컬 공격 실행 중 Enemy ASC에 부여되는 상태 태그
 
 
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Status_Phase2)               // Phase2 상태 태그. Phase2 어빌리티가 활성화된 동안 ASC에 부여됩니다.

@@ -60,4 +60,8 @@ public:
 	// 백대시 공격을 시작하는 최대 거리
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI|Distance", meta = (ClampMin = "0.0", Units = "cm"))
 	float BackDashAttackMinDistance = 0.f;
+
+	// 크리티컬 공격 사정 거리
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI|Distance", meta = (ClampMin = "0.0", Units = "cm"))
+	float CriticalAttackAllowDistance = 0.f;
 };

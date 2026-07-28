@@ -18,6 +18,7 @@ class AACWeaponBase;
 class UACGameplayAbility;
 class AACEnemyCharacter;
 class UAbilitySystemComponent;
+class UAnimMontage;
 
 
 /**
@@ -220,6 +221,21 @@ struct FACRewardCardDisplayInfo
 	// 현재 Run에서 이미 획득한 중첩 수
 	UPROPERTY(BlueprintReadOnly)
 	int32 CurrentStack = 0;
+};
+
+/** 공격의 무게 태그와, 그 공격에 맞았을 때 방향별 몽타주 대신 재생할 히트리액트 몽타주를 짝지은 항목 */
+USTRUCT(BlueprintType)
+struct FACHitReactWeightMontage
+{
+	GENERATED_BODY()
+
+	/** 피격한 공격이 이 태그를 지니고 있으면 아래 몽타주를 재생한다 */
+	UPROPERTY(EditAnywhere, Category = "HitReact", meta = (Categories = "Shared.Attack.Weight"))
+	FGameplayTag WeightTag;
+
+	/** WeightTag가 일치할 때 재생할 몽타주 */
+	UPROPERTY(EditAnywhere, Category = "HitReact")
+	TObjectPtr<UAnimMontage> Montage;
 };
 
 /** 소켓 이름과 Niagara 시스템을 쌍으로 묶어 복수 소켓에 이펙트를 부착할 때 사용합니다. */

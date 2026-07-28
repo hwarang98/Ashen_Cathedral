@@ -5,22 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "GameplayAbilitySystem/Abilities/Enemy/ACEnemyGameplayAbility.h"
+#include "Structs/ACStructTypes.h"
 #include "ACEnemyGameplayAbility_HitReact.generated.h"
-
-/** 공격의 무게 태그와, 그 공격에 맞았을 때 재생할 히트리액트 몽타주를 짝지은 항목 */
-USTRUCT(BlueprintType)
-struct FACHitReactWeightMontage
-{
-	GENERATED_BODY()
-
-	/** 피격한 공격이 이 태그를 지니고 있으면 아래 몽타주를 재생한다 */
-	UPROPERTY(EditAnywhere, Category = "HitReact", meta = (Categories = "Shared.Attack.Weight"))
-	FGameplayTag WeightTag;
-
-	/** WeightTag가 일치할 때 방향별 몽타주 대신 재생할 몽타주 */
-	UPROPERTY(EditAnywhere, Category = "HitReact")
-	TObjectPtr<UAnimMontage> Montage;
-};
 
 /**
  *

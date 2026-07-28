@@ -45,6 +45,9 @@ namespace ACGameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Event_ParrySuccess, "Enemy.Event.ParrySuccess")
 
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_CriticalAttack, "Enemy.Ability.CriticalAttack")
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Status_CriticalAttacking, "Enemy.Status.CriticalAttacking")
+
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_StateTree_Event_TargetAcquired, "Enemy.StateTree.Event.TargetAcquired")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_StateTree_Event_TargetLost, "Enemy.StateTree.Event.TargetLost")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_StateTree_Event_PressureReady, "Enemy.StateTree.Event.PressureReady")

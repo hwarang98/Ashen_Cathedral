@@ -56,4 +56,8 @@ private:
 	/** true면 결과를 뒤집는다 — "이 태그가 없을 때 통과"시키려면 켠다 (쿨다운 검사용) */
 	UPROPERTY(EditAnywhere, Category = "Condition")
 	bool bInvert = false;
+
+	/** true면 자신의 폰 대신 AIController가 추적 중인 타겟(플레이어)의 ASC를 검사한다. AACStateTreeController에서만 동작한다 */
+	UPROPERTY(EditAnywhere, Category = "Condition")
+	bool bCheckTargetActor = false;
 };

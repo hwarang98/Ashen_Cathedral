@@ -39,7 +39,14 @@ void UACPlayerGameplayAbility_HitReact::ActivateAbility(
 
 	UAnimMontage* MontageToPlay = bIsBlocking ? BlockHitReactMontage : FrontHitReactMontage;
 
-	if (InstigatorActor && AvatarActor)
+	// 블록 중이 아닐 때만, 공격에 실린 무게 태그를 보고 방향 판정보다 우선해 전용 몽타주를 재생한다
+	UAnimMontage* WeightMontage = (!bIsBlocking && TriggerEventData) ? SelectWeightHitReactMontage(TriggerEventData->InstigatorTags) : nullptr;
+
+	if (WeightMontage)
+	{
+		MontageToPlay = WeightMontage;
+	}
+	else if (InstigatorActor && AvatarActor)
 	{
 		float AngleDifference = 0.f;
 		const FGameplayTag HitDirectionTag = UACFunctionLibrary::ComputeHitReactDirectionTag(InstigatorActor, AvatarActor, AngleDifference);
@@ -90,6 +97,19 @@ void UACPlayerGameplayAbility_HitReact::ActivateAbility(
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 	}
+}
+
+UAnimMontage* UACPlayerGameplayAbility_HitReact::SelectWeightHitReactMontage(const FGameplayTagContainer& AttackTags) const
+{
+	for (const FACHitReactWeightMontage& Entry : WeightHitReactMontages)
+	{
+		if (Entry.Montage && Entry.WeightTag.IsValid() && AttackTags.HasTag(Entry.WeightTag))
+		{
+			return Entry.Montage;
+		}
+	}
+
+	return nullptr;
 }
 
 void UACPlayerGameplayAbility_HitReact::OnMontageEnded()

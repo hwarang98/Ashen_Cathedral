@@ -28,6 +28,13 @@ UACAttributeSet::UACAttributeSet()
 	InitPostureResistance(1.f);
 	InitPostureDamageTaken(0.f);
 
+	// Guard — 가드 브레이크 임계값과 회복 속도는 보상 카드가 GE로 증가시킬 수 있다
+	InitGuardGauge(0.f);
+	InitMaxGuardGauge(100.f);
+	InitGuardBreakResistance(0.f);
+	InitGuardGaugeRegenRate(25.f);
+	InitGuardDamageTaken(0.f);
+
 	// Combat
 	InitAttackPower(1.f); // 배율
 	InitDefensePower(0.f);
@@ -74,6 +81,20 @@ void UACAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, fl
 		NewValue = FMath::Max(NewValue, 0.f);
 	}
 
+	// Guard — 게이지는 0과 최대값 사이로 클램프
+	else if (Attribute == GetGuardGaugeAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxGuardGauge());
+	}
+	else if (Attribute == GetGuardBreakResistanceAttribute())
+	{
+		NewValue = FMath::Max(NewValue, 0.f);
+	}
+	else if (Attribute == GetGuardGaugeRegenRateAttribute())
+	{
+		NewValue = FMath::Max(NewValue, 0.f);
+	}
+
 	// Burn — 게이지는 0과 최대값 사이로 클램프
 	else if (Attribute == GetBurnGaugeAttribute())
 	{
@@ -109,6 +130,11 @@ void UACAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute
 	else if (Attribute == GetStaminaAttribute())
 	{
 		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxStamina());
+	}
+	// GE_GuardGaugeDecay도 주기형으로 BaseValue를 직접 깎으므로 동일하게 클램프한다.
+	else if (Attribute == GetGuardGaugeAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxGuardGauge());
 	}
 }
 
@@ -163,6 +189,11 @@ void UACAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 		// 스태미나 소모 처리 (스태미나에서 비용 차감)
 		HandleStaminaConsumption(Data);
 		PawnUIComponent->OnCurrentStaminaChanged.Broadcast(GetStamina() / GetMaxStamina());
+	}
+	else if (Data.EvaluatedData.Attribute == GetGuardDamageTakenAttribute())
+	{
+		// 가드 부하 처리 (누적량이 최대치에 도달하면 가드 브레이크 이벤트 발송)
+		HandleGuardDamage(Data);
 	}
 	else if (Data.EvaluatedData.Attribute == GetBurnAccumulationAttribute())
 	{
@@ -264,6 +295,53 @@ void UACAttributeSet::HandlePostureDamage(const FGameplayEffectModCallbackData& 
 	}
 }
 
+void UACAttributeSet::HandleGuardDamage(const FGameplayEffectModCallbackData& Data)
+{
+	const float GuardDamage = GetGuardDamageTaken();
+	SetGuardDamageTaken(0.f);
+
+	UAbilitySystemComponent* TargetASC = GetOwningAbilitySystemComponent();
+
+	// 사망·처형·체간 붕괴 중에는 방어 자체가 성립하지 않으므로 누적하지 않는다
+	if (TargetASC
+		&& (TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Dead)
+			|| TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Executed)
+			|| TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_PostureBroken)))
+	{
+		return;
+	}
+
+	// 이미 가드가 무너진 상태면 중복 발동하지 않는다
+	if (TargetASC && TargetASC->HasMatchingGameplayTag(ACGameplayTags::Player_Status_GuardBroken))
+	{
+		return;
+	}
+
+	// GuardBreakResistance만큼 부하를 깎아준다 — 보상 카드로 이 값을 올리면 가드가 잘 버틴다
+	const float ReducedDamage = FMath::Max(GuardDamage - GetGuardBreakResistance(), 0.f);
+
+	const float NewGuardGauge = FMath::Clamp(GetGuardGauge() + ReducedDamage, 0.f, GetMaxGuardGauge());
+	SetGuardGauge(NewGuardGauge);
+
+	if (NewGuardGauge < GetMaxGuardGauge())
+	{
+		return;
+	}
+
+	// 최대치 도달 — 게이지를 비우고 Block 어빌리티에 가드 브레이크를 알린다
+	SetGuardGauge(0.f);
+
+	FGameplayEventData Payload;
+	Payload.EventTag = ACGameplayTags::Shared_Event_GuardBrokenTriggered;
+	Payload.Target = Data.Target.GetAvatarActor();
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+		Data.Target.GetAvatarActor(),
+		ACGameplayTags::Shared_Event_GuardBrokenTriggered,
+		Payload
+		);
+}
+
 void UACAttributeSet::HandleDamageAndTriggerHitReact(const FGameplayEffectModCallbackData& Data)
 {
 	UAbilitySystemComponent* TargetASC = GetOwningAbilitySystemComponent();
@@ -318,6 +396,10 @@ void UACAttributeSet::HandleDamageAndTriggerHitReact(const FGameplayEffectModCal
 		HitReactImmunityTags.AddTag(ACGameplayTags::Shared_Status_SuperArmor);
 		HitReactImmunityTags.AddTag(ACGameplayTags::Shared_Status_Executed);
 		HitReactImmunityTags.AddTag(ACGameplayTags::Shared_Status_PostureBroken);
+		// 가드 브레이크 몽타주 재생 중에는 같은 히트로 발생하는 일반 HitReact가 끼어들어 덮어쓰지 않도록 막는다.
+		// 가드 브레이크는 EndAbility로 Player_Status_Blocking을 즉시 제거하므로, 그 직후 적용되는 데미지의
+		// HitReact 이벤트가 (Blocking 태그 소실로) 차단되지 않고 새어 들어와 GuardBreakMontage를 밀어내는 문제였다.
+		HitReactImmunityTags.AddTag(ACGameplayTags::Player_Status_GuardBroken);
 	}
 
 	// Enemy가 실제로 Block에 성공한 피격은 일반 HitReact 이벤트를 보내지 않는다
