@@ -28,11 +28,12 @@ UACAttributeSet::UACAttributeSet()
 	InitPostureResistance(1.f);
 	InitPostureDamageTaken(0.f);
 
-	// Guard — 가드 브레이크 임계값과 회복 속도는 보상 카드가 GE로 증가시킬 수 있다
+	// Guard — MaxGuardGauge/GuardGaugeRegenRate는 초기화 GE(GE_Player_Init 등)가 설정한다.
+	// 여기서는 0 나눗셈과 즉시 브레이크를 피하기 위한 안전값만 둔다(MaxHealth/MaxPosture와 동일한 규칙).
 	InitGuardGauge(0.f);
-	InitMaxGuardGauge(100.f);
+	InitMaxGuardGauge(1.f);
 	InitGuardBreakResistance(0.f);
-	InitGuardGaugeRegenRate(25.f);
+	InitGuardGaugeRegenRate(1.f);
 	InitGuardDamageTaken(0.f);
 
 	// Combat
@@ -300,6 +301,9 @@ void UACAttributeSet::HandleGuardDamage(const FGameplayEffectModCallbackData& Da
 	const float GuardDamage = GetGuardDamageTaken();
 	SetGuardDamageTaken(0.f);
 
+	UE_LOG(LogTemp, Warning, TEXT("[Guard] HandleGuardDamage 진입 — 받은 부하=%.1f 현재게이지=%.1f 최대=%.1f"),
+		GuardDamage, GetGuardGauge(), GetMaxGuardGauge());
+
 	UAbilitySystemComponent* TargetASC = GetOwningAbilitySystemComponent();
 
 	// 사망·처형·체간 붕괴 중에는 방어 자체가 성립하지 않으므로 누적하지 않는다
@@ -322,6 +326,22 @@ void UACAttributeSet::HandleGuardDamage(const FGameplayEffectModCallbackData& Da
 
 	const float NewGuardGauge = FMath::Clamp(GetGuardGauge() + ReducedDamage, 0.f, GetMaxGuardGauge());
 	SetGuardGauge(NewGuardGauge);
+
+	UE_LOG(LogTemp, Warning, TEXT("[Guard] 누적 결과 — 감쇄후=%.1f 게이지=%.1f / %.1f"), ReducedDamage, NewGuardGauge, GetMaxGuardGauge());
+
+	// 가드 자연 감소 지연 타이머 리셋 — 실제로 게이지가 증가했을 때만, 마지막으로 막아낸 시점부터 유예시간 이후 감소가 재개된다.
+	// GE의 Stacking(Refresh on Successful Application)이 Duration을 자동 리셋하므로 재적용만으로 충분하다.
+	if (ReducedDamage > 0.f)
+	{
+		if (UACAbilitySystemComponent* ACTargetASC = Cast<UACAbilitySystemComponent>(TargetASC))
+		{
+			if (ACTargetASC->GuardDecayDelayEffectClass)
+			{
+				const UGameplayEffect* DecayDelayGE = ACTargetASC->GuardDecayDelayEffectClass->GetDefaultObject<UGameplayEffect>();
+				ACTargetASC->ApplyGameplayEffectToSelf(DecayDelayGE, 1, ACTargetASC->MakeEffectContext());
+			}
+		}
+	}
 
 	if (NewGuardGauge < GetMaxGuardGauge())
 	{

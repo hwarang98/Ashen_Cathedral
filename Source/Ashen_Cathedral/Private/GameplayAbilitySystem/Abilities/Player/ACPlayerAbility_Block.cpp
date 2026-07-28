@@ -168,15 +168,19 @@ void UACPlayerAbility_Block::ApplyGuardDamage(const FGameplayEventData& Payload)
 	// GE가 비어 있으면 가드 게이지 기능 자체가 꺼진 것으로 본다(기존 블록 동작 유지)
 	if (!GuardDamageEffect)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[Guard] GuardDamageEffect가 비어 있음 — GA_Player_Block에서 지정 필요"));
 		return;
 	}
 
 	const bool bIsHeavyHit = GuardBreakWeightTag.IsValid() && Payload.InstigatorTags.HasTag(GuardBreakWeightTag);
 	const float GuardDamage = bIsHeavyHit ? GuardBreakHeavyAmount : GuardBreakAmountPerHit;
 
+	UE_LOG(LogTemp, Warning, TEXT("[Guard] ApplyGuardDamage 호출 — 부하=%.1f Heavy=%s"), GuardDamage, bIsHeavyHit ? TEXT("true") : TEXT("false"));
+
 	const FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(GuardDamageEffect, GetAbilityLevel());
 	if (!SpecHandle.IsValid())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[Guard] SpecHandle 생성 실패"));
 		return;
 	}
 

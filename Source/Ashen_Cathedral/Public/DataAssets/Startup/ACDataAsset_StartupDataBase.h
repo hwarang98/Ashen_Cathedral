@@ -48,5 +48,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "StartUpData|Posture")
 	TSubclassOf<UGameplayEffect> PostureDecayDelayEffectClass;
 
+	/** 가드로 막아낼 때 재적용할 GuardGauge 자연 감소 지연 GE. ASC에 전달되어 런타임에 사용됩니다. */
+	UPROPERTY(EditDefaultsOnly, Category = "StartUpData|Guard")
+	TSubclassOf<UGameplayEffect> GuardDecayDelayEffectClass;
+
 	void GrantAbilities(const TArray<TSubclassOf<UACGameplayAbility>>& InAbilitiesToGive, UACAbilitySystemComponent* InASCToGive, int32 ApplyLevel = 1);
 };

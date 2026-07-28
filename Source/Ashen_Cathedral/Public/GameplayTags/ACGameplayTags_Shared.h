@@ -37,6 +37,8 @@ namespace ACGameplayTags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Status_Executed);
 	// 체간 피해를 받은 직후 부여되는 상태 태그 — GE_PostureDecay의 Ongoing Tag Requirement가 이 태그 보유 중엔 자연 감소를 막는다
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Status_PostureDecayBlocked);
+	// 가드로 막아낸 직후 부여되는 상태 태그 — GE_GuardGaugeDecay의 Ongoing Tag Requirement가 이 태그 보유 중엔 자연 감소를 막는다
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Status_GuardDecayBlocked);
 	#pragma endregion
 
 	#pragma region Shared SetByCaller Tags

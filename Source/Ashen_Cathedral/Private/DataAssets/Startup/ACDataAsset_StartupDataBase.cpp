@@ -25,6 +25,9 @@ void UACDataAsset_StartupDataBase::GiveToAbilitySystemComponent(UACAbilitySystem
 
 	// 체간 자연 감소 지연 GE 레퍼런스를 ASC에 전달 (AttributeSet의 런타임 접근용)
 	InASCToGive->PostureDecayDelayEffectClass = PostureDecayDelayEffectClass;
+
+	// 가드 게이지 자연 감소 지연 GE도 동일하게 전달
+	InASCToGive->GuardDecayDelayEffectClass = GuardDecayDelayEffectClass;
 }
 
 void UACDataAsset_StartupDataBase::GrantAbilities(const TArray<TSubclassOf<UACGameplayAbility>>& InAbilitiesToGive, UACAbilitySystemComponent* InASCToGive, int32 ApplyLevel)

@@ -30,6 +30,7 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Status_HitReact_Right, "Shared.Status.HitReact.Right")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Status_Executed, "Shared.Status.Executed")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Status_PostureDecayBlocked, "Shared.Status.PostureDecayBlocked")
+	UE_DEFINE_GAMEPLAY_TAG(Shared_Status_GuardDecayBlocked, "Shared.Status.GuardDecayBlocked")
 	#pragma endregion
 
 	#pragma region Shared SetByCaller Tags
