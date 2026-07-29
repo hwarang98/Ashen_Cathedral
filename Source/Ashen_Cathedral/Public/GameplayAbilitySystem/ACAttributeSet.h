@@ -93,6 +93,33 @@ public:
 
 	#pragma endregion
 
+	#pragma region Guard - 가드 게이지
+	/** 현재 가드 누적 수치. 공격을 막아낼 때마다 증가하며 MaxGuardGauge에 도달하면 가드 브레이크가 발생합니다. */
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute|Guard")
+	FGameplayAttributeData GuardGauge;
+	ATTRIBUTE_ACCESSORS(UACAttributeSet, GuardGauge);
+
+	/** 최대 가드 게이지. GuardGauge의 상한선이며, 이 값에 도달하면 가드가 무너집니다. 보상 카드로 증가시킬 수 있습니다. */
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute|Guard")
+	FGameplayAttributeData MaxGuardGauge;
+	ATTRIBUTE_ACCESSORS(UACAttributeSet, MaxGuardGauge);
+
+	/** 가드 저항력. 막아냈을 때 GuardGauge 증가량을 감소시킵니다. 보상 카드로 증가시킬 수 있습니다. */
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute|Guard")
+	FGameplayAttributeData GuardBreakResistance;
+	ATTRIBUTE_ACCESSORS(UACAttributeSet, GuardBreakResistance);
+
+	/** 초당 가드 게이지 자연 회복량. 주기형 GE가 이 값을 참조해 게이지를 감소시킵니다. */
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute|Guard")
+	FGameplayAttributeData GuardGaugeRegenRate;
+	ATTRIBUTE_ACCESSORS(UACAttributeSet, GuardGaugeRegenRate);
+
+	/** 이번에 막아내며 받은 가드 부하. PostGameplayEffectExecute에서 소비 후 초기화되는 메타 Attribute입니다. */
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute|Guard")
+	FGameplayAttributeData GuardDamageTaken;
+	ATTRIBUTE_ACCESSORS(UACAttributeSet, GuardDamageTaken);
+	#pragma endregion
+
 	#pragma region Combat - 전투 능력치
 	/** 공격력. 기본 데미지 계산의 기준이 되는 값입니다. */
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute|Combat")
@@ -144,6 +171,8 @@ public:
 
 private:
 	void HandlePostureDamage(const FGameplayEffectModCallbackData& Data);
+	/** 가드 부하를 GuardGauge에 누적하고, 최대치에 도달하면 가드 브레이크 이벤트를 발송한다. */
+	void HandleGuardDamage(const FGameplayEffectModCallbackData& Data);
 	void HandleDamageAndTriggerHitReact(const FGameplayEffectModCallbackData& Data);
 	void HandleStaminaConsumption(const FGameplayEffectModCallbackData& Data);
 	void HandleBurnBuildUp(const FGameplayEffectModCallbackData& Data);

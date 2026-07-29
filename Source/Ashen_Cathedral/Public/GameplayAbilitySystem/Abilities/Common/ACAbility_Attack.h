@@ -73,6 +73,14 @@ protected:
 
 	/** 재생할 공격 몽타주를 선택해 반환한다. 기본 구현은 CurrentComboCount 기반 순차 선택. */
 	virtual UAnimMontage* SelectAttackMontage();
+
+	/**
+	 * @brief 재생할 몽타주를 하나라도 가지고 있는지 반환한다. ActivateAbility가 조기 종료 판단에 사용한다.
+	 *
+	 * 기본 구현은 AttackMontages가 비었는지만 본다. 다른 소스에서 몽타주를 고르는 서브클래스는
+	 * 이 함수를 오버라이드해 해당 소스를 검사해야 조기 종료되지 않는다.
+	 */
+	virtual bool HasAnyAttackMontage() const;
 	#pragma endregion
 
 	#pragma region Damage Extension Points

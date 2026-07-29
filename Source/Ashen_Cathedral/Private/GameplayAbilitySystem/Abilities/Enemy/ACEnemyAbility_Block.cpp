@@ -3,6 +3,8 @@
 
 #include "GameplayAbilitySystem/Abilities/Enemy/ACEnemyAbility_Block.h"
 #include "ACGameplayTags.h"
+#include "AbilitySystemComponent.h"
+#include "Abilities/GameplayAbility.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "GameFramework/Character.h"
@@ -52,10 +54,35 @@ void UACEnemyAbility_Block::ActivateAbility(const FGameplayAbilitySpecHandle Han
 
 	// Block 자세 몽타주 재생 — 이 몽타주의 자연 종료가 곧 "Block 유지 시간 종료"다.
 	PlayHoldMontage();
+
+	// 저스트 가드(패링) 성공 대기 — 패링 판정 창(Shared.Status.Parry)은 BlockMontage의 ANS_AddGameplayTag가 관리하며,
+	// 창 안에 피격되면 ACCalculation_DamageTaken이 Enemy.Event.ParrySuccess를 발송한다. 이 이벤트를 받아 카운터를 실행한다.
+	// 패링 창 노티파이가 없는 기존 보스 Block은 이 이벤트가 오지 않아 리스너가 발화하지 않는다(무영향).
+	ParrySuccessTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, ACGameplayTags::Enemy_Event_ParrySuccess, nullptr, false, true);
+	ParrySuccessTask->EventReceived.AddDynamic(this, &ThisClass::OnParrySuccessEventReceived);
+	ParrySuccessTask->ReadyForActivation();
 }
 
 void UACEnemyAbility_Block::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
+	// 저스트 가드(패링) 관련 정리. Shared.Status.Parry 태그는 BlockMontage의 ANS_AddGameplayTag가 소유·해제하므로
+	// 이 어빌리티에서는 건드리지 않는다. 기존 보스 Block은 태스크/핸들이 비어 있어 아래는 전부 no-op이다.
+	if (ParrySuccessTask && ParrySuccessTask->IsActive())
+	{
+		ParrySuccessTask->EndTask();
+	}
+	ParrySuccessTask = nullptr;
+
+	if (ParryCounterAttackEndedHandle.IsValid())
+	{
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+		{
+			ASC->OnAbilityEnded.Remove(ParryCounterAttackEndedHandle);
+		}
+		ParryCounterAttackEndedHandle.Reset();
+	}
+	ParryCounterAttackSpecHandle = FGameplayAbilitySpecHandle();
+
 	if (MontageTask && MontageTask->IsActive())
 	{
 		MontageTask->EndTask();
@@ -140,4 +167,98 @@ void UACEnemyAbility_Block::OnMontageCompleted()
 void UACEnemyAbility_Block::OnMontageCancelled()
 {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+}
+
+void UACEnemyAbility_Block::OnParrySuccessEventReceived(FGameplayEventData Payload)
+{
+	// 패링 판정 창 안에서 피격되어 ACCalculation_DamageTaken이 보낸 성공 이벤트.
+	// 데미지 0/체간 역공/Stagger는 데미지 계산이 이미 처리했으므로, 여기서는 연출 큐와 카운터 공격만 담당한다.
+	ExecuteSuccessfulParryCue(Payload);
+	TryActivateParryCounterAttack();
+}
+
+void UACEnemyAbility_Block::ExecuteSuccessfulParryCue(const FGameplayEventData& Payload)
+{
+	if (!SuccessfulParryCueTag.IsValid())
+	{
+		return;
+	}
+
+	FGameplayCueParameters CueParams;
+	CueParams.SourceObject = GetAvatarActorFromActorInfo();
+	CueParams.Instigator = const_cast<AActor*>(Payload.Instigator.Get());
+
+	if (const ACharacter* Character = Cast<ACharacter>(GetAvatarActorFromActorInfo()))
+	{
+		CueParams.TargetAttachComponent = Character->GetMesh();
+	}
+
+	K2_ExecuteGameplayCueWithParams(SuccessfulParryCueTag, CueParams);
+}
+
+bool UACEnemyAbility_Block::TryActivateParryCounterAttack()
+{
+	if (!ParryCounterAttackAbilityTag.IsValid())
+	{
+		return false;
+	}
+
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+	if (!ASC)
+	{
+		return false;
+	}
+
+	// 종료 감지에 SpecHandle이 필요하므로 TryActivateAbilitiesByTag 대신 Spec을 직접 찾아 활성화한다.
+	FGameplayAbilitySpecHandle FoundHandle;
+	for (const FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
+	{
+		if (Spec.Ability && Spec.Ability->GetAssetTags().HasTag(ParryCounterAttackAbilityTag))
+		{
+			FoundHandle = Spec.Handle;
+			break;
+		}
+	}
+
+	if (!FoundHandle.IsValid())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UACEnemyAbility_Block: 패링 카운터 공격 Ability를 찾지 못했습니다 (Tag: %s) — StartupData 등록 여부를 확인하세요"), *ParryCounterAttackAbilityTag.ToString());
+		return false;
+	}
+
+	// 카운터 공격의 몽타주가 재생되면 현재 Block/BlockHit 몽타주가 중단되는데, 그 태스크의 OnInterrupted가
+	// OnMontageCancelled → EndAbility로 이어져 카운터 종료를 기다리기도 전에 Block이 끝나버린다.
+	// PlayHoldMontage/OnSuccessfulBlockEventReceived와 동일하게, 의도적 전환이므로 콜백 없이 조용히 종료한다.
+	if (MontageTask && MontageTask->IsActive())
+	{
+		MontageTask->EndTask();
+	}
+	MontageTask = nullptr;
+
+	// 카운터가 활성화 직후 동기적으로 끝나는 케이스도 놓치지 않도록, 활성화 전에 추적 정보를 먼저 세팅한다.
+	ParryCounterAttackSpecHandle = FoundHandle;
+	ParryCounterAttackEndedHandle = ASC->OnAbilityEnded.AddUObject(this, &ThisClass::OnParryCounterAttackEnded);
+
+	if (!ASC->TryActivateAbility(FoundHandle))
+	{
+		ASC->OnAbilityEnded.Remove(ParryCounterAttackEndedHandle);
+		ParryCounterAttackEndedHandle.Reset();
+		ParryCounterAttackSpecHandle = FGameplayAbilitySpecHandle();
+		UE_LOG(LogTemp, Warning, TEXT("UACEnemyAbility_Block: 패링 카운터 공격 Ability 활성화 실패 (Tag: %s)"), *ParryCounterAttackAbilityTag.ToString());
+		return false;
+	}
+
+	return true;
+}
+
+void UACEnemyAbility_Block::OnParryCounterAttackEnded(const FAbilityEndedData& EndedData)
+{
+	// ASC의 모든 어빌리티 종료가 이 콜백으로 들어오므로, 추적 중인 카운터 공격만 골라낸다.
+	if (EndedData.AbilitySpecHandle != ParryCounterAttackSpecHandle)
+	{
+		return;
+	}
+
+	// 카운터 공격이 끝났으므로 Block 어빌리티를 종료한다 — 델리게이트/핸들 정리는 EndAbility가 담당한다.
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }

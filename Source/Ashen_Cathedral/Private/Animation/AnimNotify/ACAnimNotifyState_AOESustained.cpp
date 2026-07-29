@@ -15,7 +15,11 @@ void UACAnimNotifyState_AOESustained::NotifyBegin(
 
 	if (AActor* Owner = MeshComp ? MeshComp->GetOwner() : nullptr)
 	{
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Owner, ACGameplayTags::Shared_Event_AOE_Sustained_Start, FGameplayEventData());
+		// 다단히트 재타격 간격을 EventMagnitude로 실어 보낸다. bMultiHit이 false면 0을 보내 대상당 1회 판정으로 동작한다.
+		FGameplayEventData Payload;
+		Payload.EventMagnitude = bMultiHit ? ReHitInterval : 0.f;
+
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Owner, ACGameplayTags::Shared_Event_AOE_Sustained_Start, Payload);
 	}
 }
 

@@ -12,6 +12,7 @@ namespace ACGameplayTags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Attack_Parryable)
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Attack_Unblockable)
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Attack_Unparryable)
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Attack_Weight_Heavy) // 피격자가 대형 히트리액트를 재생하게 하는 강타 표식. Shared.Attack 하위라 예고 Notify의 태그 필터를 그대로 통과한다.
 
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Status_Stagger) // 패링 성공으로 부여되는 짧은 경직 상태. Posture 붕괴(PostureBroken)와는 별개의 즉발성 락아웃이다.
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_SetByCaller_StaggerDuration)

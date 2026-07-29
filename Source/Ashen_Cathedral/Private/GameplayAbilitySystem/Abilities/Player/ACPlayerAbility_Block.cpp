@@ -1,12 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "GameplayAbilitySystem/Abilities/Player/ACPlayerAbility_Block.h"
+#include "AbilitySystemBlueprintLibrary.h"
 #include "ACGameplayTags.h"
 #include "ACFunctionLibrary.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Abilities/Tasks/AbilityTask_ApplyRootMotionConstantForce.h"
+#include "Animation/AnimInstance.h"
 #include "Character/ACCharacterBase.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/Character.h"
 #include "Kismet/KismetMathLibrary.h"
 
@@ -17,6 +20,9 @@ UACPlayerAbility_Block::UACPlayerAbility_Block()
 	SetAssetTags(TagsToAdd);
 
 	ActivationOwnedTags.AddTag(ACGameplayTags::Player_Status_Blocking);
+
+	// 가드가 무너진 경직 동안에는 다시 막을 수 없다
+	ActivationBlockedTags.AddTag(ACGameplayTags::Player_Status_GuardBroken);
 }
 
 void UACPlayerAbility_Block::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
@@ -67,6 +73,17 @@ void UACPlayerAbility_Block::ActivateAbility(const FGameplayAbilitySpecHandle Ha
 		);
 	WaitEventTask->EventReceived.AddDynamic(this, &ThisClass::OnSuccessfulBlockEventReceived);
 	WaitEventTask->ReadyForActivation();
+
+	// AttributeSet이 GuardGauge 최대치 도달 시 보내는 가드 붕괴 통보를 대기한다
+	WaitGuardBrokenTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
+		this,
+		ACGameplayTags::Shared_Event_GuardBrokenTriggered,
+		nullptr,
+		false,
+		true
+		);
+	WaitGuardBrokenTask->EventReceived.AddDynamic(this, &ThisClass::OnGuardBrokenEventReceived);
+	WaitGuardBrokenTask->ReadyForActivation();
 }
 
 void UACPlayerAbility_Block::InputReleased(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo)
@@ -118,6 +135,10 @@ void UACPlayerAbility_Block::OnSuccessfulBlockEventReceived(FGameplayEventData P
 	else
 	{
 		ExecuteSuccessfulBlockCue(Payload);
+
+		// 패링은 완전 방어이므로 게이지 누적 대상에서 제외한다 — 순수 블록으로 막아낸 타격만 가드를 깎는다.
+		// 임계값 판정은 AttributeSet이 하며, 도달 시 OnGuardBrokenEventReceived로 되돌아온다.
+		ApplyGuardDamage(Payload);
 	}
 
 	// 블록 히트 시 공격자 반대 방향으로 밀려나는 RootMotion 적용
@@ -139,6 +160,57 @@ void UACPlayerAbility_Block::OnSuccessfulBlockEventReceived(FGameplayEventData P
 			false
 			);
 		RootMotionTask->ReadyForActivation();
+	}
+}
+
+void UACPlayerAbility_Block::ApplyGuardDamage(const FGameplayEventData& Payload)
+{
+	// GE가 비어 있으면 가드 게이지 기능 자체가 꺼진 것으로 본다(기존 블록 동작 유지)
+	if (!GuardDamageEffect)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Guard] GuardDamageEffect가 비어 있음 — GA_Player_Block에서 지정 필요"));
+		return;
+	}
+
+	const bool bIsHeavyHit = GuardBreakWeightTag.IsValid() && Payload.InstigatorTags.HasTag(GuardBreakWeightTag);
+	const float GuardDamage = bIsHeavyHit ? GuardBreakHeavyAmount : GuardBreakAmountPerHit;
+
+	UE_LOG(LogTemp, Warning, TEXT("[Guard] ApplyGuardDamage 호출 — 부하=%.1f Heavy=%s"), GuardDamage, bIsHeavyHit ? TEXT("true") : TEXT("false"));
+
+	const FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(GuardDamageEffect, GetAbilityLevel());
+	if (!SpecHandle.IsValid())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Guard] SpecHandle 생성 실패"));
+		return;
+	}
+
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, ACGameplayTags::Shared_SetByCaller_GuardDamage, GuardDamage);
+	ApplyGameplayEffectSpecToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, SpecHandle);
+}
+
+void UACPlayerAbility_Block::OnGuardBrokenEventReceived(FGameplayEventData Payload)
+{
+	TriggerGuardBreak();
+}
+
+void UACPlayerAbility_Block::TriggerGuardBreak()
+{
+	if (GuardBreakEffect)
+	{
+		ApplyGameplayEffectToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, GuardBreakEffect->GetDefaultObject<UGameplayEffect>(), GetAbilityLevel());
+	}
+
+	// EndAbility가 Block 몽타주 태스크를 정리하므로, 애님 인스턴스를 먼저 잡아두고 종료 후에 재생한다
+	const AACCharacterBase* Character = GetACCharacterFromActorInfo();
+	UAnimInstance* AnimInstance = Character && Character->GetMesh() ? Character->GetMesh()->GetAnimInstance() : nullptr;
+	UAnimMontage* MontageToPlay = GuardBreakMontage;
+
+	// 어빌리티가 끝나면서 Blocking 태그와 이동 제한 GE가 해제되어 실제로 방어가 풀린다
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+
+	if (AnimInstance && MontageToPlay)
+	{
+		AnimInstance->Montage_Play(MontageToPlay, 1.0f);
 	}
 }
 

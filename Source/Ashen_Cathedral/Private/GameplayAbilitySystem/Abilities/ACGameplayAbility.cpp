@@ -8,6 +8,8 @@
 #include "Character/Player/ACPlayerCharacter.h"
 #include "Controllers/ACEnemyController.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
+#include "GameplayAbilitySystem/GameplayEffects/ACGameplayEffect_DynamicCooldown.h"
+#include "GameplayTags/ACGameplayTags_Shared.h"
 #include "Runtime/Media/Public/IMediaControls.h"
 
 void UACGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
@@ -54,4 +56,42 @@ UPawnCombatComponent* UACGameplayAbility::GetPawnCombatComponentFromActorInfo() 
 	}
 
 	return nullptr;
+}
+
+const FGameplayTagContainer* UACGameplayAbility::GetCooldownTags() const
+{
+	return CooldownIdentifierTags.Num() > 0 ? &CooldownIdentifierTags : nullptr;
+}
+
+UGameplayEffect* UACGameplayAbility::GetCooldownGameplayEffect() const
+{
+	return UACGameplayEffect_DynamicCooldown::StaticClass()->GetDefaultObject<UGameplayEffect>();
+}
+
+void UACGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
+{
+	if (CooldownIdentifierTags.IsEmpty() || CooldownDurationSeconds <= 0.f)
+	{
+		return;
+	}
+
+	UGameplayEffect* CooldownGE = GetCooldownGameplayEffect();
+	if (!ensure(CooldownGE))
+	{
+		return;
+	}
+
+	FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(Handle, ActorInfo, ActivationInfo, CooldownGE->GetClass(), GetAbilityLevel());
+	if (!SpecHandle.IsValid())
+	{
+		ensureMsgf(false, TEXT("Failed to create Cooldown GameplayEffectSpec"));
+		return;
+	}
+
+	// 쿨다운 식별 태그를 런타임에 부여한다 — GE는 태그를 정적으로 갖지 않으므로 어빌리티마다 독립 쿨다운이 된다
+	SpecHandle.Data->DynamicGrantedTags.AppendTags(CooldownIdentifierTags);
+	// SetByCaller로 지속시간을 넘긴다
+	SpecHandle.Data->SetSetByCallerMagnitude(ACGameplayTags::Shared_SetByCaller_CooldownDuration, CooldownDurationSeconds);
+
+	ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
 }

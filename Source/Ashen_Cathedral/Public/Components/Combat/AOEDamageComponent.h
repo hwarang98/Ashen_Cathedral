@@ -33,15 +33,16 @@ public:
 
 	/**
 	 * @brief Interval마다 이전 판정 원점→현재 판정 원점을 Sphere로 스윕하는 지속형 AOE 판정을 시작한다.
-	 * 이미 진행 중이면 기존 상태를 정리하고 새로 시작한다. 같은 구간 내 동일 대상은 한 번만 콜백된다.
+	 * 이미 진행 중이면 기존 상태를 정리하고 새로 시작한다.
 	 *
 	 * @param Radius         판정 반경 (cm)
 	 * @param ForwardOffset  Owner 전방으로 밀어낼 판정 원점 오프셋 (cm)
 	 * @param Interval       스윕 판정을 반복할 간격 (초)
 	 * @param bDebugDraw     true면 스윕 경로를 디버그로 표시한다.
 	 * @param OnTargetFound  자기 자신/중복/ASC 없음/비적대 필터를 통과한 대상마다 호출되는 콜백
+	 * @param ReHitInterval  0 이하면 같은 구간 내 동일 대상은 한 번만 히트한다. 0보다 크면 다단히트로, 이 간격(초)이 지난 대상을 다시 히트한다.
 	 */
-	void StartSustainedAOE(float Radius, float ForwardOffset, float Interval, bool bDebugDraw, TFunction<void(AActor*)> OnTargetFound);
+	void StartSustainedAOE(float Radius, float ForwardOffset, float Interval, bool bDebugDraw, TFunction<void(AActor*)> OnTargetFound, float ReHitInterval = 0.f);
 
 	/** 지속형 AOE 판정을 종료하고 타이머와 중복 히트 목록을 정리한다. */
 	void StopSustainedAOE();
@@ -50,15 +51,21 @@ private:
 	FVector ComputeAOEOrigin(float ForwardOffset) const;
 	void TickSustainedAOE();
 
-	/** CandidateActors 중 자기 자신/중복(DedupSet)/ASC 없음/비적대를 걸러낸 뒤 살아남은 대상마다 OnTargetFound를 호출한다. */
-	void BroadcastHostileTargets(const TArray<AActor*>& CandidateActors, TSet<TWeakObjectPtr<AActor>>* DedupSet, const TFunction<void(AActor*)>& OnTargetFound) const;
+	/**
+	 * @brief CandidateActors 중 자기 자신/ASC 없음/비적대를 걸러낸 뒤 살아남은 대상마다 OnTargetFound를 호출한다.
+	 *
+	 * @param HitTimes      대상별 마지막 히트 시각(초) 맵. nullptr이면 중복 판정을 하지 않는다.
+	 * @param ReHitInterval 0 이하면 HitTimes에 있는 대상은 스킵한다(1회 히트). 0보다 크면 마지막 히트로부터 이 간격이 지난 대상만 다시 히트한다.
+	 */
+	void BroadcastHostileTargets(const TArray<AActor*>& CandidateActors, TMap<TWeakObjectPtr<AActor>, double>* HitTimes, float ReHitInterval, const TFunction<void(AActor*)>& OnTargetFound) const;
 
 	float SustainedRadius = 0.f;
 	float SustainedForwardOffset = 0.f;
+	float SustainedReHitInterval = 0.f;
 	bool bSustainedDebugDraw = false;
 	TFunction<void(AActor*)> SustainedOnTargetFound;
 
 	FVector PreviousAOEOrigin = FVector::ZeroVector;
 	FTimerHandle SustainedTickTimerHandle;
-	TSet<TWeakObjectPtr<AActor>> SustainedHitActors;
+	TMap<TWeakObjectPtr<AActor>, double> SustainedHitTimes;
 };

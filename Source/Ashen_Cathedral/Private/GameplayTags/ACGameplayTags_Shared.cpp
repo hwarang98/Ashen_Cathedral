@@ -9,6 +9,7 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Event_PostureBrokenTriggered, "Shared.Event.PostureBrokenTriggered")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Event_Death, "Shared.Event.Death")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Event_HitReact, "Shared.Event.HitReact")
+	UE_DEFINE_GAMEPLAY_TAG(Shared_Event_GuardBrokenTriggered, "Shared.Event.GuardBrokenTriggered")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Event_AOE_Instant, "Shared.Event.AOE.Instant")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Event_AOE_Sustained_Start, "Shared.Event.AOE.Sustained.Start")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Event_AOE_Sustained_End, "Shared.Event.AOE.Sustained.End")
@@ -29,16 +30,19 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Status_HitReact_Right, "Shared.Status.HitReact.Right")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Status_Executed, "Shared.Status.Executed")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Status_PostureDecayBlocked, "Shared.Status.PostureDecayBlocked")
+	UE_DEFINE_GAMEPLAY_TAG(Shared_Status_GuardDecayBlocked, "Shared.Status.GuardDecayBlocked")
 	#pragma endregion
 
 	#pragma region Shared SetByCaller Tags
 	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_BaseDamage, "Shared.SetByCaller.BaseDamage")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_CounterAttackBonus, "Shared.SetByCaller.CounterAttackBonus")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_PostureDamage, "Shared.SetByCaller.PostureDamage")
+	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_GuardDamage, "Shared.SetByCaller.GuardDamage")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_AttackType_Light, "Shared.SetByCaller.AttackType.Light")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_AttackType_Heavy, "Shared.SetByCaller.AttackType.Heavy")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_FireBonusDamage, "Shared.SetByCaller.FireBonusDamage")
 	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_BurnBuildUp, "Shared.SetByCaller.BurnBuildUp")
+	UE_DEFINE_GAMEPLAY_TAG(Shared_SetByCaller_CooldownDuration, "Shared.SetByCaller.CooldownDuration")
 	#pragma endregion
 
 	#pragma region Shared Abilies Tags

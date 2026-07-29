@@ -4,6 +4,7 @@
 #include "GameplayAbilitySystem/Abilities/Enemy/ACEnemyAbility_Dodge.h"
 #include "ACFunctionLibrary.h"
 #include "ACGameplayTags.h"
+#include "AbilitySystemComponent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Character/Enemy/ACEnemyCharacter.h"
 
@@ -48,9 +49,9 @@ void UACEnemyAbility_Dodge::ActivateAbility(const FGameplayAbilitySpecHandle Han
 		return;
 	}
 
-	// BT가 SendGameplayEvent의 EventMagnitude에 담아 보낸 방향을 수신
+	// SendGameplayEvent의 EventMagnitude에 담아 보낸 방향을 수신
 	const float DirValue = TriggerEventData ? TriggerEventData->EventMagnitude : 1.0f;
-	const EDodgeDirection Direction = ParseDirection(DirValue);
+	const EACDodgeDirection Direction = ParseDirection(DirValue);
 
 	UAnimMontage* MontageToPlay = SelectMontage(Direction);
 	if (!MontageToPlay)
@@ -59,11 +60,25 @@ void UACEnemyAbility_Dodge::ActivateAbility(const FGameplayAbilitySpecHandle Han
 		return;
 	}
 
+	// 회피 무적 GE 적용 (설정된 경우에만). 비어 있으면 스킵되어 기존 동작과 완전히 동일하다.
+	if (InvincibilityEffect)
+	{
+		const FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(InvincibilityEffect);
+		InvincibilityEffectHandle = ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
+	}
+
 	PlayDodgeMontage(MontageToPlay);
 }
 
 void UACEnemyAbility_Dodge::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
+	// 회피가 어떤 경로로 끝나든 무적 GE를 제거한다. 무적 GE를 안 쓴 경우 핸들이 무효라 no-op이므로 기존 동작에 영향 없다.
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+	{
+		ASC->RemoveActiveGameplayEffect(InvincibilityEffectHandle);
+	}
+	InvincibilityEffectHandle.Invalidate();
+
 	if (MontageTask && MontageTask->IsActive())
 	{
 		MontageTask->EndTask();
@@ -83,41 +98,41 @@ void UACEnemyAbility_Dodge::OnMontageCancelled()
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }
 
-UACEnemyAbility_Dodge::EDodgeDirection UACEnemyAbility_Dodge::ParseDirection(float EventMagnitude)
+EACDodgeDirection UACEnemyAbility_Dodge::ParseDirection(float EventMagnitude)
 {
 	switch (FMath::RoundToInt(EventMagnitude))
 	{
 		case 0:
-			return EDodgeDirection::Forward;
+			return EACDodgeDirection::Forward;
 
 		case 1:
-			return EDodgeDirection::Backward;
+			return EACDodgeDirection::Backward;
 
 		case 2:
-			return EDodgeDirection::Left;
+			return EACDodgeDirection::Left;
 
 		case 3:
-			return EDodgeDirection::Right;
+			return EACDodgeDirection::Right;
 
 		default:
-			return EDodgeDirection::Backward;
+			return EACDodgeDirection::Backward;
 	}
 }
 
-UAnimMontage* UACEnemyAbility_Dodge::SelectMontage(EDodgeDirection Direction) const
+UAnimMontage* UACEnemyAbility_Dodge::SelectMontage(EACDodgeDirection Direction) const
 {
 	switch (Direction)
 	{
-		case EDodgeDirection::Forward:
+		case EACDodgeDirection::Forward:
 			return ForwardDodgeMontage;
 
-		case EDodgeDirection::Backward:
+		case EACDodgeDirection::Backward:
 			return BackDodgeMontage;
 
-		case EDodgeDirection::Left:
+		case EACDodgeDirection::Left:
 			return LeftDodgeMontage;
 
-		case EDodgeDirection::Right:
+		case EACDodgeDirection::Right:
 			return RightDodgeMontage;
 
 		default:

@@ -24,7 +24,9 @@ public class Ashen_Cathedral : ModuleRules
 			"AIModule",
 			"NavigationSystem",
 			"MotionWarping",
-			"Chooser"
+			"Chooser",
+			"StateTreeModule",
+			"GameplayStateTreeModule"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });

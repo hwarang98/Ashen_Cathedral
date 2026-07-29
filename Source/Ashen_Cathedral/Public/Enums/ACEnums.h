@@ -50,6 +50,25 @@ enum class ERollDirection : uint8
 	ForwardLeft UMETA(DisplayName = "전방 좌측 (Forward Left)")
 };
 
+// Enemy 4방향 닷지 방향. GameplayEvent의 EventMagnitude로 전달되므로 값 순서를 바꾸지 말 것
+UENUM(BlueprintType)
+enum class EACDodgeDirection : uint8
+{
+	Forward  UMETA(DisplayName = "전방 (Forward)"),
+	Backward UMETA(DisplayName = "후방 (Backward)"),
+	Left     UMETA(DisplayName = "좌측 (Left)"),
+	Right    UMETA(DisplayName = "우측 (Right)"),
+};
+
+// Enemy 공격 어빌리티가 AttackMontages 배열에서 몽타주를 고르는 방식
+UENUM(BlueprintType)
+enum class EACAttackMontageSelectionMode : uint8
+{
+	Random        UMETA(DisplayName = "무작위"),
+	Sequential    UMETA(DisplayName = "순차 (배열 순서대로)"),
+	ComboSequence UMETA(DisplayName = "콤보 (ComboSequences에서 한 벌 뽑아 순서대로)"),
+};
+
 // 로그라이크 보상 카드 계열
 UENUM(BlueprintType)
 enum class EACCardCategory : uint8

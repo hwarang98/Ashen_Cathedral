@@ -9,6 +9,7 @@ namespace ACGameplayTags
 	#pragma region Shared Event Tags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Event_MeleeHit);
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Event_PostureBrokenTriggered);
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Event_GuardBrokenTriggered); // GuardGauge가 최대치에 도달했을 때 AttributeSet이 발송한다. Block 어빌리티가 수신해 가드 브레이크를 실행한다
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Event_Death);
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Event_HitReact);
 	// 단발형 AOE 데미지 타이밍 이벤트 — 몽타주 AnimNotify가 1회 발송하면 즉시 범위 판정 후 DamageEffect를 적용한다
@@ -36,18 +37,23 @@ namespace ACGameplayTags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Status_Executed);
 	// 체간 피해를 받은 직후 부여되는 상태 태그 — GE_PostureDecay의 Ongoing Tag Requirement가 이 태그 보유 중엔 자연 감소를 막는다
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Status_PostureDecayBlocked);
+	// 가드로 막아낸 직후 부여되는 상태 태그 — GE_GuardGaugeDecay의 Ongoing Tag Requirement가 이 태그 보유 중엔 자연 감소를 막는다
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Status_GuardDecayBlocked);
 	#pragma endregion
 
 	#pragma region Shared SetByCaller Tags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_SetByCaller_BaseDamage);
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_SetByCaller_CounterAttackBonus);
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_SetByCaller_PostureDamage);
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_SetByCaller_GuardDamage); // 막아낸 공격의 가드 부하량을 GuardDamageEffect에 전달한다
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_SetByCaller_AttackType_Light);
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_SetByCaller_AttackType_Heavy);
 	// Phase2 화염 추가 데미지. DamageCalculation에서 BaseDamage에 합산됩니다.
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_SetByCaller_FireBonusDamage);
 	// Phase2 화상 축적량. DamageCalculation에서 BurnAccumulation 메타 Attribute에 출력됩니다.
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_SetByCaller_BurnBuildUp);
+	// 다이나믹 쿨다운 GE의 Duration을 런타임에 주입하는 SetByCaller 태그
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_SetByCaller_CooldownDuration);
 	#pragma endregion
 
 	#pragma region Shared Abilies Tags

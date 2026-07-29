@@ -16,10 +16,14 @@ UACGameplayAbility_AshenKnight_Phase2::UACGameplayAbility_AshenKnight_Phase2()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 
-	// 활성화 중 Enemy.State.Phase2 태그를 ASC에 부여한다.
-	// 동일 태그가 ActivationBlockedTags에도 있으므로 중복 실행이 자동 차단된다.
-	ActivationOwnedTags.AddTag(ACGameplayTags::Enemy_State_Phase2);
+	// Enemy.State.Phase2는 되돌아가지 않는 영구 상태다. ActivationOwnedTags로 붙이면 어빌리티 수명에 묶여
+	// EndAbility 시 사라지므로, ActivateAbility에서 Loose 태그로 직접 부여한다(어빌리티가 끝나도 유지된다).
+	// 태그가 이미 있으면 ActivationBlockedTags가 재실행을 차단한다.
 	ActivationBlockedTags.AddTag(ACGameplayTags::Enemy_State_Phase2);
+
+	// Enemy.Status.Phase2는 '전환 연출이 진행 중'이라는 일시 상태다. 어빌리티 수명에 묶여 EndAbility 시 자동 제거되므로,
+	// 영구 상태인 Enemy.State.Phase2와 달리 "지금 전환 중인가"를 묻는 쪽(AI 컨트롤러의 예고 무시 가드 등)이 이 태그를 본다.
+	ActivationOwnedTags.AddTag(ACGameplayTags::Enemy_Status_Phase2);
 
 	// 기본 이벤트 태그. BP에서 덮어쓸 수 있다.
 	VisualActivateEventTag = ACGameplayTags::Enemy_Event_Phase2_VisualActivate;
@@ -38,6 +42,12 @@ void UACGameplayAbility_AshenKnight_Phase2::ActivateAbility(
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
+	}
+
+	// Phase2 영구 상태 태그를 Loose로 부여한다 — EndAbility 후에도 유지되어야 하므로 ActivationOwnedTags를 쓰지 않는다.
+	if (UAbilitySystemComponent* PhaseASC = GetAbilitySystemComponentFromActorInfo())
+	{
+		PhaseASC->AddLooseGameplayTag(ACGameplayTags::Enemy_State_Phase2);
 	}
 
 	// 1. 스탯 강화 GE 즉시 적용 (Infinite — 몽타주와 무관하게 바로 발동)
@@ -100,11 +110,13 @@ void UACGameplayAbility_AshenKnight_Phase2::ActivateAbility(
 	}
 	else
 	{
-		// 몽타주 없음 → 즉시 비주얼 적용
+		// 몽타주 없음 → 즉시 비주얼 적용 후 종료 (대기할 전환 연출이 없다)
 		OnVisualActivateEventReceived(FGameplayEventData{});
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 	}
 
-	// Phase2는 되돌아가지 않으므로 EndAbility를 호출하지 않는다.
+	// Enemy.State.Phase2는 위에서 Loose로 부여했으므로 EndAbility 후에도 유지된다.
+	// 몽타주가 있는 경우 종료는 OnPhase2MontageEnded(전환 연출 완료 시점)가 담당한다.
 }
 
 void UACGameplayAbility_AshenKnight_Phase2::OnVisualActivateEventReceived(FGameplayEventData Payload)
@@ -151,7 +163,7 @@ void UACGameplayAbility_AshenKnight_Phase2::OnPhase2MontageEnded()
 		ASC->RemoveLooseGameplayTag(ACGameplayTags::Shared_Status_Invincible);
 	}
 
-	// AI BT 재개
+	// AI BT 재개 (BT 보스 전용 — StateTree 보스는 BrainComponent가 없어 no-op)
 	if (AAIController* AIC = GetOwningAIController())
 	{
 		if (AIC->BrainComponent)
@@ -159,6 +171,10 @@ void UACGameplayAbility_AshenKnight_Phase2::OnPhase2MontageEnded()
 			AIC->BrainComponent->ResumeLogic(TEXT("Phase2Transition"));
 		}
 	}
+
+	// 전환 연출이 끝났으므로 어빌리티를 종료한다. Enemy.State.Phase2는 Loose 태그라 종료 후에도 유지되며,
+	// 스탯 GE(Infinite)·머티리얼·Niagara도 그대로 남는다. StateTree 보스는 이 종료로 전환 완료를 인식한다.
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 AAIController* UACGameplayAbility_AshenKnight_Phase2::GetOwningAIController() const
