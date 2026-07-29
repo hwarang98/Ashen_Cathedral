@@ -226,6 +226,15 @@ bool UACEnemyAbility_Block::TryActivateParryCounterAttack()
 		return false;
 	}
 
+	// 카운터 공격의 몽타주가 재생되면 현재 Block/BlockHit 몽타주가 중단되는데, 그 태스크의 OnInterrupted가
+	// OnMontageCancelled → EndAbility로 이어져 카운터 종료를 기다리기도 전에 Block이 끝나버린다.
+	// PlayHoldMontage/OnSuccessfulBlockEventReceived와 동일하게, 의도적 전환이므로 콜백 없이 조용히 종료한다.
+	if (MontageTask && MontageTask->IsActive())
+	{
+		MontageTask->EndTask();
+	}
+	MontageTask = nullptr;
+
 	// 카운터가 활성화 직후 동기적으로 끝나는 케이스도 놓치지 않도록, 활성화 전에 추적 정보를 먼저 세팅한다.
 	ParryCounterAttackSpecHandle = FoundHandle;
 	ParryCounterAttackEndedHandle = ASC->OnAbilityEnded.AddUObject(this, &ThisClass::OnParryCounterAttackEnded);

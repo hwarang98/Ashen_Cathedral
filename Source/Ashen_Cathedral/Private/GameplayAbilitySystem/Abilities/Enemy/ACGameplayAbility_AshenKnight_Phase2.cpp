@@ -21,6 +21,10 @@ UACGameplayAbility_AshenKnight_Phase2::UACGameplayAbility_AshenKnight_Phase2()
 	// 태그가 이미 있으면 ActivationBlockedTags가 재실행을 차단한다.
 	ActivationBlockedTags.AddTag(ACGameplayTags::Enemy_State_Phase2);
 
+	// Enemy.Status.Phase2는 '전환 연출이 진행 중'이라는 일시 상태다. 어빌리티 수명에 묶여 EndAbility 시 자동 제거되므로,
+	// 영구 상태인 Enemy.State.Phase2와 달리 "지금 전환 중인가"를 묻는 쪽(AI 컨트롤러의 예고 무시 가드 등)이 이 태그를 본다.
+	ActivationOwnedTags.AddTag(ACGameplayTags::Enemy_Status_Phase2);
+
 	// 기본 이벤트 태그. BP에서 덮어쓸 수 있다.
 	VisualActivateEventTag = ACGameplayTags::Enemy_Event_Phase2_VisualActivate;
 }
