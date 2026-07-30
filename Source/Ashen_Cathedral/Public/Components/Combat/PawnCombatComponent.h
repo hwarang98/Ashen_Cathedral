@@ -28,9 +28,15 @@ public:
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	virtual void OnHitTargetActor(AActor* HitActor);
+	/**
+	 * @brief 무기 콜리전이 대상에 적중했을 때 호출된다.
+	 *
+	 * @param HitActor  적중된 대상 액터
+	 * @param HitResult 무기가 확정한 실제 충돌 정보. 공격자 ASC의 EffectContext에 실려 GameplayCue까지 전달된다.
+	 */
+	virtual void OnHitTargetActor(AActor* HitActor, const FHitResult& HitResult);
 	virtual void OnWeaponPulledFromTargetActor(AActor* InteractingActor);
-	virtual void OnHitTargetActorImpl(AActor* HitActor);
+	virtual void OnHitTargetActorImpl(AActor* HitActor, const FHitResult& HitResult);
 
 	UFUNCTION(BlueprintCallable, Category = "Ashen Cathdral|Combat")
 	AACWeaponBase* GetCharacterCarriedWeaponByTag(FGameplayTag InWeaponTagToGet) const;

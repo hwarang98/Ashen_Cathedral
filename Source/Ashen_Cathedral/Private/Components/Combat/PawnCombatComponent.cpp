@@ -57,7 +57,7 @@ void UPawnCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 		);
 }
 
-void UPawnCombatComponent::OnHitTargetActor(AActor* HitActor)
+void UPawnCombatComponent::OnHitTargetActor(AActor* HitActor, const FHitResult& HitResult)
 {
 	// 공격때마다 1회만 공격처리 (중복 방지)
 	if (OverlappedActors.Contains(HitActor))
@@ -69,9 +69,10 @@ void UPawnCombatComponent::OnHitTargetActor(AActor* HitActor)
 
 	// Notify(AN_IncomingAttackWarning)가 기록해둔 현재 공격의 방어 가능 속성을 가져와 Block/Parry 판정에 사용한다.
 	FGameplayTagContainer CurrentAttackDefenseTags;
-	if (UACAbilitySystemComponent* ASC = UACFunctionLibrary::NativeAbilitySystemComponentFromActor(GetOwningPawn()))
+	UACAbilitySystemComponent* SourceASC = UACFunctionLibrary::NativeAbilitySystemComponentFromActor(GetOwningPawn());
+	if (SourceASC)
 	{
-		if (const UACAbility_Attack* AttackAbility = Cast<UACAbility_Attack>(ASC->GetAnimatingAbility()))
+		if (const UACAbility_Attack* AttackAbility = Cast<UACAbility_Attack>(SourceASC->GetAnimatingAbility()))
 		{
 			CurrentAttackDefenseTags = AttackAbility->GetCurrentAttackDefenseTags();
 		}
@@ -83,6 +84,18 @@ void UPawnCombatComponent::OnHitTargetActor(AActor* HitActor)
 	EventData.Instigator = GetOwningPawn();
 	EventData.Target = HitActor;
 
+	// 실제 충돌 지점을 EffectContext에 실어 이벤트를 받는 어빌리티(및 GameplayCue)까지 보존한다.
+	// ASC가 없거나 컨텍스트 생성에 실패하면 ContextHandle이 비어 있는 채로 기존과 동일하게 이벤트만 전송한다.
+	if (SourceASC)
+	{
+		FGameplayEffectContextHandle ContextHandle = SourceASC->MakeEffectContext();
+		if (ContextHandle.IsValid())
+		{
+			ContextHandle.AddHitResult(HitResult, true);
+			EventData.ContextHandle = ContextHandle;
+		}
+	}
+
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
 		GetOwningPawn(),
 		ACGameplayTags::Shared_Event_MeleeHit,
@@ -90,12 +103,12 @@ void UPawnCombatComponent::OnHitTargetActor(AActor* HitActor)
 		);
 
 	// 자식 클래스의 추가 로직 실행
-	OnHitTargetActorImpl(HitActor);
+	OnHitTargetActorImpl(HitActor, HitResult);
 }
 
 void UPawnCombatComponent::OnWeaponPulledFromTargetActor(AActor* InteractingActor) {}
 
-void UPawnCombatComponent::OnHitTargetActorImpl(AActor* HitActor)
+void UPawnCombatComponent::OnHitTargetActorImpl(AActor* HitActor, const FHitResult& HitResult)
 {
 	// 기본 구현은 비어있음 - 자식 클래스에서 필요시 override
 }

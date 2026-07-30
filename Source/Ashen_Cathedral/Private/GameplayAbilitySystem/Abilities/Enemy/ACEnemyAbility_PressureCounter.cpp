@@ -153,7 +153,7 @@ void UACEnemyAbility_PressureCounter::OnHitTarget(FGameplayEventData Payload)
 	// 데미지 적용 전에 대상에게 GameplayCue를 발동시킨다.
 	UACFunctionLibrary::TryTriggerSuccessfulBlockEvent(GetAvatarActorFromActorInfo(), const_cast<AActor*>(HitActor), PressureCounterDefenseTags);
 
-	ApplyDamageEffectSpecToTarget(HitActor, CombatComponent->GetCurrentWeaponBaseDamage(), 0.f);
+	ApplyDamageEffectSpecToTarget(HitActor, CombatComponent->GetCurrentWeaponBaseDamage(), 0.f, &Payload);
 }
 
 void UACEnemyAbility_PressureCounter::OnInstantAOEEventReceived(FGameplayEventData Payload)
@@ -241,7 +241,7 @@ UAOEDamageComponent* UACEnemyAbility_PressureCounter::GetOrCreateAOEDamageCompon
 	return NewComponent;
 }
 
-bool UACEnemyAbility_PressureCounter::ApplyDamageEffectSpecToTarget(const AActor* TargetActor, float BaseDamage, float PostureDamage)
+bool UACEnemyAbility_PressureCounter::ApplyDamageEffectSpecToTarget(const AActor* TargetActor, float BaseDamage, float PostureDamage, const FGameplayEventData* Payload)
 {
 	UACAbilitySystemComponent* ASC = GetACAbilitySystemComponentFromActorInfo();
 	if (!ASC || !TargetActor || !DamageEffect)
@@ -280,9 +280,11 @@ bool UACEnemyAbility_PressureCounter::ApplyDamageEffectSpecToTarget(const AActor
 	const AActor* OwnerActor = GetAvatarActorFromActorInfo();
 	const bool bParrySuccess = UACFunctionLibrary::IsSuccessfulParry(OwnerActor, TargetActor, PressureCounterDefenseTags);
 	const bool bBlockSuccess = UACFunctionLibrary::IsSuccessfulBlock(OwnerActor, TargetActor, PressureCounterDefenseTags);
+	const bool bShouldPlayBlood = ShouldPlayBloodHitGameplayCue(TargetActor, bParrySuccess, bBlockSuccess);
 
 	ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
 	PlayHitGameplayCue(TargetActor, bParrySuccess, bBlockSuccess);
+	PlayBloodHitGameplayCue(TargetActor, Payload, bShouldPlayBlood);
 	return true;
 }
 
@@ -321,6 +323,69 @@ void UACEnemyAbility_PressureCounter::PlayHitGameplayCue(const AActor* HitActor,
 	CueParams.Normal = (OwnerCharacter->GetActorLocation() - HitActor->GetActorLocation()).GetSafeNormal();
 
 	ASC->ExecuteGameplayCue(HitGameplayCueTag, CueParams);
+}
+
+bool UACEnemyAbility_PressureCounter::ShouldPlayBloodHitGameplayCue(const AActor* HitActor, bool bParrySuccess, bool bBlockSuccess) const
+{
+	if (!BloodHitGameplayCueTag.IsValid() || !HitActor)
+	{
+		return false;
+	}
+
+	const UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(const_cast<AActor*>(HitActor));
+	if (!TargetASC)
+	{
+		return false;
+	}
+
+	// 데미지 적용 '전' 상태 기준이다. 적용 후 새로 붙은 Dead 태그로 취소하면 이번 반격으로 죽은 대상의
+	// 마지막 혈흔이 사라지므로, 이 판정은 반드시 GE 적용 전에 수행해야 한다.
+	const bool bWasAlreadyInvincible = TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Invincible);
+	const bool bWasAlreadyDead = TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Dead);
+
+	return !bParrySuccess && !bBlockSuccess && !bWasAlreadyInvincible && !bWasAlreadyDead;
+}
+
+void UACEnemyAbility_PressureCounter::PlayBloodHitGameplayCue(const AActor* HitActor, const FGameplayEventData* Payload, bool bShouldPlayBlood) const
+{
+	if (!bShouldPlayBlood || !HitActor)
+	{
+		return;
+	}
+
+	AACEnemyCharacter* OwnerCharacter = GetEnemyCharacterFromActorInfo();
+	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(const_cast<AActor*>(HitActor));
+	if (!OwnerCharacter || !TargetASC)
+	{
+		return;
+	}
+
+	const UEnemyCombatComponent* CombatComponent = GetEnemyCombatComponentFromActorInfo();
+
+	FGameplayCueParameters CueParams;
+	CueParams.Instigator = OwnerCharacter;
+	CueParams.EffectCauser = OwnerCharacter;
+	CueParams.SourceObject = CombatComponent ? Cast<AACWeaponBase>(CombatComponent->GetCharacterCurrentEquippedWeapon()) : nullptr;
+
+	// UPawnCombatComponent::OnHitTargetActor가 EffectContext에 실어둔 무기 충돌 정보를 그대로 사용한다.
+	const FHitResult* HitResult = Payload ? Payload->ContextHandle.GetHitResult() : nullptr;
+	if (HitResult && !HitResult->ImpactPoint.ContainsNaN())
+	{
+		CueParams.EffectContext = Payload->ContextHandle;
+		CueParams.Location = HitResult->ImpactPoint;
+		CueParams.Normal = HitResult->ImpactNormal;
+		CueParams.PhysicalMaterial = HitResult->PhysMaterial;
+		CueParams.TargetAttachComponent = HitResult->GetComponent();
+	}
+	else
+	{
+		// HitResult가 없는 경로(AOE 등)는 기존 히트 큐와 동일한 폴백을 사용한다.
+		CueParams.TargetAttachComponent = HitActor->GetRootComponent();
+		CueParams.Location = HitActor->GetActorLocation();
+		CueParams.Normal = (OwnerCharacter->GetActorLocation() - HitActor->GetActorLocation()).GetSafeNormal();
+	}
+
+	TargetASC->ExecuteGameplayCue(BloodHitGameplayCueTag, CueParams);
 }
 
 void UACEnemyAbility_PressureCounter::ApplyInvincibilityEffect()

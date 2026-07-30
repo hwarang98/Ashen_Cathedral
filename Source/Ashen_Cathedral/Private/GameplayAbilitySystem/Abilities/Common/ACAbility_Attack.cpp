@@ -344,6 +344,86 @@ void UACAbility_Attack::PlayHitGameplayCue(const AActor* HitActor, bool bParrySu
 	ASC->ExecuteGameplayCue(MeleeAttackSoundCueTag, CueParams);
 }
 
+FGameplayTag UACAbility_Attack::ResolveBloodHitGameplayCueTag() const
+{
+	// bWasCounterAttack은 ActivateAbility에서 캐시된 값이다 (히트 시점에는 태그가 이미 소모됨).
+	if (bWasCounterAttack && CounterAttackBloodHitGameplayCueTag.IsValid())
+	{
+		return CounterAttackBloodHitGameplayCueTag;
+	}
+
+	return BloodHitGameplayCueTag;
+}
+
+bool UACAbility_Attack::ShouldPlayBloodHitGameplayCue(const AActor* HitActor, bool bParrySuccess, bool bBlockSuccess) const
+{
+	if (!ResolveBloodHitGameplayCueTag().IsValid() || !HitActor)
+	{
+		return false;
+	}
+
+	const UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(const_cast<AActor*>(HitActor));
+	if (!TargetASC)
+	{
+		return false;
+	}
+
+	// 데미지 적용 '전' 상태 기준이다. 적용 후 새로 붙은 Dead 태그로 취소하면 이번 공격으로 죽은 대상의
+	// 마지막 혈흔이 사라지므로, 이 판정은 반드시 호출부에서 GE 적용 전에 수행해야 한다.
+	const bool bWasAlreadyInvincible = TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Invincible);
+	const bool bWasAlreadyDead = TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Dead);
+
+	return !bParrySuccess && !bBlockSuccess && !bWasAlreadyInvincible && !bWasAlreadyDead;
+}
+
+void UACAbility_Attack::PlayBloodHitGameplayCue(const AActor* HitActor, const FGameplayEventData* Payload, bool bShouldPlayBlood) const
+{
+	if (!bShouldPlayBlood || !HitActor)
+	{
+		return;
+	}
+
+	const FGameplayTag BloodCueTag = ResolveBloodHitGameplayCueTag();
+	if (!BloodCueTag.IsValid())
+	{
+		return;
+	}
+
+	AACCharacterBase* OwnerCharacter = GetACCharacterFromActorInfo();
+	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(const_cast<AActor*>(HitActor));
+	if (!OwnerCharacter || !TargetASC)
+	{
+		return;
+	}
+
+	const UPawnCombatComponent* CombatComponent = OwnerCharacter->GetPawnCombatComponent();
+
+	FGameplayCueParameters CueParams;
+	CueParams.Instigator = OwnerCharacter;
+	CueParams.EffectCauser = OwnerCharacter;
+	CueParams.SourceObject = CombatComponent ? Cast<AACWeaponBase>(CombatComponent->GetCharacterCurrentEquippedWeapon()) : nullptr;
+
+	// UPawnCombatComponent::OnHitTargetActor가 EffectContext에 실어둔 무기 충돌 정보를 그대로 사용한다.
+	const FHitResult* HitResult = Payload ? Payload->ContextHandle.GetHitResult() : nullptr;
+	if (HitResult && !HitResult->ImpactPoint.ContainsNaN())
+	{
+		CueParams.EffectContext = Payload->ContextHandle;
+		CueParams.Location = HitResult->ImpactPoint;
+		CueParams.Normal = HitResult->ImpactNormal;
+		CueParams.PhysicalMaterial = HitResult->PhysMaterial;
+		CueParams.TargetAttachComponent = HitResult->GetComponent();
+	}
+	else
+	{
+		// HitResult가 없는 경로(AOE 등)는 기존 사운드 큐와 동일한 폴백을 사용한다.
+		CueParams.TargetAttachComponent = HitActor->GetRootComponent();
+		CueParams.Location = HitActor->GetActorLocation();
+		CueParams.Normal = (OwnerCharacter->GetActorLocation() - HitActor->GetActorLocation()).GetSafeNormal();
+	}
+
+	TargetASC->ExecuteGameplayCue(BloodCueTag, CueParams);
+}
+
 void UACAbility_Attack::OnHitTarget(FGameplayEventData Payload)
 {
 	const AActor* HitActor = Payload.Target.Get();
@@ -402,10 +482,12 @@ void UACAbility_Attack::OnHitTarget(FGameplayEventData Payload)
 	// 대상의 Parry 상태 태그를 즉시 제거할 수 있다. 따라서 Parry/Block 성공 판정은 반드시 적용 '전'에 캡처해 큐 억제에 쓴다.
 	const bool bParrySuccess = UACFunctionLibrary::IsSuccessfulParry(OwnerCharacter, HitActor, CurrentAttackDefenseTags);
 	const bool bBlockSuccess = UACFunctionLibrary::IsSuccessfulBlock(OwnerCharacter, HitActor, CurrentAttackDefenseTags);
+	const bool bShouldPlayBlood = ShouldPlayBloodHitGameplayCue(HitActor, bParrySuccess, bBlockSuccess);
 
 	if (ApplyDamageEffectSpecToTarget(SpecHandle, HitActor, BaseDamage))
 	{
 		PlayHitGameplayCue(HitActor, bParrySuccess, bBlockSuccess);
+		PlayBloodHitGameplayCue(HitActor, &Payload, bShouldPlayBlood);
 	}
 
 	if (HitCameraShakeClass)
@@ -467,11 +549,14 @@ void UACAbility_Attack::OnInstantAOEEventReceived(FGameplayEventData Payload)
 			// GE 적용이 Parry 상태 태그를 소모하므로, 큐 억제용 판정은 적용 전에 캡처한다.
 			const bool bParrySuccess = UACFunctionLibrary::IsSuccessfulParry(OwnerCharacter, TargetActor, CurrentAttackDefenseTags);
 			const bool bBlockSuccess = UACFunctionLibrary::IsSuccessfulBlock(OwnerCharacter, TargetActor, CurrentAttackDefenseTags);
+			const bool bShouldPlayBlood = ShouldPlayBloodHitGameplayCue(TargetActor, bParrySuccess, bBlockSuccess);
 
 			const FGameplayEffectSpecHandle SpecHandle = CreateDamageEffectSpec(BaseDamage, PostureDamage);
 			if (ApplyDamageEffectSpecToTarget(SpecHandle, TargetActor, BaseDamage))
 			{
 				PlayHitGameplayCue(TargetActor, bParrySuccess, bBlockSuccess);
+				// AOE는 대응하는 무기 충돌 HitResult가 없으므로 폴백 위치를 쓴다.
+				PlayBloodHitGameplayCue(TargetActor, nullptr, bShouldPlayBlood);
 			}
 		});
 }
@@ -505,11 +590,14 @@ void UACAbility_Attack::OnSustainedAOEStartReceived(FGameplayEventData Payload)
 			// GE 적용이 Parry 상태 태그를 소모하므로, 큐 억제용 판정은 적용 전에 캡처한다.
 			const bool bParrySuccess = UACFunctionLibrary::IsSuccessfulParry(OwnerCharacter, TargetActor, CurrentAttackDefenseTags);
 			const bool bBlockSuccess = UACFunctionLibrary::IsSuccessfulBlock(OwnerCharacter, TargetActor, CurrentAttackDefenseTags);
+			const bool bShouldPlayBlood = ShouldPlayBloodHitGameplayCue(TargetActor, bParrySuccess, bBlockSuccess);
 
 			const FGameplayEffectSpecHandle SpecHandle = CreateDamageEffectSpec(BaseDamage, PostureDamage);
 			if (ApplyDamageEffectSpecToTarget(SpecHandle, TargetActor, BaseDamage))
 			{
 				PlayHitGameplayCue(TargetActor, bParrySuccess, bBlockSuccess);
+				// AOE는 대응하는 무기 충돌 HitResult가 없으므로 폴백 위치를 쓴다.
+				PlayBloodHitGameplayCue(TargetActor, nullptr, bShouldPlayBlood);
 			}
 		},
 		Payload.EventMagnitude);

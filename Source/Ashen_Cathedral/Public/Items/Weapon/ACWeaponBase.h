@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ActiveGameplayEffectHandle.h"
+#include "Engine/HitResult.h"
 #include "GameFramework/Actor.h"
 #include "Structs/ACStructTypes.h"
 #include "ACWeaponBase.generated.h"
@@ -12,7 +13,9 @@ class UBoxComponent;
 class UMeshComponent;
 class UNiagaraSystem;
 
-DECLARE_DELEGATE_OneParam(FonTargetInteractedDelegate, AActor*)
+// 적중 시 실제 충돌 지점(ImpactPoint/Normal/피격 컴포넌트/BoneName)까지 함께 전달한다
+DECLARE_DELEGATE_TwoParams(FOnWeaponHitTargetDelegate, AActor*, const FHitResult&)
+DECLARE_DELEGATE_OneParam(FOnWeaponPulledFromTargetDelegate, AActor*)
 
 UCLASS()
 class ASHEN_CATHEDRAL_API AACWeaponBase : public AActor
@@ -23,8 +26,8 @@ public:
 	AACWeaponBase();
 	virtual void BeginPlay() override;
 
-	FonTargetInteractedDelegate OnWeaponHitTarget;
-	FonTargetInteractedDelegate OnWeaponPulledFromTarget;
+	FOnWeaponHitTargetDelegate OnWeaponHitTarget;
+	FOnWeaponPulledFromTargetDelegate OnWeaponPulledFromTarget;
 
 	virtual void AddGrantedGameplayEffect(FActiveGameplayEffectHandle Handle);
 
@@ -88,6 +91,21 @@ protected:
 
 	UFUNCTION()
 	virtual void OnCollisionBoxEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	/**
+	 * @brief 적중 델리게이트로 넘길 FHitResult를 확정한다.
+	 *
+	 * SweepResult가 실제 충돌 정보를 담고 있으면 그대로 사용하고, 그렇지 않으면 피격 컴포넌트 표면에서
+	 * 접촉점/법선/BoneName을 추정해 채운다.
+	 *
+	 * @param OtherActor  적중된 대상 액터
+	 * @param OtherComp   적중된 대상 컴포넌트. nullptr이면 표면 계산을 건너뛴다.
+	 * @param bFromSweep  오버랩 이벤트가 스윕에서 발생했는지 여부
+	 * @param SweepResult 오버랩 이벤트가 전달한 원본 히트 결과
+	 * @return 항상 유효한(NaN 없는) ImpactPoint/ImpactNormal을 가진 HitResult
+	 * @note 표면 접촉점을 구하지 못하면 최종적으로 대상 액터 위치를 사용한다.
+	 */
+	FHitResult ResolveWeaponHitResult(AActor* OtherActor, UPrimitiveComponent* OtherComp, bool bFromSweep, const FHitResult& SweepResult) const;
 
 	// 이 무기가 장착되면서 적용한 이펙트들의 핸들 목록
 	TArray<FActiveGameplayEffectHandle> GrantedEffectHandles;
