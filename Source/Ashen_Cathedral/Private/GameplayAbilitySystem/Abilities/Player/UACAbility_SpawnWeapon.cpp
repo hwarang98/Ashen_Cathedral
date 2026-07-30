@@ -6,6 +6,7 @@
 #include "Character/ACCharacterBase.h"
 #include "Components/Combat/PawnCombatComponent.h"
 #include "Items/Weapon/ACWeaponBase.h"
+#include "ACGameplayDebugHelper.h"
 
 UUACAbility_SpawnWeapon::UUACAbility_SpawnWeapon()
 {
@@ -58,8 +59,8 @@ void UUACAbility_SpawnWeapon::ActivateAbility(const FGameplayAbilitySpecHandle H
 			InitialSocketName
 			);
 
-		// 6. 무기 숨기기 (장착 전까지 보이지 않도록)
-		if (!bRegisterAsEquippedWeapon)
+		// 6. 무기 숨기기 (장착 전까지 보이지 않도록 설정된 무기만)
+		if (!bRegisterAsEquippedWeapon && SpawnedWeapon->GetHideUntilEquipped())
 		{
 			SpawnedWeapon->HideWeapon();
 		}

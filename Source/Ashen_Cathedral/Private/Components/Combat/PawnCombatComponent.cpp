@@ -283,8 +283,11 @@ void UPawnCombatComponent::HandleEquipEffects(const FGameplayTag& NewWeaponTag, 
 				OldWeapon->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponData->UnequippedSocketName);
 			}
 
-			// 무기 숨기기
-			OldWeapon->HideWeapon();
+			// 무기 교체는 이전 무기를 항상 숨기고, 해제(맨손)는 무기별 설정을 따른다
+			if (NewWeaponTag.IsValid() || OldWeapon->GetHideUntilEquipped())
+			{
+				OldWeapon->HideWeapon();
+			}
 		}
 	}
 

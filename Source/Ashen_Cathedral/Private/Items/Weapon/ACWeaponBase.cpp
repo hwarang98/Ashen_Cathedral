@@ -76,9 +76,16 @@ TArray<FActiveGameplayEffectHandle> AACWeaponBase::RemoveGrantedGameplayEffects(
 
 void AACWeaponBase::HideWeapon() const
 {
-	if (UMeshComponent* Mesh = GetWeaponMeshComponent())
+	// 검집처럼 BP에서 추가한 메시까지 함께 숨긴다
+	TArray<UMeshComponent*> MeshComponents;
+	GetComponents<UMeshComponent>(MeshComponents);
+
+	for (UMeshComponent* MeshComp : MeshComponents)
 	{
-		Mesh->SetVisibility(false);
+		if (MeshComp)
+		{
+			MeshComp->SetVisibility(false);
+		}
 	}
 
 	// 모든 Niagara 컴포넌트 비활성화
@@ -96,9 +103,16 @@ void AACWeaponBase::HideWeapon() const
 
 void AACWeaponBase::ShowWeapon() const
 {
-	if (UMeshComponent* Mesh = GetWeaponMeshComponent())
+	// 검집처럼 BP에서 추가한 메시까지 함께 보인다
+	TArray<UMeshComponent*> MeshComponents;
+	GetComponents<UMeshComponent>(MeshComponents);
+
+	for (UMeshComponent* MeshComp : MeshComponents)
 	{
-		Mesh->SetVisibility(true);
+		if (MeshComp)
+		{
+			MeshComp->SetVisibility(true);
+		}
 	}
 
 	// 모든 Niagara 컴포넌트 활성화

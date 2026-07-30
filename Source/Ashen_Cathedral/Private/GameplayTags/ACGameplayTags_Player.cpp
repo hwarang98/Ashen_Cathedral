@@ -18,8 +18,10 @@ namespace ACGameplayTags
 	#pragma endregion
 
 	#pragma region Player Weapon Tags
-	UE_DEFINE_GAMEPLAY_TAG(Player_Weapon_Sword, "Player.Weapon.Sword")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Weapon_Basic, "Player.Weapon.Basic")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Weapon_Sword, "Player.Weapon.Sword")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Weapon_Nodachi, "Player.Weapon.Nodachi")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Weapon_Katana, "Player.Weapon.Katana")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Weapon_Unarmed, "Player.Weapon.Unarmed")
 	#pragma endregion
 
