@@ -5,6 +5,7 @@
 
 #include "Character/ACCharacterBase.h"
 #include "Components/Combat/PawnCombatComponent.h"
+#include "Components/Combat/PlayerCombatComponent.h"
 #include "Items/Weapon/ACWeaponBase.h"
 #include "ACGameplayDebugHelper.h"
 
@@ -22,6 +23,18 @@ void UUACAbility_SpawnWeapon::ActivateAbility(const FGameplayAbilitySpecHandle H
 	if (!OwnerCharacter)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+
+	// 선택 무기 모드에서는 위 고정 필드가 비어 있으므로 기존 검증보다 먼저 분기한다
+	if (bUseSelectedWeaponData)
+	{
+		if (UPlayerCombatComponent* PlayerCombatComponent = GetPlayerCombatComponentFromActorInfo())
+		{
+			PlayerCombatComponent->RequestSpawnSelectedWeapon();
+		}
+
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
 

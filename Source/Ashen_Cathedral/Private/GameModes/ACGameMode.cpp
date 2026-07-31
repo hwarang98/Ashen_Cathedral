@@ -8,6 +8,7 @@
 #include "Character/Enemy/ACEnemyCharacter.h"
 #include "Character/Player/ACPlayerCharacter.h"
 #include "Subsystems/ACMetaProgressionSubsystem.h"
+#include "Subsystems/ACWeaponSelectionSubsystem.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
@@ -17,11 +18,36 @@ AACGameMode::AACGameMode()
 	GameStateClass = AACGameState::StaticClass();
 }
 
+void AACGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
+{
+	Super::InitGame(MapName, Options, ErrorMessage);
+
+	// PossessedBy(플레이어 스폰)보다 먼저 실행되므로 선택 무기가 여기서 확정되어야 한다
+	InitializeWeaponSelectionForLevel();
+}
+
 void AACGameMode::StartPlay()
 {
 	Super::StartPlay();
 
 	SpawnInitialBossIfNeeded();
+}
+
+void AACGameMode::InitializeWeaponSelectionForLevel()
+{
+	UACWeaponSelectionSubsystem* WeaponSelectionSubsystem = GetGameInstance() ? GetGameInstance()->GetSubsystem<UACWeaponSelectionSubsystem>() : nullptr;
+	if (!WeaponSelectionSubsystem)
+	{
+		return;
+	}
+
+	// 레벨 전환 도중 교체가 중단됐다면 플래그가 남아 아무것도 못 고르게 되므로 정리한다
+	WeaponSelectionSubsystem->SetWeaponChangeInProgress(false);
+
+	if (!WeaponSelectionSubsystem->HasSelectedWeaponData() && DefaultWeaponData)
+	{
+		WeaponSelectionSubsystem->SetSelectedWeaponData(DefaultWeaponData);
+	}
 }
 
 void AACGameMode::RegisterBossCharacter(AACCharacterBase* InBossCharacter)
@@ -151,6 +177,23 @@ void AACGameMode::RequestStartRun()
 	{
 		return;
 	}
+
+	// 거부된 시도는 재시도 가능해야 하므로 요청 플래그는 모든 검증을 통과한 뒤에 소모한다
+	if (UACWeaponSelectionSubsystem* WeaponSelectionSubsystem = GetGameInstance() ? GetGameInstance()->GetSubsystem<UACWeaponSelectionSubsystem>() : nullptr)
+	{
+		if (WeaponSelectionSubsystem->IsWeaponChangeInProgress())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[AACGameMode] 무기 교체가 진행 중이라 전투 시작을 거부했습니다."));
+			return;
+		}
+
+		if (!WeaponSelectionSubsystem->HasSelectedWeaponData())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[AACGameMode] 선택된 무기가 없어 전투 시작을 거부했습니다. 로비에서 무기를 먼저 선택하세요."));
+			return;
+		}
+	}
+
 	bRunStartRequested = true;
 
 	UGameplayStatics::OpenLevel(this, BossArenaLevelName);

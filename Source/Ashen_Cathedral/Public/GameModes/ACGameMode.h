@@ -9,6 +9,7 @@
 class AACCharacterBase;
 class AACEnemyCharacter;
 class AACPlayerCharacter;
+class UACDataAsset_WeaponData;
 
 // 보스 사망 연출이 끝나 전투가 완전히 종료됐을 때 브로드캐스트되는 델리게이트. bIsFinalBoss로 마지막 보스인지 전달
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBossBattleCompleted, bool, bIsFinalBoss);
@@ -31,6 +32,14 @@ class ASHEN_CATHEDRAL_API AACGameMode : public AGameMode
 
 public:
 	AACGameMode();
+
+	/**
+	 * @brief 플레이어가 스폰되기 전에 무기 선택 상태를 초기화한다.
+	 *
+	 * 선택 무기 스폰 어빌리티는 PossessedBy에서 실행되는데, 이는 StartPlay보다 먼저다.
+	 * 따라서 기본 무기 보충은 반드시 이 시점에 끝나 있어야 스폰이 건너뛰어지지 않는다.
+	 */
+	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 
 	virtual void StartPlay() override;
 
@@ -87,7 +96,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Battle|Sequence")
 	FName BossArenaLevelName;
 
+	// 선택된 무기가 없을 때 이 데이터로 초기 선택을 채운다. 비워두면 무기 선택이 필수가 된다
+	UPROPERTY(EditDefaultsOnly, Category = "WeaponSelection")
+	TObjectPtr<UACDataAsset_WeaponData> DefaultWeaponData;
+
 private:
+	// 레벨 시작 시 무기 선택 상태를 정리한다 (교체 진행 플래그 해제, 기본 무기 보충)
+	void InitializeWeaponSelectionForLevel();
+
 	UFUNCTION()
 	void HandleBossDeath(AACCharacterBase* DeadCharacter);
 

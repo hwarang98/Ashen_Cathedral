@@ -37,4 +37,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	bool bRegisterAsEquippedWeapon = false;
 
+	/* true면 위의 고정 필드를 무시하고 WeaponSelectionSubsystem이 보관한 선택 무기로 스폰한다 (플레이어 전용). 적 스폰 어빌리티는 false로 두어 기존 동작을 유지한다 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	bool bUseSelectedWeaponData = false;
+
 };
