@@ -182,6 +182,11 @@ UAnimMontage* UACAbility_Attack::SelectAttackMontage()
 	return AttackMontages[CurrentComboCount];
 }
 
+int32 UACAbility_Attack::GetComboDamageCount() const
+{
+	return CurrentComboCount;
+}
+
 UAnimMontage* UACAbility_Attack::SelectCounterAttackMontage() const
 {
 	if (CounterAttackMontages.IsEmpty())
@@ -469,7 +474,7 @@ void UACAbility_Attack::OnHitTarget(FGameplayEventData Payload)
 	// 콤보 횟수를 전달 -> 계산기에서 콤보 횟수에 비례한 데미지 보너스 적용 (플레이어 전용)
 	if (bApplyComboDamageBonus && ComboAttackTypeTag.IsValid())
 	{
-		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, ComboAttackTypeTag, static_cast<float>(CurrentComboCount));
+		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, ComboAttackTypeTag, static_cast<float>(GetComboDamageCount()));
 	}
 
 	// 카운터 어택 보너스 배율 전달 -> 계산기에서 FinalDamage에 곱한다

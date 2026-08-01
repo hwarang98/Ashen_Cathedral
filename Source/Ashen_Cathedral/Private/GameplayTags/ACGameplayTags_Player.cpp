@@ -36,6 +36,7 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_Status_TargetLock, "Player_Status_TargetLock")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Status_CriticalAttacking, "Player.Status.CriticalAttacking")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Status_ComboWindow, "Player.Status.ComboWindow")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Status_SpecialLinkWindow, "Player.Status.SpecialLinkWindow")
 	#pragma endregion
 
 	#pragma region Player ActionState Tags

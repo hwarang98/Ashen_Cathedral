@@ -22,6 +22,7 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_SwitchTarget, "InputTag.SwitchTarget")
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_Execution, "InputTag.Execution")
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_Interact, "InputTag.Interact")
+	UE_DEFINE_GAMEPLAY_TAG(InputTag_SpecialWeaponAbility, "InputTag.SpecialWeaponAbility")
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_SpecialWeaponAbility_LightAttack, "InputTag.SpecialWeaponAbility.LightAttack")
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_SpecialWeaponAbility_RightAttack, "InputTag.SpecialWeaponAbility.RightAttack")
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_SpecialWeaponAbility_CombinedAttack, "InputTag.SpecialWeaponAbility.CombinedAttack")

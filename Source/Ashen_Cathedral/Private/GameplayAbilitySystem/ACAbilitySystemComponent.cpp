@@ -64,6 +64,19 @@ void UACAbilitySystemComponent::OnAbilityInputPressed(const FGameplayTag& InputT
 	}
 }
 
+FGameplayAbilitySpec* UACAbilitySystemComponent::FindInactiveAbilitySpecByInputTag(const FGameplayTag& InputTag)
+{
+	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
+	{
+		if (AbilitySpec.GetDynamicSpecSourceTags().HasTagExact(InputTag) && !AbilitySpec.IsActive())
+		{
+			return &AbilitySpec;
+		}
+	}
+
+	return nullptr;
+}
+
 void UACAbilitySystemComponent::OnAbilityInputReleased(const FGameplayTag& InputTag)
 {
 	if (!InputTag.IsValid() || !InputTag.MatchesTag(ACGameplayTags::InputTag_MustBeHeld))

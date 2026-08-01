@@ -149,7 +149,7 @@ Ashen_Cathedral/
 | [GAS 스태미나](./Docs/GAS_Stamina_Setup_Guide.md) | 스태미나 소모, 회복, 회복 유예 설정 |
 | [GAS 가드 브레이크](./Docs/GAS_GuardBreak_Guide.md) | 가드 게이지와 가드 붕괴 처리 |
 | [GAS 적 방어·패링](./Docs/GAS_EnemyBlockParry_Guide.md) | 보스의 방어, 패링, 카운터 공격 연동 |
-| [GAS 콤보 리셋](./Docs/GAS_ComboReset_Guide.md) | 콤보 진행과 정상·취소 리셋 경로 |
+| [GAS 플레이어 콤보](./Docs/GAS_ComboReset_Guide.md) | 공유 콤보 단계, 피니셔 연계, 스페셜 전환, 리셋 경로 |
 | [StateTree 런타임](./Docs/StateTree_Runtime_Guide.md) | UE 5.7 StateTree 실행 구조와 프로젝트 연동 |
 | [StateTree 보스 설계](./Docs/StateTree_Boss_Design.md) | Ordan 보스의 상태 및 전투 패턴 설계 |
 

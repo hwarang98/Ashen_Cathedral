@@ -39,6 +39,8 @@ namespace ACGameplayTags
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Status_CriticalAttacking);
 	// ANS_ComboWindow Begin/End에 맞춰 추가·제거 — 콤보 체인 허용 구간 표시
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Status_ComboWindow);
+	// ANS_SpecialLinkWindow Begin/End에 맞춰 추가·제거 — 피니셔 후반의 스페셜 연계 허용 구간 표시
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Status_SpecialLinkWindow);
 	#pragma endregion
 
 	#pragma region Player ActionState Tags

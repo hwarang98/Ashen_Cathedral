@@ -75,6 +75,14 @@ protected:
 	virtual UAnimMontage* SelectAttackMontage();
 
 	/**
+	 * @brief 데미지 계산기에 SetByCaller로 전달할 콤보 단계를 반환한다.
+	 *
+	 * @return 기본 구현은 이 어빌리티 인스턴스의 CurrentComboCount
+	 * @note 여러 어빌리티가 콤보를 공유하는 서브클래스는 실제로 선택된 몽타주 단계를 반환하도록 오버라이드한다.
+	 */
+	virtual int32 GetComboDamageCount() const;
+
+	/**
 	 * @brief 재생할 몽타주를 하나라도 가지고 있는지 반환한다. ActivateAbility가 조기 종료 판단에 사용한다.
 	 *
 	 * 기본 구현은 AttackMontages가 비었는지만 본다. 다른 소스에서 몽타주를 고르는 서브클래스는

@@ -44,8 +44,8 @@
 | 태그 | 주입 위치 | 설명 |
 |------|-----------|------|
 | `Shared.SetByCaller.BaseDamage` | `ACAbility_Attack::OnHitTarget` | 무기 DataTable 기본 데미지 |
-| `Shared.SetByCaller.AttackType.Light` | `ACAbility_Attack::OnHitTarget` | 일반 공격 콤보 횟수 (플레이어 전용) |
-| `Shared.SetByCaller.AttackType.Heavy` | `ACAbility_Attack::OnHitTarget` | 강공격 콤보 횟수 (플레이어 전용) |
+| `Shared.SetByCaller.AttackType.Light` | `ACAbility_Attack::OnHitTarget` | 일반 공격 콤보 단계 (플레이어 전용) — `GetComboDamageCount()` 반환값 |
+| `Shared.SetByCaller.AttackType.Heavy` | `ACAbility_Attack::OnHitTarget` | 강공격 콤보 단계 (플레이어 전용) — `GetComboDamageCount()` 반환값 |
 | `Shared.SetByCaller.CounterAttackBonus` | `ACAbility_Attack::OnHitTarget` | 카운터 공격 보너스 배율 |
 | `Shared.SetByCaller.GroggyDamage` | `ACAbility_Attack::OnHitTarget` | 그로기 게이지 누적량 |
 | `Shared.SetByCaller.FireBonusDamage` | `ACEnemyAbility_Attack::ModifyDamageSpec` | Phase2 화염 추가 데미지 (적 전용) |
@@ -57,8 +57,10 @@
 
 ```
 // 콤보 배율 적용 (플레이어 전용)
-BaseDamage × ((콤보횟수 - 1) × 0.05 + 1.0)   // 일반 공격
-BaseDamage × (콤보횟수 × 0.15 + 1.0)          // 강공격
+// 콤보 단계 = 실제로 재생된 몽타주의 1-기반 단계 (UACPlayerAbility_Attack::SelectedComboStage)
+// 0이면 배율을 적용하지 않는다 — 카운터 어택 / 단발성 스페셜 / 적 공격
+BaseDamage × ((콤보단계 - 1) × 0.05 + 1.0)   // 일반 공격
+BaseDamage × (콤보단계 × 0.15 + 1.0)          // 강공격
 
 // 최종 데미지
 FinalDamage = (BaseDamage + FireBonusDamage) × AttackMultiplier × (1.0 - DefenseMultiplier)
@@ -184,6 +186,7 @@ ACEnemyGameplayAbility_HitReact::ActivateAbility
 | 역할 | 파일 |
 |------|------|
 | 공통 공격 어빌리티 | `ACAbility_Attack.h / .cpp` |
+| 플레이어 공격 어빌리티 | `ACPlayerAbility_Attack.h / .cpp` — 콤보 단계·피니셔는 [콤보 가이드](./GAS_ComboReset_Guide.md) 참고 |
 | 적 공격 어빌리티 | `ACEnemyAbility_Attack.h / .cpp` |
 | Phase2 진입 어빌리티 | `ACGameplayAbility_AshenKnight_Phase2.h / .cpp` |
 | 데미지 계산 | `ACCalculation_DamageTaken.h / .cpp` |
