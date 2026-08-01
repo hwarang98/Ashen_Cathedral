@@ -206,7 +206,12 @@ void AACPlayerCharacter::Input_AbilityInputPressed(const FGameplayTag InInputTag
 		return;
 	}
 
-	if (InInputTag.MatchesTagExact(ACGameplayTags::InputTag_LightAttack) || InInputTag.MatchesTagExact(ACGameplayTags::InputTag_HeavyAttack))
+	if (
+		InInputTag.MatchesTagExact(ACGameplayTags::InputTag_LightAttack) ||
+		InInputTag.MatchesTagExact(ACGameplayTags::InputTag_HeavyAttack) ||
+		InInputTag.MatchesTagExact(ACGameplayTags::InputTag_SpecialWeaponAbility_LightAttack) ||
+		InInputTag.MatchesTagExact(ACGameplayTags::InputTag_SpecialWeaponAbility_RightAttack)
+	)
 	{
 		// 입력 태그와 무관하게 현재 활성 중인 공격 어빌리티를 찾는다.
 		// TriggerComboChain에 누른 입력 태그를 넘겨 크로스 체이닝(Light→Heavy, Heavy→Light)을 지원한다.

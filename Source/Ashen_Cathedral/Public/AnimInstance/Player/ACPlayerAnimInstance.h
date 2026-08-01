@@ -65,4 +65,14 @@ protected:
 	// 현재 장착된 무기의 타입 (Blend Poses by Enum 등에서 사용)
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Weapon")
 	EACWeaponType CurrentWeaponType = EACWeaponType::None;
+
+	/** true면 CurrentWeaponType과 무기 태그가 바뀔 때마다 로그를 출력한다 (무기 교체 디버깅용) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AnimData|Weapon")
+	bool bDebugLogWeaponType = false;
+
+private:
+	// 직전 프레임에 로그로 남긴 값. 매 프레임 스팸을 막고 변경 시에만 출력하기 위해 보관한다
+	EACWeaponType LastLoggedWeaponType = EACWeaponType::None;
+
+	FGameplayTagContainer LastLoggedWeaponTags;
 };

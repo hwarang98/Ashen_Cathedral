@@ -11,6 +11,8 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Sprint, "Player.Ability.Sprint")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Attack_Light, "Player.Ability.Attack.Light")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Attack_Heavy, "Player.Ability.Attack.Heavy")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Attack_Light_Special, "Player.Ability.Attack.Light.Special")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Attack_Heavy_Special, "Player.Ability.Attack.Heavy.Special")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Block, "Player.Ability.Block")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Roll, "Player.Ability.Roll")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_TargetLock, "Player.Ability.TargetLock")
