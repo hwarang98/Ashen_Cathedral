@@ -1,0 +1,210 @@
+{
+	"schema": 1,
+	"runId": "run-0017",
+	"seed": 8629,
+	"startedAtUtc": "2026-07-13T02:00:00Z",
+	"durationSec": 429.5,
+	"weapon": "Player.Weapon.Katana",
+	"result": "cleared",
+	"metaUpgrades": {
+		"Strength": 3,
+		"Vitality": 2,
+		"Luck": 1
+	},
+	"currencyEarned": {
+		"MetaProgression.Currency.AshSoul": 634,
+		"MetaProgression.Currency.CathedralSigil": 2,
+		"MetaProgression.Currency.RelicFragment": 1
+	},
+	"cardsPicked": [
+		{
+			"cardId": "P03",
+			"rarity": "Legendary",
+			"category": "Parry",
+			"stackAfter": 1,
+			"offeredWith": [
+				"M02",
+				"A04"
+			],
+			"afterBossId": "MetaProgression.BossID.AshenKnight",
+			"pickIndex": 0
+		},
+		{
+			"cardId": "M02",
+			"rarity": "Uncommon",
+			"category": "Mobility",
+			"stackAfter": 1,
+			"offeredWith": [
+				"R02",
+				"P02"
+			],
+			"afterBossId": "MetaProgression.BossID.Ordan",
+			"pickIndex": 1
+		}
+	],
+	"bossFights": [
+		{
+			"bossId": "MetaProgression.BossID.AshenKnight",
+			"attempt": 17,
+			"result": "won",
+			"durationSec": 186.7,
+			"bossHealthPctAtEnd": 0,
+			"parry": {
+				"attempts": 21,
+				"successes": 13
+			},
+			"dodge": {
+				"attempts": 31,
+				"iframeSuccesses": 16
+			},
+			"block": {
+				"attempts": 26,
+				"successes": 24
+			},
+			"guardBreaksTaken": 2,
+			"guardBreaksInflicted": 3,
+			"postureBreaksTaken": 1,
+			"postureBreaksInflicted": 5,
+			"criticalAttacksLanded": 4,
+			"totalDamageDealt": 9405,
+			"totalDamageTaken": 1113,
+			"avgPlayerHealthPct": 0.704,
+			"damageTakenByAttackTag": {
+				"Enemy.Ability.AttackType.Special_01": 530,
+				"Enemy.Ability.Melee": 233,
+				"Enemy.Ability.AttackType.Run": 123,
+				"Enemy.Ability.AttackType.Special_02": 56,
+				"Enemy.Ability.AttackType.BackDash": 171
+			},
+			"timingSamples": {
+				"parryInputOffsetMs": [
+					-29,
+					-103,
+					-93,
+					-32,
+					-51,
+					-25,
+					-140,
+					-121,
+					-67,
+					-70,
+					-58,
+					-92,
+					-41,
+					-85,
+					-5,
+					-104,
+					-4,
+					-121,
+					-144,
+					-93,
+					-77
+				],
+				"hitAfterIframeEndMs": [
+					173,
+					478,
+					21,
+					33,
+					7,
+					62,
+					51,
+					41,
+					48,
+					67,
+					34,
+					20
+				],
+				"comboWindowInputOffsetMs": [
+					34,
+					32,
+					8,
+					47,
+					23,
+					-13,
+					17,
+					23,
+					26,
+					25,
+					-2
+				]
+			}
+		},
+		{
+			"bossId": "MetaProgression.BossID.Ordan",
+			"attempt": 4,
+			"result": "won",
+			"durationSec": 139.5,
+			"bossHealthPctAtEnd": 0,
+			"parry": {
+				"attempts": 16,
+				"successes": 7
+			},
+			"dodge": {
+				"attempts": 27,
+				"iframeSuccesses": 14
+			},
+			"block": {
+				"attempts": 23,
+				"successes": 19
+			},
+			"guardBreaksTaken": 2,
+			"guardBreaksInflicted": 2,
+			"postureBreaksTaken": 2,
+			"postureBreaksInflicted": 2,
+			"criticalAttacksLanded": 2,
+			"totalDamageDealt": 7477,
+			"totalDamageTaken": 1266,
+			"avgPlayerHealthPct": 0.614,
+			"damageTakenByAttackTag": {
+				"Enemy.Ability.AttackType.Special_01": 509,
+				"Enemy.Ability.Melee": 288,
+				"Enemy.Ability.AttackType.Run": 150,
+				"Enemy.Ability.AttackType.Special_02": 76,
+				"Enemy.Ability.AttackType.BackDash": 243
+			},
+			"timingSamples": {
+				"parryInputOffsetMs": [
+					-52,
+					69,
+					6,
+					-191,
+					-48,
+					-208,
+					-162,
+					-79,
+					-232,
+					-188,
+					-141,
+					-61,
+					-131,
+					-187,
+					-245,
+					-140
+				],
+				"hitAfterIframeEndMs": [
+					33,
+					10,
+					48,
+					16,
+					116,
+					112,
+					30,
+					19,
+					297
+				],
+				"comboWindowInputOffsetMs": [
+					37,
+					-36,
+					21,
+					2,
+					43,
+					73,
+					31,
+					-45,
+					-24,
+					23
+				]
+			}
+		}
+	]
+}

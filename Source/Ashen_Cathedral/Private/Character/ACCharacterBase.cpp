@@ -10,6 +10,10 @@
 #include "GameplayAbilitySystem/ACAttributeSet.h"
 #include "MotionWarpingComponent.h"
 
+#if AC_WEB_DEBUG
+	#include "Debug/ACWebDebugSubsystem.h"
+#endif
+
 AACCharacterBase::AACCharacterBase()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -39,6 +43,14 @@ void AACCharacterBase::PossessedBy(AController* NewController)
 		ACAbilitySystemComponent->InitAbilityActorInfo(this, this);
 
 		ensureMsgf(!CharacterStartUpData.IsNull(), TEXT("Forgot to assign start up data to %s"), *GetName());
+
+#if AC_WEB_DEBUG
+		// 웹 디버그 타임라인의 태그 레인 — 상태 태그 구간을 구독한다(중복 등록은 내부에서 걸러진다)
+		if (UACWebDebugSubsystem* WebDebug = UACWebDebugSubsystem::Get(this))
+		{
+			WebDebug->RegisterAbilitySystem(ACAbilitySystemComponent);
+		}
+#endif
 	}
 }
 

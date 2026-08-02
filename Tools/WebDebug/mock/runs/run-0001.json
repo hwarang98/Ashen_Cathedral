@@ -1,0 +1,109 @@
+{
+	"schema": 1,
+	"runId": "run-0001",
+	"seed": 8037,
+	"startedAtUtc": "2026-07-12T10:00:00Z",
+	"durationSec": 168,
+	"weapon": "Player.Weapon.Katana",
+	"result": "died",
+	"metaUpgrades": {
+		"Strength": 0,
+		"Vitality": 0,
+		"Luck": 0
+	},
+	"currencyEarned": {
+		"MetaProgression.Currency.AshSoul": 213,
+		"MetaProgression.Currency.CathedralSigil": 0,
+		"MetaProgression.Currency.RelicFragment": 0
+	},
+	"cardsPicked": [],
+	"bossFights": [
+		{
+			"bossId": "MetaProgression.BossID.AshenKnight",
+			"attempt": 1,
+			"result": "lost",
+			"durationSec": 88.5,
+			"bossHealthPctAtEnd": 0.959,
+			"parry": {
+				"attempts": 14,
+				"successes": 2
+			},
+			"dodge": {
+				"attempts": 45,
+				"iframeSuccesses": 10
+			},
+			"block": {
+				"attempts": 25,
+				"successes": 20
+			},
+			"guardBreaksTaken": 5,
+			"guardBreaksInflicted": 0,
+			"postureBreaksTaken": 2,
+			"postureBreaksInflicted": 0,
+			"criticalAttacksLanded": 1,
+			"totalDamageDealt": 2967,
+			"totalDamageTaken": 1774,
+			"avgPlayerHealthPct": 0.414,
+			"damageTakenByAttackTag": {
+				"Enemy.Ability.AttackType.Special_01": 827,
+				"Enemy.Ability.Melee": 390,
+				"Enemy.Ability.AttackType.Run": 181,
+				"Enemy.Ability.AttackType.Special_02": 124,
+				"Enemy.Ability.AttackType.BackDash": 252
+			},
+			"timingSamples": {
+				"parryInputOffsetMs": [
+					-184,
+					-101,
+					-226,
+					-213,
+					-248,
+					-151,
+					-261,
+					-2,
+					-215,
+					13,
+					-69,
+					-72,
+					-128,
+					-302
+				],
+				"hitAfterIframeEndMs": [
+					302,
+					29,
+					53,
+					18,
+					7,
+					15,
+					32,
+					0,
+					10
+				],
+				"comboWindowInputOffsetMs": [
+					23,
+					-46,
+					-79,
+					-17,
+					-38,
+					33,
+					-88,
+					-43,
+					-49,
+					0,
+					-35,
+					-69,
+					-33,
+					-100,
+					68,
+					99
+				]
+			},
+			"deathCause": {
+				"attackTag": "Enemy.Ability.AttackType.Special_01",
+				"bossAbility": "GA_Enemy_Attack_Special_01",
+				"playerHealthPctBefore": 0.219,
+				"damage": 250.8
+			}
+		}
+	]
+}

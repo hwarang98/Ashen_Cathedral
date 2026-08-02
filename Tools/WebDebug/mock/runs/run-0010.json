@@ -1,0 +1,109 @@
+{
+	"schema": 1,
+	"runId": "run-0010",
+	"seed": 8370,
+	"startedAtUtc": "2026-07-12T19:00:00Z",
+	"durationSec": 307.4,
+	"weapon": "Player.Weapon.Nodachi",
+	"result": "died",
+	"metaUpgrades": {
+		"Strength": 2,
+		"Vitality": 1,
+		"Luck": 1
+	},
+	"currencyEarned": {
+		"MetaProgression.Currency.AshSoul": 498,
+		"MetaProgression.Currency.CathedralSigil": 0,
+		"MetaProgression.Currency.RelicFragment": 0
+	},
+	"cardsPicked": [],
+	"bossFights": [
+		{
+			"bossId": "MetaProgression.BossID.AshenKnight",
+			"attempt": 10,
+			"result": "lost",
+			"durationSec": 164.5,
+			"bossHealthPctAtEnd": 0.45,
+			"parry": {
+				"attempts": 19,
+				"successes": 8
+			},
+			"dodge": {
+				"attempts": 35,
+				"iframeSuccesses": 15
+			},
+			"block": {
+				"attempts": 35,
+				"successes": 31
+			},
+			"guardBreaksTaken": 3,
+			"guardBreaksInflicted": 2,
+			"postureBreaksTaken": 2,
+			"postureBreaksInflicted": 3,
+			"criticalAttacksLanded": 3,
+			"totalDamageDealt": 6418,
+			"totalDamageTaken": 1276,
+			"avgPlayerHealthPct": 0.578,
+			"damageTakenByAttackTag": {
+				"Enemy.Ability.AttackType.Special_01": 618,
+				"Enemy.Ability.Melee": 270,
+				"Enemy.Ability.AttackType.Run": 123,
+				"Enemy.Ability.AttackType.Special_02": 78,
+				"Enemy.Ability.AttackType.BackDash": 187
+			},
+			"timingSamples": {
+				"parryInputOffsetMs": [
+					-148,
+					-23,
+					-202,
+					-91,
+					-64,
+					-115,
+					-130,
+					-90,
+					-31,
+					-157,
+					-111,
+					30,
+					-123,
+					-89,
+					-18,
+					-128,
+					22,
+					-112,
+					-111
+				],
+				"hitAfterIframeEndMs": [
+					54,
+					0,
+					412,
+					20,
+					22,
+					489
+				],
+				"comboWindowInputOffsetMs": [
+					-60,
+					32,
+					39,
+					14,
+					-12,
+					38,
+					-9,
+					-108,
+					48,
+					8,
+					11,
+					-51,
+					7,
+					22
+				]
+			},
+			"deathCause": {
+				"attackTag": "Enemy.Ability.AttackType.Special_01",
+				"bossAbility": "GA_Enemy_Attack_Special_01",
+				"playerHealthPctBefore": 0.278,
+				"damage": 203.1
+			}
+		}
+	]
+}

@@ -1,0 +1,128 @@
+{
+	"schema": 1,
+	"runId": "run-0013",
+	"seed": 8481,
+	"startedAtUtc": "2026-07-12T22:00:00Z",
+	"durationSec": 276.9,
+	"weapon": "Player.Weapon.Katana",
+	"result": "died",
+	"metaUpgrades": {
+		"Strength": 2,
+		"Vitality": 2,
+		"Luck": 1
+	},
+	"currencyEarned": {
+		"MetaProgression.Currency.AshSoul": 578,
+		"MetaProgression.Currency.CathedralSigil": 0,
+		"MetaProgression.Currency.RelicFragment": 0
+	},
+	"cardsPicked": [],
+	"bossFights": [
+		{
+			"bossId": "MetaProgression.BossID.AshenKnight",
+			"attempt": 13,
+			"result": "lost",
+			"durationSec": 156.2,
+			"bossHealthPctAtEnd": 0.309,
+			"parry": {
+				"attempts": 31,
+				"successes": 15
+			},
+			"dodge": {
+				"attempts": 44,
+				"iframeSuccesses": 20
+			},
+			"block": {
+				"attempts": 20,
+				"successes": 18
+			},
+			"guardBreaksTaken": 3,
+			"guardBreaksInflicted": 2,
+			"postureBreaksTaken": 1,
+			"postureBreaksInflicted": 3,
+			"criticalAttacksLanded": 2,
+			"totalDamageDealt": 7835,
+			"totalDamageTaken": 1174,
+			"avgPlayerHealthPct": 0.6,
+			"damageTakenByAttackTag": {
+				"Enemy.Ability.AttackType.Special_01": 561,
+				"Enemy.Ability.Melee": 255,
+				"Enemy.Ability.AttackType.Run": 109,
+				"Enemy.Ability.AttackType.Special_02": 72,
+				"Enemy.Ability.AttackType.BackDash": 177
+			},
+			"timingSamples": {
+				"parryInputOffsetMs": [
+					-96,
+					12,
+					-87,
+					-66,
+					-110,
+					-1,
+					-166,
+					-23,
+					-135,
+					-71,
+					-71,
+					-36,
+					-134,
+					-138,
+					-95,
+					11,
+					-29,
+					-298,
+					-96,
+					-45,
+					-98,
+					-3,
+					-73,
+					-150,
+					-120,
+					-111,
+					-132,
+					-75,
+					-38,
+					-45,
+					-237
+				],
+				"hitAfterIframeEndMs": [
+					13,
+					338,
+					40,
+					398,
+					18,
+					133,
+					520,
+					0,
+					18,
+					447,
+					133,
+					24,
+					277
+				],
+				"comboWindowInputOffsetMs": [
+					-4,
+					20,
+					-11,
+					-30,
+					-18,
+					-41,
+					17,
+					-4,
+					13,
+					68,
+					-32,
+					-59,
+					-14,
+					-32
+				]
+			},
+			"deathCause": {
+				"attackTag": "Enemy.Ability.AttackType.Special_01",
+				"bossAbility": "GA_Enemy_Attack_Special_01",
+				"playerHealthPctBefore": 0.138,
+				"damage": 167.4
+			}
+		}
+	]
+}

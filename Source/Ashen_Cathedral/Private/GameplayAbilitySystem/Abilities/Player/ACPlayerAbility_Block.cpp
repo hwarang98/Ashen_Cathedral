@@ -13,6 +13,11 @@
 #include "GameFramework/Character.h"
 #include "Kismet/KismetMathLibrary.h"
 
+#if AC_WEB_DEBUG
+	#include "Debug/ACRunLogSubsystem.h"
+	#include "Debug/ACWebDebugSubsystem.h"
+#endif
+
 UACPlayerAbility_Block::UACPlayerAbility_Block()
 {
 	FGameplayTagContainer TagsToAdd;
@@ -28,6 +33,14 @@ UACPlayerAbility_Block::UACPlayerAbility_Block()
 void UACPlayerAbility_Block::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+
+#if AC_WEB_DEBUG
+	// 패링 입력 타이밍 표본의 T0 — 판정 윈도우(Shared.Status.Parry)가 붙는 시각과의 차이가 표본이 된다
+	if (UACRunLogSubsystem* RunLog = UACRunLogSubsystem::Get(ActorInfo ? ActorInfo->AvatarActor.Get() : nullptr))
+	{
+		RunLog->NotifyParryAbilityActivated();
+	}
+#endif
 
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
@@ -126,6 +139,25 @@ void UACPlayerAbility_Block::OnSuccessfulBlockEventReceived(FGameplayEventData P
 
 	const AACCharacterBase* Character = GetACCharacterFromActorInfo();
 	const bool bIsParry = Character && UACFunctionLibrary::NativeDoesActorHaveTag(const_cast<AACCharacterBase*>(Character), ACGameplayTags::Shared_Status_Parry);
+
+#if AC_WEB_DEBUG
+	// 패링/블록 성공은 타임라인 마커이자 런 통계의 성공 표본이다
+	if (UACWebDebugSubsystem* WebDebug = UACWebDebugSubsystem::Get(Character))
+	{
+		WebDebug->RecordMarker(Character, bIsParry ? TEXT("ParrySuccess") : TEXT("BlockSuccess"));
+	}
+	if (UACRunLogSubsystem* RunLog = UACRunLogSubsystem::Get(Character))
+	{
+		if (bIsParry)
+		{
+			RunLog->NotifyParrySuccess();
+		}
+		else
+		{
+			RunLog->NotifyBlockSuccess();
+		}
+	}
+#endif
 
 	if (bIsParry)
 	{

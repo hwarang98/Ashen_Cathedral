@@ -1,0 +1,111 @@
+{
+	"schema": 1,
+	"runId": "run-0002",
+	"seed": 8074,
+	"startedAtUtc": "2026-07-12T11:00:00Z",
+	"durationSec": 173.4,
+	"weapon": "Player.Weapon.Katana",
+	"result": "died",
+	"metaUpgrades": {
+		"Strength": 0,
+		"Vitality": 0,
+		"Luck": 0
+	},
+	"currencyEarned": {
+		"MetaProgression.Currency.AshSoul": 264,
+		"MetaProgression.Currency.CathedralSigil": 0,
+		"MetaProgression.Currency.RelicFragment": 0
+	},
+	"cardsPicked": [],
+	"bossFights": [
+		{
+			"bossId": "MetaProgression.BossID.AshenKnight",
+			"attempt": 2,
+			"result": "lost",
+			"durationSec": 96.8,
+			"bossHealthPctAtEnd": 0.902,
+			"parry": {
+				"attempts": 26,
+				"successes": 5
+			},
+			"dodge": {
+				"attempts": 36,
+				"iframeSuccesses": 8
+			},
+			"block": {
+				"attempts": 26,
+				"successes": 21
+			},
+			"guardBreaksTaken": 4,
+			"guardBreaksInflicted": 1,
+			"postureBreaksTaken": 2,
+			"postureBreaksInflicted": 0,
+			"criticalAttacksLanded": 0,
+			"totalDamageDealt": 3481,
+			"totalDamageTaken": 1582,
+			"avgPlayerHealthPct": 0.423,
+			"damageTakenByAttackTag": {
+				"Enemy.Ability.AttackType.Special_01": 730,
+				"Enemy.Ability.Melee": 323,
+				"Enemy.Ability.AttackType.Run": 185,
+				"Enemy.Ability.AttackType.Special_02": 93,
+				"Enemy.Ability.AttackType.BackDash": 251
+			},
+			"timingSamples": {
+				"parryInputOffsetMs": [
+					-136,
+					-146,
+					-172,
+					-85,
+					-223,
+					-128,
+					-200,
+					-47,
+					53,
+					-220,
+					-129,
+					-133,
+					-225,
+					-45,
+					-198,
+					-224,
+					-190,
+					-222,
+					-210,
+					-174,
+					-152,
+					-123,
+					-74,
+					-84,
+					-201,
+					-160
+				],
+				"hitAfterIframeEndMs": [
+					299,
+					41,
+					89,
+					26,
+					48,
+					35,
+					0
+				],
+				"comboWindowInputOffsetMs": [
+					-33,
+					8,
+					-45,
+					37,
+					28,
+					76,
+					-23,
+					32
+				]
+			},
+			"deathCause": {
+				"attackTag": "Enemy.Ability.AttackType.Special_01",
+				"bossAbility": "GA_Enemy_Attack_Special_01",
+				"playerHealthPctBefore": 0.137,
+				"damage": 143.2
+			}
+		}
+	]
+}

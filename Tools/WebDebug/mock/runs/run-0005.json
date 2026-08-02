@@ -1,0 +1,109 @@
+{
+	"schema": 1,
+	"runId": "run-0005",
+	"seed": 8185,
+	"startedAtUtc": "2026-07-12T14:00:00Z",
+	"durationSec": 291.5,
+	"weapon": "Player.Weapon.Nodachi",
+	"result": "died",
+	"metaUpgrades": {
+		"Strength": 0,
+		"Vitality": 0,
+		"Luck": 0
+	},
+	"currencyEarned": {
+		"MetaProgression.Currency.AshSoul": 394,
+		"MetaProgression.Currency.CathedralSigil": 0,
+		"MetaProgression.Currency.RelicFragment": 0
+	},
+	"cardsPicked": [],
+	"bossFights": [
+		{
+			"bossId": "MetaProgression.BossID.AshenKnight",
+			"attempt": 5,
+			"result": "lost",
+			"durationSec": 141.6,
+			"bossHealthPctAtEnd": 0.688,
+			"parry": {
+				"attempts": 17,
+				"successes": 4
+			},
+			"dodge": {
+				"attempts": 26,
+				"iframeSuccesses": 8
+			},
+			"block": {
+				"attempts": 29,
+				"successes": 25
+			},
+			"guardBreaksTaken": 5,
+			"guardBreaksInflicted": 1,
+			"postureBreaksTaken": 2,
+			"postureBreaksInflicted": 1,
+			"criticalAttacksLanded": 2,
+			"totalDamageDealt": 4567,
+			"totalDamageTaken": 1599,
+			"avgPlayerHealthPct": 0.484,
+			"damageTakenByAttackTag": {
+				"Enemy.Ability.AttackType.Special_01": 693,
+				"Enemy.Ability.Melee": 413,
+				"Enemy.Ability.AttackType.Run": 157,
+				"Enemy.Ability.AttackType.Special_02": 85,
+				"Enemy.Ability.AttackType.BackDash": 251
+			},
+			"timingSamples": {
+				"parryInputOffsetMs": [
+					-83,
+					-140,
+					-78,
+					-194,
+					-9,
+					7,
+					-168,
+					-13,
+					-144,
+					-167,
+					-172,
+					-211,
+					-143,
+					-34,
+					15,
+					-121,
+					-53
+				],
+				"hitAfterIframeEndMs": [
+					6,
+					14,
+					530,
+					27,
+					14,
+					0,
+					30,
+					180,
+					33
+				],
+				"comboWindowInputOffsetMs": [
+					-69,
+					-54,
+					9,
+					-10,
+					-29,
+					67,
+					18,
+					-42,
+					3,
+					-82,
+					-2,
+					5,
+					-21
+				]
+			},
+			"deathCause": {
+				"attackTag": "Enemy.Ability.Melee",
+				"bossAbility": "GA_Enemy_Attack_Melee",
+				"playerHealthPctBefore": 0.266,
+				"damage": 214.9
+			}
+		}
+	]
+}

@@ -7,6 +7,11 @@
 #include "SaveGame/ACSaveGame_MetaProgression.h"
 #include "Kismet/GameplayStatics.h"
 
+#if AC_WEB_DEBUG
+	#include "Debug/ACRunLogSubsystem.h"
+	#include "Engine/GameInstance.h"
+#endif
+
 const FString UACMetaProgressionSubsystem::SaveSlotBaseName = TEXT("MetaProgressionSave_Slot_");
 const int32 UACMetaProgressionSubsystem::SaveUserIndex = 0;
 
@@ -128,6 +133,18 @@ void UACMetaProgressionSubsystem::AddCurrency(FGameplayTag CurrencyTag, int32 Am
 	SaveGameInstance->CurrencyAmounts.Add(CurrencyTag, NewAmount);
 
 	SaveProgress();
+
+#if AC_WEB_DEBUG
+	// 런 로그의 currencyEarned — 획득분만 누적한다(소비는 제외)
+	if (Amount > 0)
+	{
+		// 같은 GameInstance 에 붙어 있으므로 월드를 거치지 않고 형제 서브시스템을 직접 집는다
+		if (UACRunLogSubsystem* RunLog = GetGameInstance() ? GetGameInstance()->GetSubsystem<UACRunLogSubsystem>() : nullptr)
+		{
+			RunLog->NotifyCurrencyEarned(CurrencyTag, Amount);
+		}
+	}
+#endif
 
 	OnCurrencyChangedDelegate.Broadcast(CurrencyTag, NewAmount);
 }

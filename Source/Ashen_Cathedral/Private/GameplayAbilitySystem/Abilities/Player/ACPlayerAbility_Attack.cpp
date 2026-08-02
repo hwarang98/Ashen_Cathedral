@@ -7,6 +7,10 @@
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 #include "GameplayAbilitySystem/ACAttributeSet.h"
 
+#if AC_WEB_DEBUG
+	#include "Debug/ACRunLogSubsystem.h"
+#endif
+
 UACPlayerAbility_Attack::UACPlayerAbility_Attack()
 {
 	// 이 어빌리티의 식별 태그 (에셋 태그)
@@ -31,6 +35,14 @@ void UACPlayerAbility_Attack::ActivateAbility(
 	const FGameplayEventData* TriggerEventData)
 {
 	bComboChaining = false;
+
+#if AC_WEB_DEBUG
+	// 콤보 윈도우 입력 타이밍 표본의 T1 — 윈도우가 열려 있지 않았다면 무시된다
+	if (UACRunLogSubsystem* RunLog = UACRunLogSubsystem::Get(ActorInfo ? ActorInfo->AvatarActor.Get() : nullptr))
+	{
+		RunLog->NotifyAttackInput();
+	}
+#endif
 
 	// 카운터 어택은 SelectAttackMontage를 거치지 않으므로, 여기서 초기화해 두면
 	// 베이스의 CurrentComboCount = 0 동작과 동일하게 콤보 데미지 보너스가 빠진다.

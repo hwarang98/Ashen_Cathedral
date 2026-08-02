@@ -12,6 +12,12 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Interfaces/PawnUIInterface.h"
 
+#if AC_WEB_DEBUG
+	#include "Abilities/GameplayAbility.h" // 피격 기록에서 출처 어빌리티의 GetClass()를 부른다
+	#include "Debug/ACRunLogSubsystem.h"
+	#include "Debug/ACWebDebugSubsystem.h"
+#endif
+
 UACAttributeSet::UACAttributeSet()
 {
 	//Core
@@ -218,6 +224,36 @@ void UACAttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, f
 			}
 		}
 	}
+
+#if AC_WEB_DEBUG
+	// 웹 디버그 타임라인 게이지 기록 — 실제 전송은 15Hz 틱에서, 값이 변했을 때만 일어난다.
+	// 최대값이 바뀌어도 정규화 값이 달라지므로 Max* 변경도 함께 흘려보낸다.
+	const AActor* Owner = GetOwningActor();
+	UACWebDebugSubsystem* WebDebug = UACWebDebugSubsystem::Get(Owner);
+	if (WebDebug && Owner)
+	{
+		if (Attribute == GetHealthAttribute() || Attribute == GetMaxHealthAttribute())
+		{
+			WebDebug->RecordGauge(Owner, TEXT("Health"), GetHealth(), GetMaxHealth());
+		}
+		else if (Attribute == GetStaminaAttribute() || Attribute == GetMaxStaminaAttribute())
+		{
+			WebDebug->RecordGauge(Owner, TEXT("Stamina"), GetStamina(), GetMaxStamina());
+		}
+		else if (Attribute == GetPostureAttribute() || Attribute == GetMaxPostureAttribute())
+		{
+			WebDebug->RecordGauge(Owner, TEXT("Posture"), GetPosture(), GetMaxPosture());
+		}
+		else if (Attribute == GetGuardGaugeAttribute() || Attribute == GetMaxGuardGaugeAttribute())
+		{
+			WebDebug->RecordGauge(Owner, TEXT("GuardGauge"), GetGuardGauge(), GetMaxGuardGauge());
+		}
+		else if (Attribute == GetBurnGaugeAttribute() || Attribute == GetMaxBurnGaugeAttribute())
+		{
+			WebDebug->RecordGauge(Owner, TEXT("BurnGauge"), GetBurnGauge(), GetMaxBurnGauge());
+		}
+	}
+#endif
 }
 
 void UACAttributeSet::HandlePostureDamage(const FGameplayEffectModCallbackData& Data)
@@ -283,6 +319,17 @@ void UACAttributeSet::HandlePostureDamage(const FGameplayEffectModCallbackData& 
 
 	if (NewPosture >= GetMaxPosture())
 	{
+#if AC_WEB_DEBUG
+		if (UACWebDebugSubsystem* WebDebug = UACWebDebugSubsystem::Get(Data.Target.GetAvatarActor()))
+		{
+			WebDebug->RecordMarker(Data.Target.GetAvatarActor(), TEXT("PostureBroken"));
+		}
+		if (UACRunLogSubsystem* RunLog = UACRunLogSubsystem::Get(Data.Target.GetAvatarActor()))
+		{
+			RunLog->NotifyPostureBreak(Data.Target.GetAvatarActor());
+		}
+#endif
+
 		// 체간 붕괴 어빌리티(GA_Groggy)를 통해 체간 붕괴 상태 처리
 		FGameplayEventData Payload;
 		Payload.EventTag = ACGameplayTags::Shared_Event_PostureBrokenTriggered;
@@ -351,6 +398,17 @@ void UACAttributeSet::HandleGuardDamage(const FGameplayEffectModCallbackData& Da
 	// 최대치 도달 — 게이지를 비우고 Block 어빌리티에 가드 브레이크를 알린다
 	SetGuardGauge(0.f);
 
+#if AC_WEB_DEBUG
+	if (UACWebDebugSubsystem* WebDebug = UACWebDebugSubsystem::Get(Data.Target.GetAvatarActor()))
+	{
+		WebDebug->RecordMarker(Data.Target.GetAvatarActor(), TEXT("GuardBroken"));
+	}
+	if (UACRunLogSubsystem* RunLog = UACRunLogSubsystem::Get(Data.Target.GetAvatarActor()))
+	{
+		RunLog->NotifyGuardBreak(Data.Target.GetAvatarActor());
+	}
+#endif
+
 	FGameplayEventData Payload;
 	Payload.EventTag = ACGameplayTags::Shared_Event_GuardBrokenTriggered;
 	Payload.Target = Data.Target.GetAvatarActor();
@@ -369,6 +427,13 @@ void UACAttributeSet::HandleDamageAndTriggerHitReact(const FGameplayEffectModCal
 	// 무적 태그 보유시 데미지 무효화
 	if (TargetASC && TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Invincible))
 	{
+#if AC_WEB_DEBUG
+		// 무적으로 완전히 흘려낸 타격 — 회피 성공(i-frame) 표본
+		if (UACRunLogSubsystem* RunLog = UACRunLogSubsystem::Get(Data.Target.GetAvatarActor()))
+		{
+			RunLog->NotifyIframeNegatedHit();
+		}
+#endif
 		SetDamageTaken(0.f);
 		return;
 	}
@@ -388,13 +453,75 @@ void UACAttributeSet::HandleDamageAndTriggerHitReact(const FGameplayEffectModCal
 		return;
 	}
 
+	const float HealthPctBeforeHit = GetMaxHealth() > 0.f ? GetHealth() / GetMaxHealth() : 0.f;
 	const float NewHealth = FMath::Clamp(GetHealth() - DamageDone, 0.f, GetMaxHealth());
 	SetHealth(NewHealth);
+
+#if AC_WEB_DEBUG
+	// 웹 디버그 타임라인 피격 기록 — 공격 성질 태그·출처 어빌리티·방향을 함께 남긴다
+	{
+		AActor* HitTarget = Data.Target.GetAvatarActor();
+		AActor* HitInstigator = Data.EffectSpec.GetEffectContext().GetInstigator();
+		const FGameplayTagContainer AttackTags = Data.EffectSpec.GetDynamicAssetTags();
+
+		FACWebDebugHitMeta Meta;
+		for (const FGameplayTag& Tag : AttackTags)
+		{
+			Meta.AttackTags.Add(Tag.ToString());
+		}
+		if (const UGameplayAbility* SourceAbility = Data.EffectSpec.GetEffectContext().GetAbility())
+		{
+			Meta.SourceAbility = SourceAbility->GetClass()->GetName();
+		}
+		float AngleDifference = 0.f;
+		const FGameplayTag DirectionTag = UACFunctionLibrary::ComputeHitReactDirectionTag(HitInstigator, HitTarget, AngleDifference);
+		// "Shared.Status.HitReact.Front" 에서 마지막 조각만 남긴다
+		Meta.Direction = TEXT("Front");
+		if (DirectionTag.IsValid())
+		{
+			FString TagPath = DirectionTag.ToString();
+			int32 LastDot = INDEX_NONE;
+			if (TagPath.FindLastChar(TEXT('.'), LastDot))
+			{
+				Meta.Direction = TagPath.RightChop(LastDot + 1);
+			}
+		}
+		// 체간/가드 피해는 별도 GE 실행으로 들어오므로 메타 어트리뷰트는 이 시점에 이미 비어 있다.
+		// 공격자가 실어 보낸 SetByCaller 값을 그대로 읽어야 실제 수치가 남는다.
+		Meta.PostureDamage = Data.EffectSpec.GetSetByCallerMagnitude(ACGameplayTags::Shared_SetByCaller_PostureDamage, false, 0.f);
+		Meta.GuardDamage = Data.EffectSpec.GetSetByCallerMagnitude(ACGameplayTags::Shared_SetByCaller_GuardDamage, false, 0.f);
+		Meta.bWasBlocked = TargetASC && TargetASC->HasMatchingGameplayTag(ACGameplayTags::Player_Status_Blocking);
+		Meta.bWasParried = TargetASC && TargetASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Parry);
+
+		if (UACWebDebugSubsystem* WebDebug = UACWebDebugSubsystem::Get(HitTarget))
+		{
+			WebDebug->RecordHit(HitTarget, DamageDone, Meta);
+		}
+		if (UACRunLogSubsystem* RunLog = UACRunLogSubsystem::Get(HitTarget))
+		{
+			RunLog->NotifyDamageTaken(HitTarget, DamageDone, AttackTags, Meta.SourceAbility, HealthPctBeforeHit);
+			RunLog->NotifyPlayerHealthPct(GetMaxHealth() > 0.f ? GetHealth() / GetMaxHealth() : 0.f);
+		}
+	}
+#endif
 
 	// 사망 판정
 	if (GetHealth() <= 0.f)
 	{
 		UACFunctionLibrary::AddGameplayTagToActorIfNone(Data.Target.GetAvatarActor(), ACGameplayTags::Shared_Status_Dead);
+
+#if AC_WEB_DEBUG
+		if (UACWebDebugSubsystem* WebDebug = UACWebDebugSubsystem::Get(Data.Target.GetAvatarActor()))
+		{
+			const bool bPlayerDied = UACWebDebugSubsystem::ResolveSource(Data.Target.GetAvatarActor()) == EACWebDebugSource::Player;
+			WebDebug->RecordMarker(Data.Target.GetAvatarActor(), bPlayerDied ? TEXT("Death") : TEXT("BossDeath"));
+			if (bPlayerDied)
+			{
+				// 사망 시 링 버퍼 전체를 파일로 남긴다 — 게임을 껐다 켜도 마지막 60초를 다시 볼 수 있다
+				WebDebug->SaveDeathSnapshot();
+			}
+		}
+#endif
 
 		// 사망 이벤트 전송 (Death Drop Ability 트리거용)
 		FGameplayEventData DeathPayload;

@@ -13,6 +13,14 @@
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 
+#if AC_WEB_DEBUG
+	#include "DataAssets/Items/Weapon/ACDataAsset_WeaponData.h"
+	#include "DataAssets/MetaProgression/ACDataAsset_BossReward.h"
+	#include "Debug/ACRunLogSubsystem.h"
+	#include "Debug/ACWebDebugSubsystem.h"
+	#include "GameplayAbilitySystem/ACAttributeSet.h"
+#endif
+
 AACGameMode::AACGameMode()
 {
 	GameStateClass = AACGameState::StaticClass();
@@ -71,6 +79,41 @@ void AACGameMode::RegisterBossCharacter(AACCharacterBase* InBossCharacter)
 
 	ACGameState->SetBossCharacter(InBossCharacter);
 	ACGameState->SetBattleState(EACBattleState::BossBattleInProgress);
+
+#if AC_WEB_DEBUG
+	// 웹 디버그 — 보스전 단위로 타임라인의 시간 원점과 런 통계 슬롯을 연다
+	{
+		FGameplayTag BossId;
+		if (const AACEnemyCharacter* Boss = Cast<AACEnemyCharacter>(InBossCharacter))
+		{
+			if (const UACDataAsset_BossReward* RewardData = Boss->GetBossRewardData())
+			{
+				BossId = RewardData->BossID;
+			}
+		}
+
+		FGameplayTag WeaponTag;
+		if (const UACWeaponSelectionSubsystem* WeaponSelection = GetGameInstance() ? GetGameInstance()->GetSubsystem<UACWeaponSelectionSubsystem>() : nullptr)
+		{
+			if (const UACDataAsset_WeaponData* WeaponData = WeaponSelection->GetSelectedWeaponData())
+			{
+				WeaponTag = WeaponData->WeaponTypeTag;
+			}
+		}
+
+		int32 Attempt = 0;
+		int32 RunSeed = 0;
+		if (UACRunLogSubsystem* RunLog = UACRunLogSubsystem::Get(this))
+		{
+			Attempt = RunLog->BeginBossFight(BossId);
+			RunSeed = RunLog->GetSeed();
+		}
+		if (UACWebDebugSubsystem* WebDebug = UACWebDebugSubsystem::Get(this))
+		{
+			WebDebug->BeginCombat(BossId, Attempt, WeaponTag, RunSeed);
+		}
+	}
+#endif
 
 	// 다음 보스를 스폰할 위치로 재사용 (Scale은 다음 보스 자신의 BP 기본값을 따르도록 제외)
 	CachedBossSpawnTransform = FTransform(InBossCharacter->GetActorRotation(), InBossCharacter->GetActorLocation());
@@ -196,6 +239,22 @@ void AACGameMode::RequestStartRun()
 
 	bRunStartRequested = true;
 
+#if AC_WEB_DEBUG
+	// 로비에서 아레나로 넘어가는 순간이 런의 시작이다
+	if (UACRunLogSubsystem* RunLog = UACRunLogSubsystem::Get(this))
+	{
+		FGameplayTag WeaponTag;
+		if (const UACWeaponSelectionSubsystem* WeaponSelection = GetGameInstance() ? GetGameInstance()->GetSubsystem<UACWeaponSelectionSubsystem>() : nullptr)
+		{
+			if (const UACDataAsset_WeaponData* WeaponData = WeaponSelection->GetSelectedWeaponData())
+			{
+				WeaponTag = WeaponData->WeaponTypeTag;
+			}
+		}
+		RunLog->BeginRun(/*InSeed*/ 0, WeaponTag);
+	}
+#endif
+
 	UGameplayStatics::OpenLevel(this, BossArenaLevelName);
 }
 
@@ -214,6 +273,22 @@ void AACGameMode::RegisterPlayerCharacter(AACPlayerCharacter* InPlayerCharacter)
 
 void AACGameMode::HandlePlayerDeathCompleted(AACCharacterBase* DeadCharacter)
 {
+#if AC_WEB_DEBUG
+	// 런 종료(사망) — 보스 잔여 체력을 남기고 Saved/RunLogs 에 기록한다
+	if (UACRunLogSubsystem* RunLog = UACRunLogSubsystem::Get(this))
+	{
+		float BossHealthPct = 1.f;
+		const AACGameState* ACGameState = GetGameState<AACGameState>();
+		const AACCharacterBase* Boss = ACGameState ? ACGameState->GetBossCharacter() : nullptr;
+		if (const UACAttributeSet* BossAttributes = Boss ? Boss->GetACAttributeSet() : nullptr)
+		{
+			BossHealthPct = BossAttributes->GetMaxHealth() > 0.f ? BossAttributes->GetHealth() / BossAttributes->GetMaxHealth() : 0.f;
+		}
+		RunLog->EndBossFight(/*bWon*/ false, BossHealthPct);
+		RunLog->EndRun(TEXT("died"));
+	}
+#endif
+
 	UGameplayStatics::OpenLevel(this, LobbyLevelName);
 }
 
@@ -237,6 +312,18 @@ void AACGameMode::HandleBossBattleCompleted(AACCharacterBase* DeadCharacter)
 	}
 
 	ACGameState->SetBattleState(EACBattleState::Completed);
+
+#if AC_WEB_DEBUG
+	if (UACRunLogSubsystem* RunLog = UACRunLogSubsystem::Get(this))
+	{
+		RunLog->EndBossFight(/*bWon*/ true, 0.f);
+		// 마지막 보스였다면 런 자체가 클리어로 끝난다
+		if (IsFinalBossPending())
+		{
+			RunLog->EndRun(TEXT("cleared"));
+		}
+	}
+#endif
 
 	if (AACEnemyCharacter* DeadBoss = Cast<AACEnemyCharacter>(DeadCharacter))
 	{
