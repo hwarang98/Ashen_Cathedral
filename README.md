@@ -128,7 +128,7 @@ Ashen_Cathedral/
 - Visual Studio 2022
 - Visual Studio의 **Game development with C++** 워크로드
 
-프로젝트에서 사용하는 Marketplace 또는 외부 플러그인이 로컬에 설치되어 있어야 합니다. 특히 `WindowsDualsense_ds5w`, `IconCreator`, `ProjectCleaner` 플러그인이 없으면 프로젝트 생성 또는 에디터 실행 중 경고가 발생할 수 있습니다.
+프로젝트에서 사용하는 Marketplace 또는 외부 플러그인이 로컬에 설치되어 있어야 합니다. 특히 `IconCreator`, `ProjectCleaner` 플러그인이 없으면 프로젝트 생성 또는 에디터 실행 중 경고가 발생할 수 있습니다.
 
 ### 에디터 실행
 
