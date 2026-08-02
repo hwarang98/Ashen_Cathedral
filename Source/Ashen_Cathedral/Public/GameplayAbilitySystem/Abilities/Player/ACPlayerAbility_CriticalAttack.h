@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayAbilitySystem/Abilities/Player/ACPlayerGameplayAbility.h"
+#include "Structs/ACStructTypes.h"
 #include "ACPlayerAbility_CriticalAttack.generated.h"
 
 class AACEnemyCharacter;
@@ -49,13 +50,19 @@ public:
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
 protected:
-	/** 플레이어가 재생할 크리티컬 어택 몽타주 — AnimNotify_CriticalAttackDamage 포함 필요 */
+	/** 크리티컬 어택 몽타주 조합 목록 — 발동할 때마다 하나를 무작위로 골라 Player/Enemy가 동시에 재생한다 */
 	UPROPERTY(EditDefaultsOnly, Category = "CriticalAttack|Animation")
-	TObjectPtr<UAnimMontage> PlayerCriticalAttackMontage;
+	TArray<FACCriticalAttackMontagePair> CriticalAttackMontagePairs;
 
-	/** Enemy에게 재생할 크리티컬 어택당하는 몽타주 */
+	/**
+	 * 처형을 견디고 살아남은 Enemy가 피처형 몽타주에 이어서 재생할 기상 몽타주.
+	 *
+	 * 비워두면 재생하지 않고 지금까지처럼 곧바로 이동·AI를 복구한다.
+	 * 조합에 상관없이 항상 같은 몽타주를 쓰므로, 시작 자세가 정확히 맞지 않는 것을 흡수하도록
+	 * 이 몽타주의 Blend Mode In을 Inertialization으로 두는 것을 권한다.
+	 */
 	UPROPERTY(EditDefaultsOnly, Category = "CriticalAttack|Animation")
-	TObjectPtr<UAnimMontage> EnemyCriticalAttackedMontage;
+	TObjectPtr<UAnimMontage> EnemyGetUpMontage;
 
 	/** 크리티컬 어택 시작 시 Player를 Enemy 전방에 배치할 거리 (cm) */
 	UPROPERTY(EditDefaultsOnly, Category = "CriticalAttack|Positioning", meta = (ClampMin = "50.0"))
@@ -64,6 +71,24 @@ protected:
 	/** Motion Warping 타겟 이름 — 크리티컬 어택 몽타주의 MotionWarping NotifyState와 동일해야 한다 */
 	UPROPERTY(EditDefaultsOnly, Category = "CriticalAttack|Positioning")
 	FName WarpTargetName = "CriticalAttackTarget";
+
+	/** 처형 마무리 이동 구간의 Motion Warping 타겟 이름 — 그 구간에 얹은 NotifyState와 동일해야 한다 */
+	UPROPERTY(EditDefaultsOnly, Category = "CriticalAttack|Positioning")
+	FName RetreatWarpTargetName = "CriticalAttackRetreatTarget";
+
+	/** 처형 마무리 이동 타겟을 등록할지 여부. 마무리 구간에 MotionWarping NotifyState가 있는 몽타주에서만 켠다 */
+	UPROPERTY(EditDefaultsOnly, Category = "CriticalAttack|Positioning")
+	bool bUseCriticalAttackEndWarp = true;
+
+	/**
+	 * 처형이 끝난 뒤 Player가 서 있을 지점을, Enemy 위치에서 Enemy 정면 축을 따라 잰 부호 있는 거리 (cm).
+	 *
+	 * 접근 지점이 +CriticalAttackSnapOffset 이므로 기준은 그 값이다.
+	 *   - CriticalAttackSnapOffset보다 큰 양수 → Enemy 앞쪽으로 더 물러난다
+	 *   - 음수 → Enemy를 지나쳐 뒤쪽에 선다 (스쳐 지나가는 연출)
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "CriticalAttack|Positioning", meta = (EditCondition = "bUseCriticalAttackEndWarp"))
+	float CriticalAttackEndOffset = 320.f;
 
 	/** 크리티컬 어택 가능 최대 거리 (cm) */
 	UPROPERTY(EditDefaultsOnly, Category = "CriticalAttack|Detection", meta = (ClampMin = "50.0"))
@@ -109,6 +134,14 @@ private:
 	 */
 	AACEnemyCharacter* FindCriticalAttackTarget(const AACPlayerCharacter* InPlayer) const;
 
+	/**
+	 * @brief CriticalAttackMontagePairs 중 Player/Enemy 몽타주가 모두 채워진 조합 하나를 무작위로 고른다.
+	 *
+	 * @return 선택된 조합의 인덱스, 유효한 조합이 하나도 없으면 INDEX_NONE
+	 * @note 비어 있는 조합은 후보에서 빠지므로, 배열 중간에 미완성 항목이 있어도 나머지로 처형이 성립한다.
+	 */
+	int32 PickRandomMontagePairIndex() const;
+
 	/** Enemy에 Shared.Status.Executed를 부여하고 체간 붕괴 어빌리티 취소 -> 이동 잠금 -> BT 일시정지를 수행한다. */
 	void LockEnemyForCriticalAttack(const AACEnemyCharacter* Enemy) const;
 
@@ -121,6 +154,17 @@ private:
 
 	/** 크리티컬 어택 종료 시 Enemy 상태를 복구한다. 사망 상태면 Death 어빌리티에 위임하고 즉시 반환한다. */
 	void UnlockEnemy(const AACEnemyCharacter* Enemy);
+
+	/**
+	 * @brief EnemyGetUpMontage를 Enemy에게 재생한다.
+	 *
+	 * @return 재생을 시작했으면 true. 이 경우 이동·AI 복구를 미루고 기상 몽타주 종료 콜백에 맡겨야 한다.
+	 * @note 몽타주가 지정되지 않았거나 재생에 실패하면 false를 반환하므로, 호출부는 기존처럼 즉시 복구하면 된다.
+	 */
+	bool TryPlayEnemyGetUpMontage(const AACEnemyCharacter* Enemy);
+
+	/** Enemy의 이동 모드와 AI 로직을 복구한다 — 처형 연출이 완전히 끝난 시점에만 호출한다 */
+	void RestoreEnemyAfterCriticalAttack(const AACEnemyCharacter* Enemy) const;
 
 	/** 크리티컬 어택 종료 공통 처리 — 태스크 정리 → UnlockEnemy → EndAbility */
 	void FinishCriticalAttack(bool bWasCancelled);
@@ -149,6 +193,14 @@ private:
 	UFUNCTION()
 	void OnEnemyMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
+	/**
+	 * @brief 피처형 몽타주의 블렌드아웃이 시작될 때 호출 — 여기서 기상 몽타주를 얹는다.
+	 *
+	 * @note OnMontageEnded는 블렌드아웃이 끝난 뒤에 오므로, 그때 기상을 재생하면 Idle로 돌아가
+	 *       잠깐 선 자세를 거친 뒤 다시 눕는 그림이 된다. 블렌드아웃 시작 시점에 얹어야 두 블렌드가 겹친다.
+	 */
+	void OnEnemyMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted);
+
 	UPROPERTY()
 	TObjectPtr<UAbilityTask_PlayMontageAndWait> PlayerMontageTask;
 
@@ -157,7 +209,14 @@ private:
 
 	TWeakObjectPtr<AACEnemyCharacter> CachedTargetEnemy;
 
+	/** 이번 발동에서 선택된 몽타주 조합 — 종료 콜백이 Enemy 몽타주를 식별해야 하므로 EndAbility에서 리셋하지 않는다 */
+	UPROPERTY()
+	FACCriticalAttackMontagePair SelectedMontagePair;
+
 	FTimerHandle HitStopTimerHandle;
 
 	bool bCriticalAttackFinished = false;
+
+	/** 기상 몽타주를 이미 얹었는지. 피처형 몽타주 종료가 이동·AI를 앞당겨 복구하는 것을 막는다 */
+	bool bEnemyGetUpStarted = false;
 };

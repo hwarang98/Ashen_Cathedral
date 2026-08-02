@@ -321,7 +321,22 @@ StateTree는 부모 전이(`PostureBroken` 등)로 상태가 강제 종료될 �
    (`StateTreeMoveToTask.cpp:145-148`). 맵에 `NavMeshBoundsVolume`이 있는 것과
    보스 위치가 실제로 커버되는 것은 다른 문제다.
 
-5. **바인딩 노출 조건**
+5. **Root 직속 인터럽트 상태에는 Enter Condition이 반드시 있어야 한다**
+   `Groggy`(PostureBroken), `Dead`, `PhaseTransition`처럼 4.2절 방식으로 Root 전이를 다는 상태들이다.
+   Root에 `On Tick` + `Critical` 전이만 걸고 **상태 자체의 Enter Conditions를 비워두면,
+   게임 시작 직후 그 상태에 눌러앉아 `Combat` 아래로 내려가지 못한다.**
+   Root의 `Try Select Children In Order` 하향 선택이 조건 없는 첫 자식을 무조건 고르기 때문이다.
+
+   전이는 "인터럽트로 들어가는 문"만 만든다. "평소에 안 들어가게 막는 문지기"는 Enter Conditions뿐이다.
+   두 경로(하향 선택 / 전이)가 각각 독립적으로 상태에 진입한다는 점이 BT Selector와 다르다.
+
+   전이 타깃도 진입 시 Enter Conditions를 검사하므로(`StateTreeExecutionContext.cpp:6942-6945`)
+   같은 조건을 양쪽에 두면 일관되게 동작한다. 전이 쪽 조건도 지우지 말 것 —
+   지우면 매 틱 전이가 발동을 시도했다가 타깃 진입 조건에서 실패하는 낭비가 생긴다.
+
+   조건 없는 상태는 Root의 **마지막 자식(폴백)** 자리에만 놓을 수 있다 (3절의 `Idle`, `CloseRange`).
+
+6. **바인딩 노출 조건**
    컨트롤러 프로퍼티를 바인딩하려면 `CPF_Edit`가 필요하다 — `BlueprintReadOnly`만으로는 부족하고
    `VisibleAnywhere`/`EditAnywhere` 계열이어야 한다 (`PropertyBindingExtension.cpp:1142`).
    private이면 `meta = (AllowPrivateAccess = "true")`도 함께 붙인다.

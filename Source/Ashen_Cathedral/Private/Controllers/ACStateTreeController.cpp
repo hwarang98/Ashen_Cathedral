@@ -44,6 +44,17 @@ void AACStateTreeController::OnPossess(APawn* InPawn)
 		ASC->RegisterGameplayTagEvent(ACGameplayTags::Enemy_State_PressureReady, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::OnPressureReadyTagChanged);
 		ASC->GenericGameplayEventCallbacks.FindOrAdd(ACGameplayTags::Shared_Event_Combat_IncomingAttack).AddUObject(this, &ThisClass::OnIncomingAttackEventReceived);
 	}
+
+	// 런타임 스폰 경로에서는 SpawnDefaultController가 컨트롤러를 스폰하는 시점에 BeginPlay가 즉시 발화하고,
+	// Possess는 그 뒤에 온다(Pawn.cpp:377-382). 그래서 StateTree가 Pawn 없이 StartLogic을 돌다가
+	// 스키마의 Actor 컨텍스트를 못 채워 실패하고 틱까지 꺼버린다(StateTreeComponentSchema.cpp:138).
+	// bStartAILogicOnPossess가 기본 false라 엔진은 재시도하지 않으므로 여기서 직접 다시 시작한다.
+	// 레벨에 배치된 경우에는 아직 BeginPlay가 오지 않았으므로 건드리지 않는다 — 그대로 두면 자동 시작이 정상 동작하고,
+	// 여기서 시작해버리면 이후 BeginPlay의 StartLogic과 겹쳐 트리가 두 번 진입한다.
+	if (StateTreeAIComponent && HasActorBegunPlay() && !StateTreeAIComponent->IsRunning())
+	{
+		StateTreeAIComponent->RestartLogic();
+	}
 }
 
 void AACStateTreeController::OnUnPossess()
@@ -58,8 +69,9 @@ void AACStateTreeController::OnUnPossess()
 		}
 	}
 
-	// UStateTreeComponent는 UBrainComponent 초기화를 건너뛰어 AAIController::BrainComponent에 등록되지 않는다.
-	// 따라서 언포제스 시 자동으로 정지하지 않으므로 여기서 명시적으로 중단한다
+	// Super::OnUnPossess가 bStopAILogicOnUnposses 경로로 CleanupBrainComponent()를 부르지만,
+	// 그 시점에는 CachedEnemyCharacter가 이미 정리된 뒤라 순서를 보장하려고 여기서 먼저 중단한다.
+	// (StopLogic은 bIsRunning 가드가 있어 뒤따르는 엔진 호출은 무시된다)
 	if (StateTreeAIComponent)
 	{
 		StateTreeAIComponent->StopLogic(TEXT("UnPossess"));

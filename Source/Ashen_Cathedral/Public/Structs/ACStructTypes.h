@@ -238,6 +238,27 @@ struct FACHitReactWeightMontage
 	TObjectPtr<UAnimMontage> Montage;
 };
 
+/** 플레이어 처형 몽타주와, 그때 대상 Enemy가 동시에 재생할 피처형 몽타주를 한 쌍으로 묶은 항목 */
+USTRUCT(BlueprintType)
+struct FACCriticalAttackMontagePair
+{
+	GENERATED_BODY()
+
+	/** 플레이어가 재생할 처형 몽타주 — Shared.Event.CriticalAttackDamage를 쏘는 AnimNotify가 포함돼야 한다 */
+	UPROPERTY(EditDefaultsOnly, Category = "CriticalAttack")
+	TObjectPtr<UAnimMontage> PlayerMontage;
+
+	/** PlayerMontage와 동시에 대상 Enemy가 재생할 피처형 몽타주 */
+	UPROPERTY(EditDefaultsOnly, Category = "CriticalAttack")
+	TObjectPtr<UAnimMontage> EnemyMontage;
+
+	/** 둘 중 하나라도 비어 있으면 처형 연출이 성립하지 않으므로 후보에서 제외한다 */
+	bool IsValid() const
+	{
+		return PlayerMontage != nullptr && EnemyMontage != nullptr;
+	}
+};
+
 /** 소켓 이름과 Niagara 시스템을 쌍으로 묶어 복수 소켓에 이펙트를 부착할 때 사용합니다. */
 USTRUCT(BlueprintType)
 struct FACPhase2NiagaraAttachment
