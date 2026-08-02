@@ -94,72 +94,12 @@ void UUACPlayerAbility_EquipWeapon::OnMontageCancelled()
 
 void UUACPlayerAbility_EquipWeapon::HandleEquipLogic(FGameplayEventData Payload)
 {
-	const AACPlayerCharacter* OwnerCharacter = GetPlayerCharacterFromActorInfo();
-
-	if (!OwnerCharacter)
+	// 실제 장착 처리는 UPlayerCombatComponent가 단일 원본으로 보유한다.
+	// 로비 선택대의 즉시 교체도 같은 함수를 호출하므로 두 경로의 결과가 항상 같다.
+	// WaitGameplayEvent는 OnlyTriggerOnce=false이므로 이벤트가 두 번 와도 되도록
+	// 중복 지급 방어는 ApplyEquipEffects 안에 있다.
+	if (UPlayerCombatComponent* PlayerCombatComponent = GetPlayerCombatComponentFromActorInfo())
 	{
-		return;
-	}
-
-	UPawnCombatComponent* PawnCombatComponent = OwnerCharacter->GetPawnCombatComponent();
-	UACAbilitySystemComponent* ASC = GetACAbilitySystemComponentFromActorInfo();
-
-	if (!PawnCombatComponent || !ASC)
-	{
-		return;
-	}
-
-	if (AACWeapon* PlayerWeapon = Cast<AACWeapon>(PawnCombatComponent->GetCharacterCarriedWeaponByTag(WeaponToEquipTag)))
-	{
-		// 데이터 에셋 포인터를 가져오고 nullptr 체크
-		if (const UACDataAsset_WeaponData* WeaponData = PlayerWeapon->WeaponData)
-		{
-			// 1. 서버: 능력 부여
-			TArray<FGameplayAbilitySpecHandle> GrantedAbilitySpecHandles;
-
-			// Reserve를 사용해서 메모리 최적화
-			GrantedAbilitySpecHandles.Reserve(WeaponData->DefaultWeaponAbilities.Num());
-
-			// UPawnUIComponent 가져오기
-			// UPawnUIComponent* UIComponent = OwnerCharacter->FindComponentByClass<UPawnUIComponent>();
-
-			for (const FACPlayerAbilitySet& AbilitySet : WeaponData->DefaultWeaponAbilities)
-			{
-				// 스펙 생성
-				FGameplayAbilitySpec AbilitySpec(AbilitySet.AbilityToGrant);
-				AbilitySpec.SourceObject = PlayerWeapon;
-				AbilitySpec.GetDynamicSpecSourceTags().AddTag(AbilitySet.InputTag);
-
-				const FGameplayAbilitySpecHandle SpecHandle = ASC->GiveAbility(AbilitySpec);
-
-				// 생성된 무기 스펙 부여
-				GrantedAbilitySpecHandles.Add(SpecHandle);
-
-				// UI 컴포넌트에 아이콘 추가 (리플리케이트됨)
-				// if (UIComponent && !AbilitySet.SoftAbilityIconMaterial.IsNull())
-				// {
-				// 	UIComponent->AddAbilityIcon(AbilitySet);
-				// }
-			}
-			PlayerWeapon->AssignGrantedAbilitySpecHandles(GrantedAbilitySpecHandles);
-
-			// 2. 서버: 상태 변경 (OnRep 호출)
-			PawnCombatComponent->SetCurrentEquippedWeaponTag(WeaponToEquipTag); // [수정]
-
-			// 3. UI에 장착 무기 아이콘 브로드캐스트
-			if (const UPlayerUIComponent* PlayerUIComponent = OwnerCharacter->GetPlayerUIComponent())
-			{
-				PlayerUIComponent->OnEquippedWeaponChangedDelegate.Broadcast(WeaponData->SoftWeaponIconTexture);
-			}
-
-			// 4. 서버: 무기 장착 태그 추가
-			ASC->AddLooseGameplayTag(ACGameplayTags::Player_Ability_EquipWeapon);
-			ASC->RemoveLooseGameplayTag(ACGameplayTags::Player_Weapon_Unarmed);
-
-			if (WeaponData->WeaponTypeTag.IsValid())
-			{
-				ASC->AddLooseGameplayTag(WeaponData->WeaponTypeTag);
-			}
-		}
+		PlayerCombatComponent->ApplyEquipEffects(Cast<AACWeapon>(PlayerCombatComponent->GetCharacterCarriedWeaponByTag(WeaponToEquipTag)));
 	}
 }

@@ -15,4 +15,6 @@ enum class EACWeaponType : uint8
 	Spear UMETA(DisplayName = "창"),
 	Axe UMETA(DisplayName = "도끼"),
 	Dagger UMETA(DisplayName = "단검"),
+	Nodachi UMETA(DisplayName = "노다치"),
+	Katana UMETA(DisplayName = "카타나"),
 };

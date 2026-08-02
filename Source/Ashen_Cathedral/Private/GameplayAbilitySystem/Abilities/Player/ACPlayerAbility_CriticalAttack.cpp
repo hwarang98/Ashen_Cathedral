@@ -17,6 +17,11 @@
 #include "GameFramework/PlayerController.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 
+#if AC_WEB_DEBUG
+	#include "Debug/ACRunLogSubsystem.h"
+	#include "Debug/ACWebDebugSubsystem.h"
+#endif
+
 UACPlayerAbility_CriticalAttack::UACPlayerAbility_CriticalAttack()
 {
 	FGameplayTagContainer TagsToAdd;
@@ -92,6 +97,18 @@ void UACPlayerAbility_CriticalAttack::ActivateAbility(
 	}
 
 	CachedTargetEnemy = TargetEnemy;
+
+#if AC_WEB_DEBUG
+	// 처형이 실제로 성립한 시점에만 마커를 남긴다
+	if (UACWebDebugSubsystem* WebDebug = UACWebDebugSubsystem::Get(PlayerCharacter))
+	{
+		WebDebug->RecordMarker(PlayerCharacter, TEXT("CriticalAttack"));
+	}
+	if (UACRunLogSubsystem* RunLog = UACRunLogSubsystem::Get(PlayerCharacter))
+	{
+		RunLog->NotifyCriticalAttack(PlayerCharacter);
+	}
+#endif
 
 	// 1. Enemy 상태 잠금 (Executed 태그 부여 → 체간 붕괴 취소 → 이동 잠금 → BT 정지)
 	LockEnemyForCriticalAttack(TargetEnemy);

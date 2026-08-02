@@ -70,6 +70,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "PressureCounter|GameplayCue")
 	FGameplayTag HitGameplayCueTag;
 
+	/** 실제 피격 시 재생할 혈흔 GameplayCue 태그. 비어 있으면 혈흔 큐를 실행하지 않는다. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "PressureCounter|GameplayCue", meta = (Categories = "GameplayCue.FX.Blood"))
+	FGameplayTag BloodHitGameplayCueTag;
+
 	/**
 	 * 이 반격 공격 전용 방어 가능 속성(Shared.Attack.*). UACAbility_Attack의 Notify 기반 CurrentAttackDefenseTags와는
 	 * 별개의 PressureCounter 전용 값이며, ApplyDamageEffectSpecToTarget이 DynamicAssetTags에 주입해
@@ -134,9 +138,10 @@ private:
 	 * @param TargetActor   적중된 대상 액터
 	 * @param BaseDamage    Shared_SetByCaller_BaseDamage로 주입할 기본 데미지
 	 * @param PostureDamage  Shared_SetByCaller_PostureDamage로 주입할 체간 데미지. 0 이하면 주입하지 않는다.
+	 * @param Payload       무기 충돌 HitResult를 담은 Shared_Event_MeleeHit 페이로드. AOE 경로는 nullptr을 넘긴다.
 	 * @return 타겟 ASC를 찾아 Spec을 적용했으면 true
 	 */
-	bool ApplyDamageEffectSpecToTarget(const AActor* TargetActor, float BaseDamage, float PostureDamage);
+	bool ApplyDamageEffectSpecToTarget(const AActor* TargetActor, float BaseDamage, float PostureDamage, const FGameplayEventData* Payload = nullptr);
 
 	/**
 	 * @brief HitGameplayCueTag를 HitActor 위치/방향으로 재생한다.
@@ -148,4 +153,24 @@ private:
 	 *       적용 후 재조회하면 성공을 놓치기 때문이다.
 	 */
 	void PlayHitGameplayCue(const AActor* HitActor, bool bParrySuccess, bool bBlockSuccess) const;
+
+	/**
+	 * @brief 데미지 적용 전에 혈흔 큐 실행 조건을 계산한다.
+	 *
+	 * @param HitActor      적중된 대상 액터
+	 * @param bParrySuccess 데미지 적용 전에 판정한 Parry 성공 여부
+	 * @param bBlockSuccess 데미지 적용 전에 판정한 Block 성공 여부
+	 * @return 태그가 지정되어 있고, 대상 ASC가 있으며, 패링/방어/기존 무적/기존 사망이 아닐 때만 true
+	 */
+	bool ShouldPlayBloodHitGameplayCue(const AActor* HitActor, bool bParrySuccess, bool bBlockSuccess) const;
+
+	/**
+	 * @brief BloodHitGameplayCueTag 혈흔 GameplayCue를 피격자 ASC에서 실행한다.
+	 *
+	 * @param HitActor         적중된 대상 액터
+	 * @param Payload          ContextHandle의 HitResult로 정확한 충돌 위치/법선을 채운다. AOE 경로는 nullptr.
+	 * @param bShouldPlayBlood 데미지 적용 '전'에 계산한 실행 허용 여부
+	 * @note 이번 타격으로 사망한 대상에게도 마지막 혈흔이 나와야 하므로 Dead/Invincible 태그를 재조회하지 않는다.
+	 */
+	void PlayBloodHitGameplayCue(const AActor* HitActor, const FGameplayEventData* Payload, bool bShouldPlayBlood) const;
 };

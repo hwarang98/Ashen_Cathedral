@@ -199,6 +199,18 @@ void AACPlayerCharacter::StopSprint()
 	}
 }
 
+void AACPlayerCharacter::ResetSharedComboState()
+{
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(SharedComboResetTimerHandle);
+	}
+
+	SharedComboCount = 0;
+	bSharedComboFinisherReady = false;
+	bSharedComboFinisherPlaying = false;
+}
+
 void AACPlayerCharacter::Input_AbilityInputPressed(const FGameplayTag InInputTag)
 {
 	if (!ACAbilitySystemComponent)
@@ -206,10 +218,15 @@ void AACPlayerCharacter::Input_AbilityInputPressed(const FGameplayTag InInputTag
 		return;
 	}
 
-	if (InInputTag.MatchesTagExact(ACGameplayTags::InputTag_LightAttack) || InInputTag.MatchesTagExact(ACGameplayTags::InputTag_HeavyAttack))
+	const bool bIsSpecialAttackInput = UACPlayerAbility_Attack::IsSpecialAttackInputTag(InInputTag);
+
+	if (
+		InInputTag.MatchesTagExact(ACGameplayTags::InputTag_LightAttack) ||
+		InInputTag.MatchesTagExact(ACGameplayTags::InputTag_HeavyAttack) ||
+		bIsSpecialAttackInput
+	)
 	{
 		// 입력 태그와 무관하게 현재 활성 중인 공격 어빌리티를 찾는다.
-		// TriggerComboChain에 누른 입력 태그를 넘겨 크로스 체이닝(Light→Heavy, Heavy→Light)을 지원한다.
 		for (const FGameplayAbilitySpec& Spec : ACAbilitySystemComponent->GetActivatableAbilities())
 		{
 			if (!Spec.IsActive())
@@ -219,6 +236,15 @@ void AACPlayerCharacter::Input_AbilityInputPressed(const FGameplayTag InInputTag
 
 			if (UACPlayerAbility_Attack* AttackAbility = Cast<UACPlayerAbility_Attack>(Spec.GetPrimaryInstance()))
 			{
+				if (bIsSpecialAttackInput)
+				{
+					// 스페셜 입력은 전용 경로로만 처리한다. 전환에 실패해도(창이 닫혔거나 비용 부족)
+					// 진행 중인 공격을 유지해야 하므로 일반 활성화 경로로 넘기지 않는다.
+					AttackAbility->TryTriggerSpecialAttack(InInputTag);
+					return;
+				}
+
+				// TriggerComboChain에 누른 입력 태그를 넘겨 크로스 체이닝(Light→Heavy, Heavy→Light)을 지원한다.
 				AttackAbility->TriggerComboChain(InInputTag);
 				return;
 			}

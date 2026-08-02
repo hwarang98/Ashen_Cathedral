@@ -37,6 +37,15 @@ void UACPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		CurrentWeaponType = CombatComponent->GetPlayerCurrentWeaponType();
 	}
+
+	// 매 프레임 호출되므로 값이 실제로 바뀐 순간에만 출력한다
+	if (bDebugLogWeaponType && (CurrentWeaponType != LastLoggedWeaponType || CurrentGameplayTags != LastLoggedWeaponTags))
+	{
+		LastLoggedWeaponType = CurrentWeaponType;
+		LastLoggedWeaponTags = CurrentGameplayTags;
+
+		UE_LOG(LogTemp, Warning, TEXT("[ACPlayerAnimInstance] CurrentWeaponType=%s, 무기 태그=%s"), *UEnum::GetValueAsString(CurrentWeaponType), *CurrentGameplayTags.ToStringSimple());
+	}
 }
 
 void UACPlayerAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)

@@ -151,6 +151,11 @@ private:
 	// Run 중 획득한 카드 ID → 현재 중첩 수
 	TMap<FName, int32> AcquiredStacks;
 
+#if AC_WEB_DEBUG
+	// 이번에 제시된 카드 ID 목록 — 런 로그의 픽률(offeredWith) 집계에 쓴다
+	TArray<FName> LastOfferedCardIds;
+#endif
+
 	// 적용된 Infinite GE 핸들 목록 (Run 종료 시 일괄 제거)
 	TArray<FActiveGameplayEffectHandle> ActiveEffectHandles;
 

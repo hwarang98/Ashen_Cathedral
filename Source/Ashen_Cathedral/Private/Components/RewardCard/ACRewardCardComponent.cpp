@@ -10,6 +10,46 @@
 #include "GameFramework/PlayerController.h"
 #include "GameplayAbilitySystem/Abilities/ACGameplayAbility.h"
 
+#if AC_WEB_DEBUG
+	#include "Debug/ACRunLogSubsystem.h"
+
+namespace
+{
+	// 런 로그 JSON 에 그대로 들어가는 문자열 — 리플렉션 대신 직접 매핑해 스키마 값을 고정한다
+	const TCHAR* CardRarityToString(EACCardRarity Rarity)
+	{
+		switch (Rarity)
+		{
+			case EACCardRarity::Uncommon:
+				return TEXT("Uncommon");
+			case EACCardRarity::Rare:
+				return TEXT("Rare");
+			case EACCardRarity::Legendary:
+				return TEXT("Legendary");
+			default:
+				return TEXT("Common");
+		}
+	}
+
+	const TCHAR* CardCategoryToString(EACCardCategory Category)
+	{
+		switch (Category)
+		{
+			case EACCardCategory::Defense:
+				return TEXT("Defense");
+			case EACCardCategory::Mobility:
+				return TEXT("Mobility");
+			case EACCardCategory::Parry:
+				return TEXT("Parry");
+			case EACCardCategory::Resource:
+				return TEXT("Resource");
+			default:
+				return TEXT("Attack");
+		}
+	}
+}
+#endif
+
 UACRewardCardComponent::UACRewardCardComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
@@ -100,6 +140,28 @@ void UACRewardCardComponent::OnCardSelected(FName CardID)
 	{
 		bLegendaryUsedThisRun = true;
 	}
+
+#if AC_WEB_DEBUG
+	// 런 로그 카드 픽 기록 — 선택된 카드와 함께 제시된 카드를 같이 남겨야 픽률을 낼 수 있다
+	if (UACRunLogSubsystem* RunLog = UACRunLogSubsystem::Get(GetOwner()))
+	{
+		TArray<FString> OfferedWith;
+		for (const FName& OfferedId : LastOfferedCardIds)
+		{
+			if (OfferedId != CardID)
+			{
+				OfferedWith.Add(OfferedId.ToString());
+			}
+		}
+		RunLog->NotifyCardPicked(
+			CardID.ToString(),
+			CardRarityToString(FoundCard->Rarity),
+			CardCategoryToString(FoundCard->Category),
+			Stack,
+			OfferedWith,
+			FGameplayTag::EmptyTag);
+	}
+#endif
 
 	// GameplayEffect, Ability 적용
 	UACAbilitySystemComponent* ASC = GetPlayerASC();
@@ -323,6 +385,15 @@ void UACRewardCardComponent::ShowSelectionUI(const TArray<FACRewardCardData>& Ca
 	}
 
 	bSelectionActive = true;
+
+#if AC_WEB_DEBUG
+	// 픽률의 분모 — 무엇이 함께 제시됐는지 기억해 둔다
+	LastOfferedCardIds.Reset();
+	for (const FACRewardCardData& Card : Candidates)
+	{
+		LastOfferedCardIds.Add(Card.CardID);
+	}
+#endif
 
 	// 카드 데이터 → 표시 정보 변환
 	TArray<FACRewardCardDisplayInfo> DisplayInfos;

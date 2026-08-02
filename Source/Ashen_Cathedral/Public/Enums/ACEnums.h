@@ -22,6 +22,16 @@ enum class EToggleDamageType : uint8
 	RightHand
 };
 
+// 플레이어 무기 교체 파이프라인의 진행 단계
+UENUM(BlueprintType)
+enum class EACWeaponSwapPhase : uint8
+{
+	Idle           UMETA(DisplayName = "대기"),
+	WaitingUnequip UMETA(DisplayName = "해제 완료 대기"),
+	Swapping       UMETA(DisplayName = "파괴/스폰 동기 구간"),
+	WaitingEquip   UMETA(DisplayName = "장착 완료 대기"),
+};
+
 UENUM()
 enum class EACValidType : uint8
 {

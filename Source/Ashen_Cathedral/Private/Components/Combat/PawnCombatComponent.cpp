@@ -57,7 +57,7 @@ void UPawnCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 		);
 }
 
-void UPawnCombatComponent::OnHitTargetActor(AActor* HitActor)
+void UPawnCombatComponent::OnHitTargetActor(AActor* HitActor, const FHitResult& HitResult)
 {
 	// 공격때마다 1회만 공격처리 (중복 방지)
 	if (OverlappedActors.Contains(HitActor))
@@ -69,9 +69,10 @@ void UPawnCombatComponent::OnHitTargetActor(AActor* HitActor)
 
 	// Notify(AN_IncomingAttackWarning)가 기록해둔 현재 공격의 방어 가능 속성을 가져와 Block/Parry 판정에 사용한다.
 	FGameplayTagContainer CurrentAttackDefenseTags;
-	if (UACAbilitySystemComponent* ASC = UACFunctionLibrary::NativeAbilitySystemComponentFromActor(GetOwningPawn()))
+	UACAbilitySystemComponent* SourceASC = UACFunctionLibrary::NativeAbilitySystemComponentFromActor(GetOwningPawn());
+	if (SourceASC)
 	{
-		if (const UACAbility_Attack* AttackAbility = Cast<UACAbility_Attack>(ASC->GetAnimatingAbility()))
+		if (const UACAbility_Attack* AttackAbility = Cast<UACAbility_Attack>(SourceASC->GetAnimatingAbility()))
 		{
 			CurrentAttackDefenseTags = AttackAbility->GetCurrentAttackDefenseTags();
 		}
@@ -83,6 +84,18 @@ void UPawnCombatComponent::OnHitTargetActor(AActor* HitActor)
 	EventData.Instigator = GetOwningPawn();
 	EventData.Target = HitActor;
 
+	// 실제 충돌 지점을 EffectContext에 실어 이벤트를 받는 어빌리티(및 GameplayCue)까지 보존한다.
+	// ASC가 없거나 컨텍스트 생성에 실패하면 ContextHandle이 비어 있는 채로 기존과 동일하게 이벤트만 전송한다.
+	if (SourceASC)
+	{
+		FGameplayEffectContextHandle ContextHandle = SourceASC->MakeEffectContext();
+		if (ContextHandle.IsValid())
+		{
+			ContextHandle.AddHitResult(HitResult, true);
+			EventData.ContextHandle = ContextHandle;
+		}
+	}
+
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
 		GetOwningPawn(),
 		ACGameplayTags::Shared_Event_MeleeHit,
@@ -90,12 +103,12 @@ void UPawnCombatComponent::OnHitTargetActor(AActor* HitActor)
 		);
 
 	// 자식 클래스의 추가 로직 실행
-	OnHitTargetActorImpl(HitActor);
+	OnHitTargetActorImpl(HitActor, HitResult);
 }
 
 void UPawnCombatComponent::OnWeaponPulledFromTargetActor(AActor* InteractingActor) {}
 
-void UPawnCombatComponent::OnHitTargetActorImpl(AActor* HitActor)
+void UPawnCombatComponent::OnHitTargetActorImpl(AActor* HitActor, const FHitResult& HitResult)
 {
 	// 기본 구현은 비어있음 - 자식 클래스에서 필요시 override
 }
@@ -131,6 +144,46 @@ void UPawnCombatComponent::RegisterSpawnedWeapon(FGameplayTag InWeaponTagToResis
 	{
 		CurrentEquippedWeaponTag = InWeaponTagToResister;
 	}
+}
+
+bool UPawnCombatComponent::UnregisterWeapon(FGameplayTag InWeaponTagToUnregister)
+{
+	const int32 FoundIndex = CharacterCarriedWeaponList.IndexOfByPredicate([&InWeaponTagToUnregister](const FWeaponEntry& Entry) { return Entry.WeaponTag == InWeaponTagToUnregister; });
+
+	if (FoundIndex == INDEX_NONE)
+	{
+		return false;
+	}
+
+	if (AACWeaponBase* WeaponActor = CharacterCarriedWeaponList[FoundIndex].WeaponActor)
+	{
+		// 파괴 예정 무기가 계속 적중 이벤트를 보내지 않도록 바인딩을 끊는다
+		WeaponActor->OnWeaponHitTarget.Unbind();
+		WeaponActor->OnWeaponPulledFromTarget.Unbind();
+	}
+
+	CharacterCarriedWeaponList.RemoveAt(FoundIndex);
+
+	if (CurrentEquippedWeaponTag == InWeaponTagToUnregister)
+	{
+		// SetCurrentEquippedWeaponTag를 쓰지 않는다 — HandleEquipEffects가 이미 제거된 엔트리를 찾으려 하기 때문
+		CurrentEquippedWeaponTag = FGameplayTag();
+	}
+
+	return true;
+}
+
+TArray<FGameplayTag> UPawnCombatComponent::GetCarriedWeaponTags() const
+{
+	TArray<FGameplayTag> WeaponTags;
+	WeaponTags.Reserve(CharacterCarriedWeaponList.Num());
+
+	for (const FWeaponEntry& Entry : CharacterCarriedWeaponList)
+	{
+		WeaponTags.Add(Entry.WeaponTag);
+	}
+
+	return WeaponTags;
 }
 
 void UPawnCombatComponent::SetCurrentEquippedWeaponTag(const FGameplayTag& NewWeaponTag)
@@ -241,37 +294,46 @@ void UPawnCombatComponent::HandleEquipEffects(const FGameplayTag& NewWeaponTag, 
 	{
 		if (AACWeapon* OldWeapon = Cast<AACWeapon>(GetCharacterCarriedWeaponByTag(OldWeaponTag)))
 		{
-			const UACDataAsset_WeaponData* WeaponData = OldWeapon->WeaponData;
-
-			// 애님 레이어 해제
-			if (WeaponData->WeaponAnimLayerToLink)
+			// WeaponData가 비어 있으면 소켓/애님/입력 정보를 알 수 없으므로 해당 처리만 건너뛴다
+			if (const UACDataAsset_WeaponData* WeaponData = OldWeapon->WeaponData)
 			{
-				OwnerCharacter->GetMesh()->UnlinkAnimClassLayers(WeaponData->WeaponAnimLayerToLink.Get());
-			}
-
-			// [로컬 플레이어 전용] 입력 컨텍스트 제거
-			if (OwnerCharacter->IsLocallyControlled())
-			{
-				if (const APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController()))
+				// 애님 레이어 해제
+				if (WeaponData->WeaponAnimLayerToLink)
 				{
-					if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+					OwnerCharacter->GetMesh()->UnlinkAnimClassLayers(WeaponData->WeaponAnimLayerToLink.Get());
+				}
+
+				// [로컬 플레이어 전용] 입력 컨텍스트 제거
+				if (OwnerCharacter->IsLocallyControlled())
+				{
+					if (const APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController()))
 					{
-						if (WeaponData->WeaponInputMappingContext)
+						if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 						{
-							Subsystem->RemoveMappingContext(WeaponData->WeaponInputMappingContext);
+							if (WeaponData->WeaponInputMappingContext)
+							{
+								Subsystem->RemoveMappingContext(WeaponData->WeaponInputMappingContext);
+							}
 						}
 					}
 				}
-			}
 
-			// 무기 장착 제거
-			if (WeaponData->UnequippedSocketName != NAME_None)
+				// 무기 장착 제거
+				if (WeaponData->UnequippedSocketName != NAME_None)
+				{
+					OldWeapon->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponData->UnequippedSocketName);
+				}
+			}
+			else
 			{
-				OldWeapon->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponData->UnequippedSocketName);
+				UE_LOG(LogTemp, Warning, TEXT("[PawnCombatComponent] %s의 WeaponData가 비어 있어 해제 효과를 건너뜁니다."), *OldWeapon->GetName());
 			}
 
-			// 무기 숨기기
-			OldWeapon->HideWeapon();
+			// 무기 교체는 이전 무기를 항상 숨기고, 해제(맨손)는 무기별 설정을 따른다
+			if (NewWeaponTag.IsValid() || OldWeapon->GetHideUntilEquipped())
+			{
+				OldWeapon->HideWeapon();
+			}
 		}
 	}
 
@@ -280,40 +342,51 @@ void UPawnCombatComponent::HandleEquipEffects(const FGameplayTag& NewWeaponTag, 
 	{
 		if (AACWeapon* NewWeapon = Cast<AACWeapon>(GetCharacterCarriedWeaponByTag(NewWeaponTag)))
 		{
-			const UACDataAsset_WeaponData* WeaponData = NewWeapon->WeaponData;
-
-			// 애님 레이어 연결
-			if (WeaponData->WeaponAnimLayerToLink)
+			// WeaponData가 비어 있으면 소켓/애님/입력 정보를 알 수 없으므로 해당 처리만 건너뛴다
+			if (const UACDataAsset_WeaponData* WeaponData = NewWeapon->WeaponData)
 			{
-				OwnerCharacter->GetMesh()->LinkAnimClassLayers(WeaponData->WeaponAnimLayerToLink);
-			}
-
-			// [로컬 플레이어 전용] 입력 컨텍스트 추가
-			if (OwnerCharacter->IsLocallyControlled())
-			{
-				if (const APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController()))
+				// 애님 레이어 연결
+				if (WeaponData->WeaponAnimLayerToLink)
 				{
-					if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+					OwnerCharacter->GetMesh()->LinkAnimClassLayers(WeaponData->WeaponAnimLayerToLink);
+				}
+
+				// [로컬 플레이어 전용] 입력 컨텍스트 추가
+				if (OwnerCharacter->IsLocallyControlled())
+				{
+					if (const APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController()))
 					{
-						if (WeaponData->WeaponInputMappingContext)
+						if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 						{
-							Subsystem->AddMappingContext(WeaponData->WeaponInputMappingContext, 1);
+							if (WeaponData->WeaponInputMappingContext)
+							{
+								Subsystem->AddMappingContext(WeaponData->WeaponInputMappingContext, 1);
+							}
 						}
 					}
 				}
-			}
 
-			// 무기를 Equipped 소켓(손)에 부착
-			if (WeaponData->EquippedSocketName != NAME_None)
+				// 무기를 Equipped 소켓(손)에 부착
+				if (WeaponData->EquippedSocketName != NAME_None)
+				{
+					NewWeapon->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponData->EquippedSocketName);
+				}
+
+				// 무기 보이기
+				NewWeapon->ShowWeapon();
+
+				// 스킬 파티클 시스템 프라이밍 (첫 사용 시 프리징 방지)
+				PreloadSkillParticles(WeaponData);
+
+				// 무기가 손에 붙고 보이게 된 직후가 장착 이펙트의 정확한 시점이다
+				PlayEquipVFX(NewWeapon, WeaponData);
+			}
+			else
 			{
-				NewWeapon->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponData->EquippedSocketName);
+				UE_LOG(LogTemp, Warning, TEXT("[PawnCombatComponent] %s의 WeaponData가 비어 있어 장착 효과를 건너뜁니다."), *NewWeapon->GetName());
+
+				NewWeapon->ShowWeapon();
 			}
-
-			// 무기 보이기
-			NewWeapon->ShowWeapon();
-
-			// 스킬 파티클 시스템 프라이밍 (첫 사용 시 프리징 방지)
-			PreloadSkillParticles(WeaponData);
 		}
 	}
 }
@@ -356,4 +429,28 @@ void UPawnCombatComponent::PreloadSkillParticles(const UACDataAsset_WeaponData* 
 			}
 		}
 	}
+}
+
+void UPawnCombatComponent::PlayEquipVFX(const AACWeaponBase* InWeapon, const UACDataAsset_WeaponData* InWeaponData) const
+{
+	if (!InWeapon || !InWeaponData || !InWeaponData->EquipNiagaraSystem)
+	{
+		return;
+	}
+
+	UMeshComponent* AttachMesh = InWeapon->GetWeaponMeshComponent();
+	if (!AttachMesh)
+	{
+		return;
+	}
+
+	UNiagaraFunctionLibrary::SpawnSystemAttached(
+		InWeaponData->EquipNiagaraSystem,
+		AttachMesh,
+		NAME_None,
+		FVector::ZeroVector,
+		FRotator::ZeroRotator,
+		EAttachLocation::SnapToTarget,
+		true // Auto Destroy
+		);
 }

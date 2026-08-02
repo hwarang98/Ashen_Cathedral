@@ -48,8 +48,14 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Camera")
 	FOnActionStatesChanged OnActionStatesChanged;
 
-	/** Light/Heavy 어빌리티가 공유하는 콤보 카운트. SelectAttackMontage()가 이 값을 기준으로 몽타주를 선택한다. */
+	/** Light/Heavy 어빌리티가 공유하는 콤보 카운트. 다음 '일반' 콤보 단계의 0-기반 인덱스를 의미한다. */
 	int32 SharedComboCount = 0;
+
+	/** true이면 다음 공격이 대상 배열의 마지막 몽타주(피니셔)로 연결된다. 직전 공격이 피니셔 직전 단계였을 때 설정된다. */
+	bool bSharedComboFinisherReady = false;
+
+	/** true이면 현재 재생 중인 몽타주가 피니셔다. 콤보 윈도우가 열려 있어도 추가 체이닝을 허용하지 않는다. */
+	bool bSharedComboFinisherPlaying = false;
 
 	/** Light/Heavy 어빌리티가 공유하는 콤보 리셋 타이머 핸들. 하나만 유지되므로 어빌리티 전환 시 이전 타이머가 자동으로 교체된다. */
 	FTimerHandle SharedComboResetTimerHandle;
@@ -57,6 +63,12 @@ public:
 	/** 마지막 공격 후 이 시간 안에 재입력이 없으면 콤보 카운트를 리셋한다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Combat|Combo")
 	float ComboResetDelay = 2.0f;
+
+	/**
+	 * @brief 공유 콤보 상태(카운트/피니셔 플래그)와 리셋 타이머를 한 번에 초기화한다.
+	 * 부분 초기화를 막기 위해 모든 콤보 리셋 경로는 이 함수만 호출한다.
+	 */
+	void ResetSharedComboState();
 
 	// 상호작용 가능한 액터가 오버랩 범위에 들어왔을 때 호출
 	void SetCurrentInteractable(TScriptInterface<IInteractableInterface> InInteractable);

@@ -12,6 +12,10 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Items/Weapon/ACWeaponBase.h"
 
+#if AC_WEB_DEBUG
+	#include "Debug/ACWebDebugSubsystem.h"
+#endif
+
 UACGameplayAbility_AshenKnight_Phase2::UACGameplayAbility_AshenKnight_Phase2()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
@@ -43,6 +47,14 @@ void UACGameplayAbility_AshenKnight_Phase2::ActivateAbility(
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
+
+#if AC_WEB_DEBUG
+	// 타임라인에서 페이즈 전환 시점을 기준선으로 삼는다 (설계 기준: 보스 HP 50% 이하에서 공격속도 1.2배)
+	if (UACWebDebugSubsystem* WebDebug = UACWebDebugSubsystem::Get(OwnerCharacter))
+	{
+		WebDebug->RecordMarker(OwnerCharacter, TEXT("Phase2Enter"));
+	}
+#endif
 
 	// Phase2 영구 상태 태그를 Loose로 부여한다 — EndAbility 후에도 유지되어야 하므로 ActivationOwnedTags를 쓰지 않는다.
 	if (UAbilitySystemComponent* PhaseASC = GetAbilitySystemComponentFromActorInfo())

@@ -75,6 +75,14 @@ protected:
 	virtual UAnimMontage* SelectAttackMontage();
 
 	/**
+	 * @brief 데미지 계산기에 SetByCaller로 전달할 콤보 단계를 반환한다.
+	 *
+	 * @return 기본 구현은 이 어빌리티 인스턴스의 CurrentComboCount
+	 * @note 여러 어빌리티가 콤보를 공유하는 서브클래스는 실제로 선택된 몽타주 단계를 반환하도록 오버라이드한다.
+	 */
+	virtual int32 GetComboDamageCount() const;
+
+	/**
 	 * @brief 재생할 몽타주를 하나라도 가지고 있는지 반환한다. ActivateAbility가 조기 종료 판단에 사용한다.
 	 *
 	 * 기본 구현은 AttackMontages가 비었는지만 본다. 다른 소스에서 몽타주를 고르는 서브클래스는
@@ -136,6 +144,28 @@ protected:
 	 *       성공 이벤트 수신 시 즉시 제거)할 수 있어, 적용 후 재조회하면 성공을 놓치기 때문이다.
 	 */
 	void PlayHitGameplayCue(const AActor* HitActor, bool bParrySuccess, bool bBlockSuccess) const;
+
+	/**
+	 * @brief ResolveBloodHitGameplayCueTag()가 고른 혈흔 GameplayCue를 피격자 ASC에서 실행한다.
+	 *
+	 * @param HitActor         적중된 대상 액터
+	 * @param Payload          Shared_Event_MeleeHit 페이로드. ContextHandle의 HitResult로 정확한 충돌 위치/법선을
+	 *                         채운다. AOE처럼 HitResult가 없는 경로는 nullptr을 넘겨 폴백 위치를 쓰게 한다.
+	 * @param bShouldPlayBlood 데미지 적용 '전'에 계산한 실행 허용 여부 (태그 유효/패링/방어/무적/사망 판정 포함)
+	 * @note 이번 타격으로 사망한 대상에게도 마지막 혈흔이 나와야 하므로, 여기서 Dead/Invincible 태그를 다시
+	 *       조회하지 않는다. 시각 효과 전용이며 데미지나 게임플레이 상태를 변경하지 않는다.
+	 */
+	void PlayBloodHitGameplayCue(const AActor* HitActor, const FGameplayEventData* Payload, bool bShouldPlayBlood) const;
+
+	/**
+	 * @brief 데미지 적용 전에 혈흔 큐 실행 조건을 계산한다.
+	 *
+	 * @param HitActor      적중된 대상 액터
+	 * @param bParrySuccess 데미지 적용 전에 판정한 Parry 성공 여부
+	 * @param bBlockSuccess 데미지 적용 전에 판정한 Block 성공 여부
+	 * @return 태그가 지정되어 있고, 대상 ASC가 있으며, 패링/방어/기존 무적/기존 사망이 아닐 때만 true
+	 */
+	bool ShouldPlayBloodHitGameplayCue(const AActor* HitActor, bool bParrySuccess, bool bBlockSuccess) const;
 	#pragma endregion
 
 	#pragma region Montage
@@ -197,6 +227,25 @@ private:
 	#pragma region GameplayCue & Camera
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameplayCue", meta = (AllowPrivateAccess = "true"))
 	FGameplayTag MeleeAttackSoundCueTag;
+
+	/** 실제 피격 시 재생할 혈흔 GameplayCue 태그. 비어 있으면 혈흔 큐를 실행하지 않는다. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameplayCue|Blood", meta = (AllowPrivateAccess = "true", Categories = "GameplayCue.FX.Blood"))
+	FGameplayTag BloodHitGameplayCueTag;
+
+	/**
+	 * 같은 어빌리티 안에서 카운터 어택(CounterAttackMontages)으로 발동한 타격에만 사용할 혈흔 GameplayCue 태그.
+	 * 비어 있으면 BloodHitGameplayCueTag로 폴백한다. 적의 별도 Counter Attack BP는 이 값 없이
+	 * BloodHitGameplayCueTag만 지정해도 동일하게 동작한다.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameplayCue|Blood", meta = (AllowPrivateAccess = "true", Categories = "GameplayCue.FX.Blood"))
+	FGameplayTag CounterAttackBloodHitGameplayCueTag;
+
+	/**
+	 * @brief 이번 타격에 실제로 사용할 혈흔 GameplayCue 태그를 결정한다.
+	 *
+	 * @return 카운터 어택이면서 CounterAttackBloodHitGameplayCueTag가 지정되어 있으면 그 태그, 아니면 BloodHitGameplayCueTag
+	 */
+	FGameplayTag ResolveBloodHitGameplayCueTag() const;
 
 	/** 공격이 타겟에 적중했을 때 재생할 카메라 셰이크 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CameraShake", meta = (AllowPrivateAccess = "true"))

@@ -12,6 +12,10 @@
 #include "GameplayTags/ACGameplayTags_Shared.h"
 #include "Runtime/Media/Public/IMediaControls.h"
 
+#if AC_WEB_DEBUG
+	#include "Debug/ACWebDebugSubsystem.h"
+#endif
+
 void UACGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
 {
 	Super::OnGiveAbility(ActorInfo, Spec);
@@ -27,6 +31,34 @@ void UACGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInf
 		}
 	}
 }
+
+#if AC_WEB_DEBUG
+void UACGameplayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+{
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+
+	AActor* Avatar = ActorInfo ? ActorInfo->AvatarActor.Get() : nullptr;
+	if (UACWebDebugSubsystem* WebDebug = UACWebDebugSubsystem::Get(Avatar))
+	{
+		WebDebug->RecordAbility(Avatar, GetClass()->GetName(), EACWebDebugPhase::Begin);
+	}
+}
+
+void UACGameplayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
+{
+	// begin/end 짝을 정확히 맞추기 위해, 실제로 활성 상태였을 때만 end 를 남긴다
+	if (IsActive())
+	{
+		AActor* Avatar = ActorInfo ? ActorInfo->AvatarActor.Get() : nullptr;
+		if (UACWebDebugSubsystem* WebDebug = UACWebDebugSubsystem::Get(Avatar))
+		{
+			WebDebug->RecordAbility(Avatar, GetClass()->GetName(), EACWebDebugPhase::End);
+		}
+	}
+
+	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+#endif
 
 UACAbilitySystemComponent* UACGameplayAbility::GetACAbilitySystemComponentFromActorInfo() const
 {

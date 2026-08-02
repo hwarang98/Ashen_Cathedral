@@ -11,6 +11,8 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Sprint, "Player.Ability.Sprint")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Attack_Light, "Player.Ability.Attack.Light")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Attack_Heavy, "Player.Ability.Attack.Heavy")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Attack_Light_Special, "Player.Ability.Attack.Light.Special")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Attack_Heavy_Special, "Player.Ability.Attack.Heavy.Special")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Block, "Player.Ability.Block")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Roll, "Player.Ability.Roll")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_TargetLock, "Player.Ability.TargetLock")
@@ -18,8 +20,10 @@ namespace ACGameplayTags
 	#pragma endregion
 
 	#pragma region Player Weapon Tags
-	UE_DEFINE_GAMEPLAY_TAG(Player_Weapon_Sword, "Player.Weapon.Sword")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Weapon_Basic, "Player.Weapon.Basic")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Weapon_Sword, "Player.Weapon.Sword")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Weapon_Nodachi, "Player.Weapon.Nodachi")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Weapon_Katana, "Player.Weapon.Katana")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Weapon_Unarmed, "Player.Weapon.Unarmed")
 	#pragma endregion
 
@@ -32,6 +36,7 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_Status_TargetLock, "Player_Status_TargetLock")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Status_CriticalAttacking, "Player.Status.CriticalAttacking")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Status_ComboWindow, "Player.Status.ComboWindow")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Status_SpecialLinkWindow, "Player.Status.SpecialLinkWindow")
 	#pragma endregion
 
 	#pragma region Player ActionState Tags

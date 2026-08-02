@@ -24,6 +24,14 @@ protected:
 	#pragma region Native Overrides
 	/** 어빌리티가 ASC에 부여될 때 자동으로 호출 */
 	virtual void OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
+
+#if AC_WEB_DEBUG
+	/** 웹 디버그 타임라인에 어빌리티 활성 구간의 시작을 남긴다. 동작은 바꾸지 않는다. */
+	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
+
+	/** 웹 디버그 타임라인에 어빌리티 활성 구간의 끝을 남긴다. 동작은 바꾸지 않는다. */
+	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
+#endif
 	#pragma endregion
 
 	#pragma region Cooldown

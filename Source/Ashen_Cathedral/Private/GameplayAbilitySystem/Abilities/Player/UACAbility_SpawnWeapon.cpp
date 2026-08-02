@@ -5,7 +5,9 @@
 
 #include "Character/ACCharacterBase.h"
 #include "Components/Combat/PawnCombatComponent.h"
+#include "Components/Combat/PlayerCombatComponent.h"
 #include "Items/Weapon/ACWeaponBase.h"
+#include "ACGameplayDebugHelper.h"
 
 UUACAbility_SpawnWeapon::UUACAbility_SpawnWeapon()
 {
@@ -21,6 +23,18 @@ void UUACAbility_SpawnWeapon::ActivateAbility(const FGameplayAbilitySpecHandle H
 	if (!OwnerCharacter)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+
+	// 선택 무기 모드에서는 위 고정 필드가 비어 있으므로 기존 검증보다 먼저 분기한다
+	if (bUseSelectedWeaponData)
+	{
+		if (UPlayerCombatComponent* PlayerCombatComponent = GetPlayerCombatComponentFromActorInfo())
+		{
+			PlayerCombatComponent->RequestSpawnSelectedWeapon();
+		}
+
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
 
@@ -58,8 +72,8 @@ void UUACAbility_SpawnWeapon::ActivateAbility(const FGameplayAbilitySpecHandle H
 			InitialSocketName
 			);
 
-		// 6. 무기 숨기기 (장착 전까지 보이지 않도록)
-		if (!bRegisterAsEquippedWeapon)
+		// 6. 무기 숨기기 (장착 전까지 보이지 않도록 설정된 무기만)
+		if (!bRegisterAsEquippedWeapon && SpawnedWeapon->GetHideUntilEquipped())
 		{
 			SpawnedWeapon->HideWeapon();
 		}

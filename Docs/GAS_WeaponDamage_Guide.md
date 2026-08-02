@@ -10,8 +10,8 @@
     │
     ├─ GE_Damage 생성 + SetByCaller로 값 설정
     │      → Shared.SetByCaller.BaseDamage         = 무기 기본 데미지
-    │      → Player.SetByCaller.AttackType.Light   = 일반 콤보 횟수 (일반 공격 시)
-    │      → Player.SetByCaller.AttackType.Heavy   = 강공격 콤보 횟수 (강공격 시)
+    │      → Shared.SetByCaller.AttackType.Light   = 일반 콤보 단계 (일반 공격 시)
+    │      → Shared.SetByCaller.AttackType.Heavy   = 강공격 콤보 단계 (강공격 시)
     │      → Shared.SetByCaller.CounterAttackBonus = 카운터 보너스 (카운터 시)
     │      → Shared.SetByCaller.GroggyDamage       = 그로기 데미지
     │
@@ -38,16 +38,21 @@
 
 ## 데미지 계산식
 
+콤보 단계는 **실제로 재생된 몽타주의 1-기반 단계**입니다. `AttackMontages` 길이를 넘지 않고,
+피니셔(배열 마지막 타)가 끝나면 초기화되므로 배율이 무한히 누적되지 않습니다.
+단계가 0이면(카운터 어택 / 단발성 스페셜 / 적 공격) 배율을 적용하지 않습니다.
+자세한 단계 산출 규칙은 [플레이어 콤보 가이드](./GAS_ComboReset_Guide.md)를 참고하세요.
+
 ### 일반 공격
 ```
-배율 = (콤보 횟수 - 1) × 0.05 + 1.0
-예) 1콤보: 1.0x / 2콤보: 1.05x / 3콤보: 1.10x / 4콤보: 1.15x
+배율 = (콤보 단계 - 1) × 0.05 + 1.0
+예) 1단계: 1.0x / 2단계: 1.05x / 3단계: 1.10x / 4단계: 1.15x
 ```
 
 ### 강공격
 ```
-배율 = 콤보 횟수 × 0.15 + 1.0
-예) 1콤보: 1.15x / 2콤보: 1.30x / 3콤보: 1.45x
+배율 = 콤보 단계 × 0.15 + 1.0
+예) 1단계: 1.15x / 2단계: 1.30x / 3단계: 1.45x / 5단계: 1.75x
 ```
 
 ### 최종 데미지
@@ -101,10 +106,11 @@ SpecHandle.Data->SetSetByCallerMagnitude(
     GetPlayerCurrentEquippedWeaponDamageAtLevel(InLevel)
 );
 
-// 콤보 횟수 설정 (둘 중 해당하는 것만 설정, 나머지는 0)
+// 콤보 단계 설정 (둘 중 해당하는 것만 설정, 나머지는 0)
+// 실제 구현은 ACAbility_Attack::OnHitTarget이 GetComboDamageCount()로 값을 얻어 주입한다
 SpecHandle.Data->SetSetByCallerMagnitude(
-    ACGameplayTags::Player_SetByCaller_AttackType_Light,
-    LightComboCount  // 일반 공격
+    ACGameplayTags::Shared_SetByCaller_AttackType_Light,
+    GetComboDamageCount()  // 일반 공격
 );
 
 // 그로기 데미지 설정

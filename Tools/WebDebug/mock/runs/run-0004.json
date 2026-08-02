@@ -1,0 +1,115 @@
+{
+	"schema": 1,
+	"runId": "run-0004",
+	"seed": 8148,
+	"startedAtUtc": "2026-07-12T13:00:00Z",
+	"durationSec": 196.4,
+	"weapon": "Player.Weapon.Katana",
+	"result": "died",
+	"metaUpgrades": {
+		"Strength": 0,
+		"Vitality": 0,
+		"Luck": 0
+	},
+	"currencyEarned": {
+		"MetaProgression.Currency.AshSoul": 355,
+		"MetaProgression.Currency.CathedralSigil": 0,
+		"MetaProgression.Currency.RelicFragment": 0
+	},
+	"cardsPicked": [],
+	"bossFights": [
+		{
+			"bossId": "MetaProgression.BossID.AshenKnight",
+			"attempt": 4,
+			"result": "lost",
+			"durationSec": 123.9,
+			"bossHealthPctAtEnd": 0.797,
+			"parry": {
+				"attempts": 29,
+				"successes": 7
+			},
+			"dodge": {
+				"attempts": 28,
+				"iframeSuccesses": 8
+			},
+			"block": {
+				"attempts": 32,
+				"successes": 27
+			},
+			"guardBreaksTaken": 4,
+			"guardBreaksInflicted": 1,
+			"postureBreaksTaken": 2,
+			"postureBreaksInflicted": 2,
+			"criticalAttacksLanded": 1,
+			"totalDamageDealt": 4176,
+			"totalDamageTaken": 1537,
+			"avgPlayerHealthPct": 0.459,
+			"damageTakenByAttackTag": {
+				"Enemy.Ability.AttackType.Special_01": 782,
+				"Enemy.Ability.Melee": 329,
+				"Enemy.Ability.AttackType.Run": 158,
+				"Enemy.Ability.AttackType.Special_02": 82,
+				"Enemy.Ability.AttackType.BackDash": 186
+			},
+			"timingSamples": {
+				"parryInputOffsetMs": [
+					-113,
+					-34,
+					-156,
+					-59,
+					-78,
+					74,
+					117,
+					46,
+					-219,
+					-83,
+					-159,
+					-270,
+					-88,
+					-191,
+					-83,
+					33,
+					-93,
+					-240,
+					16,
+					-86,
+					34,
+					6,
+					-75,
+					-153,
+					-43,
+					-199,
+					-37,
+					8,
+					-68
+				],
+				"hitAfterIframeEndMs": [
+					31,
+					28,
+					285,
+					3,
+					246,
+					274,
+					347,
+					165
+				],
+				"comboWindowInputOffsetMs": [
+					43,
+					-5,
+					-2,
+					-20,
+					-18,
+					-8,
+					-56,
+					-69
+				]
+			},
+			"deathCause": {
+				"attackTag": "Enemy.Ability.AttackType.Special_01",
+				"bossAbility": "GA_Enemy_Attack_Special_01",
+				"playerHealthPctBefore": 0.161,
+				"damage": 235.3
+			}
+		}
+	]
+}

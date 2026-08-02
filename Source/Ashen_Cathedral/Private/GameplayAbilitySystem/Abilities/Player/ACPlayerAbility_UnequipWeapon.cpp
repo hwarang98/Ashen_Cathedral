@@ -87,52 +87,10 @@ void UACPlayerAbility_UnequipWeapon::OnMontageCancelled()
 
 void UACPlayerAbility_UnequipWeapon::HandleUnequipLogic(FGameplayEventData Payload)
 {
-	const AACPlayerCharacter* OwnerCharacter = GetPlayerCharacterFromActorInfo();
-	if (!OwnerCharacter)
+	// 실제 해제 처리는 UPlayerCombatComponent가 단일 원본으로 보유한다.
+	// 무기 교체 파이프라인도 몽타주가 중단됐을 때 같은 함수로 상태를 정규화한다.
+	if (UPlayerCombatComponent* PlayerCombatComponent = GetPlayerCombatComponentFromActorInfo())
 	{
-		return;
-	}
-
-	UPawnCombatComponent* PawnCombatComponent = GetPlayerCombatComponentFromActorInfo();
-	UACAbilitySystemComponent* ASC = GetACAbilitySystemComponentFromActorInfo();
-
-	if (!PawnCombatComponent || !ASC)
-	{
-		return;
-	}
-
-	if (AACWeapon* PlayerWeapon = Cast<AACWeapon>(PawnCombatComponent->GetCharacterCurrentEquippedWeapon()))
-	{
-		// 데이터 에셋 포인터를 가져오고 nullptr 체크
-		if (const UACDataAsset_WeaponData* WeaponData = PlayerWeapon->WeaponData)
-		{
-			// 1. 서버: 능력 제거
-			const TArray<FGameplayAbilitySpecHandle> GrantedAbilitySpecHandles = PlayerWeapon->GetGrantedAbilitySpecHandles();
-
-			for (const FGameplayAbilitySpecHandle& SpecHandle : GrantedAbilitySpecHandles)
-			{
-				ASC->ClearAbility(SpecHandle);
-			}
-
-			PlayerWeapon->AssignGrantedAbilitySpecHandles(TArray<FGameplayAbilitySpecHandle>());
-
-			// 2. 서버: 상태 변경 (OnRep 호출)
-			PawnCombatComponent->SetCurrentEquippedWeaponTag(FGameplayTag()); // [수정]
-
-			// 3. UI에 장착 무기 아이콘 브로드캐스트
-			if (const UPlayerUIComponent* PlayerUIComponent = OwnerCharacter->GetPlayerUIComponent())
-			{
-				PlayerUIComponent->OnEquippedWeaponChangedDelegate.Broadcast(nullptr);
-			}
-
-			// 4. 서버: 무기 장착 태그 제거
-			ASC->RemoveLooseGameplayTag(ACGameplayTags::Player_Ability_EquipWeapon);
-			ASC->AddLooseGameplayTag(ACGameplayTags::Player_Weapon_Unarmed);
-
-			if (WeaponData->WeaponTypeTag.IsValid())
-			{
-				ASC->RemoveLooseGameplayTag(WeaponData->WeaponTypeTag);
-			}
-		}
+		PlayerCombatComponent->ApplyUnequipEffects();
 	}
 }

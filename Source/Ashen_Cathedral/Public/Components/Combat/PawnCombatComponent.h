@@ -28,9 +28,15 @@ public:
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	virtual void OnHitTargetActor(AActor* HitActor);
+	/**
+	 * @brief 무기 콜리전이 대상에 적중했을 때 호출된다.
+	 *
+	 * @param HitActor  적중된 대상 액터
+	 * @param HitResult 무기가 확정한 실제 충돌 정보. 공격자 ASC의 EffectContext에 실려 GameplayCue까지 전달된다.
+	 */
+	virtual void OnHitTargetActor(AActor* HitActor, const FHitResult& HitResult);
 	virtual void OnWeaponPulledFromTargetActor(AActor* InteractingActor);
-	virtual void OnHitTargetActorImpl(AActor* HitActor);
+	virtual void OnHitTargetActorImpl(AActor* HitActor, const FHitResult& HitResult);
 
 	UFUNCTION(BlueprintCallable, Category = "Ashen Cathdral|Combat")
 	AACWeaponBase* GetCharacterCarriedWeaponByTag(FGameplayTag InWeaponTagToGet) const;
@@ -38,8 +44,24 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Ashen Cathdral|Combat")
 	void RegisterSpawnedWeapon(FGameplayTag InWeaponTagToResister, AACWeaponBase* InWeaponToResister, bool bResisterAsEquippedWeapon = false);
 
+	/**
+	 * @brief 등록된 무기 하나를 목록에서 제거한다. 무기 액터를 파괴하지는 않는다.
+	 *
+	 * 적중 델리게이트 바인딩을 해제하고, 해당 태그가 현재 장착 태그와 같을 때만 장착 태그를 비운다.
+	 * 소켓/애님/입력 해제는 이 함수를 호출하기 전에 해제 경로에서 이미 끝나 있어야 한다.
+	 *
+	 * @param InWeaponTagToUnregister 제거할 무기의 등록 태그
+	 * @return 실제로 제거했으면 true
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Ashen Cathdral|Combat")
-	void SetCurrentEquippedWeaponTag(const FGameplayTag& NewWeaponTag);
+	bool UnregisterWeapon(FGameplayTag InWeaponTagToUnregister);
+
+	// 현재 등록된 모든 무기의 태그 목록. 등록 해제를 순회할 때 사용한다
+	UFUNCTION(BlueprintPure, Category = "Ashen Cathdral|Combat")
+	TArray<FGameplayTag> GetCarriedWeaponTags() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Ashen Cathdral|Combat")
+	virtual void SetCurrentEquippedWeaponTag(const FGameplayTag& NewWeaponTag);
 
 	UFUNCTION(BlueprintCallable, Category = "Ashen Cathdral|Combat")
 	AACWeaponBase* GetCharacterCurrentEquippedWeapon() const;
@@ -88,4 +110,7 @@ private:
 	void HandleEquipEffects(const FGameplayTag& NewWeaponTag, const FGameplayTag& OldWeaponTag);
 
 	void PreloadSkillParticles(const UACDataAsset_WeaponData* WeaponData);
+
+	// 장착이 확정되는 순간 무기 메시에 EquipNiagaraSystem을 붙여 재생한다. 이펙트가 없으면 아무것도 하지 않는다
+	void PlayEquipVFX(const AACWeaponBase* InWeapon, const UACDataAsset_WeaponData* InWeaponData) const;
 };

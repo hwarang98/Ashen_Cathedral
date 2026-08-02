@@ -21,6 +21,10 @@ void AACBattleStartPoint::Interact(APawn* InstigatorPawn)
 	{
 		ACGameMode->RequestStartRun();
 	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[AACBattleStartPoint] AACGameMode를 찾지 못해 전투 시작을 처리할 수 없습니다. 레벨의 GameMode Override를 확인하세요."));
+	}
 }
 
 FText AACBattleStartPoint::GetInteractionText() const

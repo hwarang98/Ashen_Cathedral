@@ -1,0 +1,28 @@
+{
+  "name": "ashen-cathedral-webdebug",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Ashen Cathedral 웹 디버그 대시보드 — 전투 타임라인 + 런 통계",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --noEmit false --emitDeclarationOnly false",
+    "gen:mock": "node scripts/gen-mock.mjs",
+    "validate:palette": "node scripts/validate-palette.mjs"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2",
+    "recharts": "^2.12.7"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.2",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.9"
+  }
+}

@@ -6,12 +6,13 @@
 #include "GameplayTagContainer.h"
 #include "Engine/DataTable.h"
 #include "Engine/DataAsset.h"
+#include "Structs/ACStructTypes.h"
 #include "ACDataAsset_WeaponData.generated.h"
 
 class UNiagaraSystem;
 class UGameplayEffect;
+class AACWeapon;
 class AACWeaponBase;
-struct FACPlayerAbilitySet;
 class UInputMappingContext;
 class UACPlayerLinkedAnimLayer;
 /**
@@ -55,4 +56,20 @@ public:
 	// 이 무기를 장착할 때 ASC에 추가할 무기 식별 태그
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	FGameplayTag WeaponTypeTag;
+
+	// 이 무기를 스폰할 때 사용할 액터 클래스. 로비 프리뷰와 실제 무기 스폰이 모두 이 값을 사용한다
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	TSubclassOf<AACWeapon> WeaponClassToSpawn;
+
+	// 스폰 직후 부착할 소켓. 비어 있으면 UnequippedSocketName을 대신 사용한다
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Socket")
+	FName InitialSocketName;
+
+	// 무기 스폰과 함께 부여할 장착 어빌리티. 장착 전에도 입력을 받아야 하므로 DefaultWeaponAbilities와 수명이 다르다
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability")
+	FACPlayerAbilitySet EquipAbility;
+
+	// 장착이 확정되는 순간 무기 메시에 붙여 재생할 나이아가라. 비어 있어도 장착은 정상 진행된다
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "VFX")
+	TObjectPtr<UNiagaraSystem> EquipNiagaraSystem;
 };
