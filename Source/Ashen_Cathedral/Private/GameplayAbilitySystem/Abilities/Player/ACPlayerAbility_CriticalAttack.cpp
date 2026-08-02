@@ -64,6 +64,12 @@ bool UACPlayerAbility_CriticalAttack::CanActivateAbility(const FGameplayAbilityS
 		return false;
 	}
 
+	// 재생할 조합이 없으면 처형을 포기하고 LightAttack에 차례를 넘긴다
+	if (PickRandomMontagePairIndex() == INDEX_NONE)
+	{
+		return false;
+	}
+
 	return FindCriticalAttackTarget(PlayerCharacter) != nullptr;
 }
 
@@ -90,11 +96,16 @@ void UACPlayerAbility_CriticalAttack::ActivateAbility(
 
 	// CanActivateAbility와 ActivateAbility 사이에 상태가 바뀔 수 있으므로 재탐색
 	AACEnemyCharacter* TargetEnemy = FindCriticalAttackTarget(PlayerCharacter);
-	if (!TargetEnemy || !PlayerCriticalAttackMontage || !EnemyCriticalAttackedMontage)
+	const int32 PairIndex = PickRandomMontagePairIndex();
+	if (!TargetEnemy || PairIndex == INDEX_NONE)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
+
+	// 이후 단계와 종료 콜백이 모두 이 조합을 참조한다 — 재추첨하면 Player/Enemy 몽타주가 어긋난다
+	SelectedMontagePair = CriticalAttackMontagePairs[PairIndex];
+	bEnemyGetUpStarted = false;
 
 	CachedTargetEnemy = TargetEnemy;
 
@@ -143,15 +154,20 @@ void UACPlayerAbility_CriticalAttack::ActivateAbility(
 	{
 		// 동일 Enemy에게 반복 발동될 경우 이전 활성화에서 남은 바인딩이 중복 등록되지 않도록 먼저 해제한다.
 		EnemyAnim->OnMontageEnded.RemoveDynamic(this, &ThisClass::OnEnemyMontageEnded);
-		EnemyAnim->Montage_Play(EnemyCriticalAttackedMontage, 1.0f);
+		EnemyAnim->Montage_Play(SelectedMontagePair.EnemyMontage, 1.0f);
 		EnemyAnim->OnMontageEnded.AddDynamic(this, &ThisClass::OnEnemyMontageEnded);
+
+		// 블렌드아웃 델리게이트는 재생 중인 인스턴스에 붙으므로 Montage_Play 뒤에 설정한다
+		FOnMontageBlendingOutStarted BlendingOutDelegate;
+		BlendingOutDelegate.BindUObject(this, &ThisClass::OnEnemyMontageBlendingOut);
+		EnemyAnim->Montage_SetBlendingOutDelegate(BlendingOutDelegate, SelectedMontagePair.EnemyMontage);
 	}
 
 	// 6. Player 크리티컬 어택 몽타주 재생 (AbilityTask로 종료 콜백 처리)
 	PlayerMontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this,
 		NAME_None,
-		PlayerCriticalAttackMontage,
+		SelectedMontagePair.PlayerMontage,
 		1.0f,
 		NAME_None,
 		false
@@ -277,6 +293,26 @@ AACEnemyCharacter* UACPlayerAbility_CriticalAttack::FindCriticalAttackTarget(con
 	return BestTarget;
 }
 
+int32 UACPlayerAbility_CriticalAttack::PickRandomMontagePairIndex() const
+{
+	// 유효한 항목만 모아서 추첨한다 — 배열 인덱스를 직접 뽑으면 빈 항목에 당첨될 수 있다
+	TArray<int32, TInlineAllocator<8>> ValidIndices;
+	for (int32 Index = 0; Index < CriticalAttackMontagePairs.Num(); ++Index)
+	{
+		if (CriticalAttackMontagePairs[Index].IsValid())
+		{
+			ValidIndices.Add(Index);
+		}
+	}
+
+	if (ValidIndices.IsEmpty())
+	{
+		return INDEX_NONE;
+	}
+
+	return ValidIndices[FMath::RandRange(0, ValidIndices.Num() - 1)];
+}
+
 void UACPlayerAbility_CriticalAttack::LockEnemyForCriticalAttack(const AACEnemyCharacter* Enemy) const
 {
 	if (!Enemy)
@@ -340,6 +376,17 @@ void UACPlayerAbility_CriticalAttack::SetupCriticalAttackMotionWarp(const AACPla
 
 	MotionWarpingComponent->AddOrUpdateWarpTargetFromLocationAndRotation(WarpTargetName, WarpLocation, WarpRotation);
 
+	// 처형 마무리 지점 = Enemy 정면 축 위의 부호 있는 지점. 음수면 Enemy 뒤쪽이 되어 스쳐 지나가는 연출이 된다.
+	// 회전은 접근 때 맞춘 값을 그대로 넘겨준다 — 마무리 NotifyState에서 Warp Rotation을 꺼두면 무시되고,
+	// 켜져 있더라도 방향이 유지되어 이동 중 몸이 도는 일이 없다.
+	if (bUseCriticalAttackEndWarp)
+	{
+		FVector EndLocation = Enemy->GetActorLocation() + Enemy->GetActorForwardVector() * CriticalAttackEndOffset;
+		EndLocation.Z = WarpLocation.Z;
+
+		MotionWarpingComponent->AddOrUpdateWarpTargetFromLocationAndRotation(RetreatWarpTargetName, EndLocation, WarpRotation);
+	}
+
 	// Enemy에는 MotionWarpingComponent가 없으므로 즉시 회전 보정
 	const FVector EnemyToWarp = (WarpLocation - Enemy->GetActorLocation()).GetSafeNormal();
 	if (!EnemyToWarp.IsNearlyZero())
@@ -369,18 +416,46 @@ void UACPlayerAbility_CriticalAttack::UnlockEnemy(const AACEnemyCharacter* Enemy
 
 	// 몽타주가 아직 재생 중이면 강제로 끊지 않고 자연 종료를 기다린다 — OnEnemyMontageEnded에서 이동/BT 복구.
 	// Player/Enemy 몽타주 길이가 서로 달라도, 어느 한쪽이 먼저 끝났다고 다른 쪽을 잘라내지 않는다.
-	if (EnemyCriticalAttackedMontage)
+	// 기상 몽타주도 같은 콜백으로 종료를 받으므로 함께 검사한다.
+	if (UAnimInstance* EnemyAnim = Enemy->GetMesh() ? Enemy->GetMesh()->GetAnimInstance() : nullptr)
 	{
-		if (UAnimInstance* EnemyAnim = Enemy->GetMesh() ? Enemy->GetMesh()->GetAnimInstance() : nullptr)
+		const bool bVictimPlaying = SelectedMontagePair.EnemyMontage && EnemyAnim->Montage_IsPlaying(SelectedMontagePair.EnemyMontage);
+		const bool bGetUpPlaying = EnemyGetUpMontage && EnemyAnim->Montage_IsPlaying(EnemyGetUpMontage);
+
+		if (bVictimPlaying || bGetUpPlaying)
 		{
-			if (EnemyAnim->Montage_IsPlaying(EnemyCriticalAttackedMontage))
-			{
-				return; // OnMontageEnded 콜백이 자연 종료 시 이동/BT 복구를 처리한다
-			}
+			return; // OnMontageEnded 콜백이 자연 종료 시 기상 재생과 이동/BT 복구를 처리한다
 		}
 	}
 
 	// 몽타주가 이미 종료된 경우 직접 복구
+	RestoreEnemyAfterCriticalAttack(Enemy);
+}
+
+bool UACPlayerAbility_CriticalAttack::TryPlayEnemyGetUpMontage(const AACEnemyCharacter* Enemy)
+{
+	if (!EnemyGetUpMontage || !IsValid(Enemy))
+	{
+		return false;
+	}
+
+	UAnimInstance* EnemyAnim = Enemy->GetMesh() ? Enemy->GetMesh()->GetAnimInstance() : nullptr;
+	if (!EnemyAnim)
+	{
+		return false;
+	}
+
+	// OnMontageEnded 바인딩은 피처형 몽타주 재생 때 이미 걸어뒀으므로 그대로 기상 종료도 받는다
+	return EnemyAnim->Montage_Play(EnemyGetUpMontage, 1.0f) > 0.f;
+}
+
+void UACPlayerAbility_CriticalAttack::RestoreEnemyAfterCriticalAttack(const AACEnemyCharacter* Enemy) const
+{
+	if (!IsValid(Enemy))
+	{
+		return;
+	}
+
 	if (UCharacterMovementComponent* Movement = Enemy->GetCharacterMovement())
 	{
 		Movement->SetMovementMode(MOVE_Walking);
@@ -507,7 +582,17 @@ void UACPlayerAbility_CriticalAttack::RestoreEnemyTimeDilation()
 
 void UACPlayerAbility_CriticalAttack::OnEnemyMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	if (Montage != EnemyCriticalAttackedMontage || !CachedTargetEnemy.IsValid())
+	const bool bVictimMontageEnded = Montage == SelectedMontagePair.EnemyMontage;
+	const bool bGetUpMontageEnded = EnemyGetUpMontage && Montage == EnemyGetUpMontage;
+
+	if ((!bVictimMontageEnded && !bGetUpMontageEnded) || !CachedTargetEnemy.IsValid())
+	{
+		return;
+	}
+
+	// 기상은 피처형 몽타주의 블렌드아웃 시점에 이미 얹혔다.
+	// 그 여파로 피처형 몽타주가 중단 종료되는데, 여기서 복구하면 기상 도중에 AI가 살아난다.
+	if (bVictimMontageEnded && bEnemyGetUpStarted)
 	{
 		return;
 	}
@@ -521,15 +606,35 @@ void UACPlayerAbility_CriticalAttack::OnEnemyMontageEnded(UAnimMontage* Montage,
 		return;
 	}
 
-	if (UCharacterMovementComponent* Movement = Enemy->GetCharacterMovement())
+	// 블렌드아웃 시간이 0이면 블렌드아웃 델리게이트를 못 받을 수 있으므로 여기서 한 번 더 시도한다
+	if (bVictimMontageEnded && !bInterrupted && TryPlayEnemyGetUpMontage(Enemy))
 	{
-		Movement->SetMovementMode(MOVE_Walking);
+		bEnemyGetUpStarted = true;
+		return;
 	}
-	if (AAIController* AIController = Cast<AAIController>(Enemy->GetController()))
+
+	bEnemyGetUpStarted = false;
+	RestoreEnemyAfterCriticalAttack(Enemy);
+}
+
+void UACPlayerAbility_CriticalAttack::OnEnemyMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted)
+{
+	// 중단된 경우(다른 몽타주가 슬롯을 가져간 경우)에는 기상을 얹지 않는다 — 서로 밀어내며 어긋난다
+	if (bInterrupted || Montage != SelectedMontagePair.EnemyMontage || !CachedTargetEnemy.IsValid())
 	{
-		if (UBrainComponent* Brain = AIController->GetBrainComponent())
-		{
-			Brain->ResumeLogic("ExecutionEnd");
-		}
+		return;
+	}
+
+	AACEnemyCharacter* Enemy = CachedTargetEnemy.Get();
+
+	const UACAbilitySystemComponent* EnemyASC = Enemy->GetACAbilitySystemComponent();
+	if (EnemyASC && EnemyASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Dead))
+	{
+		return;
+	}
+
+	if (TryPlayEnemyGetUpMontage(Enemy))
+	{
+		bEnemyGetUpStarted = true;
 	}
 }

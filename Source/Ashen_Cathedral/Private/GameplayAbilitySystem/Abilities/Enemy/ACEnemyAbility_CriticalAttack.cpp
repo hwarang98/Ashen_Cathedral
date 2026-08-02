@@ -50,8 +50,12 @@ void UACEnemyAbility_CriticalAttack::ActivateAbility(
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
+	// EndAbility가 이전 활성화의 값을 남겨두므로(기상 콜백이 써야 한다) 여기서 정리한다.
+	// 대상을 못 찾고 조기 종료할 때 EndAbility가 지난 플레이어를 다시 건드리는 것을 막는다.
 	bCriticalAttackFinished = false;
+	bPlayerGetUpStarted = false;
 	ActivePlayerVictimMontage = nullptr;
+	CachedTargetPlayer = nullptr;
 
 	// CanActivateAbility와 이 시점 사이에 상태가 바뀔 수 있으므로 재탐색한다
 	AACPlayerCharacter* TargetPlayer = FindCriticalAttackTarget();
@@ -81,8 +85,16 @@ void UACEnemyAbility_CriticalAttack::ActivateAbility(
 	// 플레이어 피격 몽타주 — Enemy 몽타주와 같은 프레임에 시작해야 연출이 맞물린다
 	if (UAnimInstance* PlayerAnim = TargetPlayer->GetMesh() ? TargetPlayer->GetMesh()->GetAnimInstance() : nullptr)
 	{
+		// 반복 발동 시 이전 활성화에서 남은 바인딩이 중복 등록되지 않도록 먼저 해제한다
+		PlayerAnim->OnMontageEnded.RemoveDynamic(this, &ThisClass::OnPlayerVictimMontageEnded);
 		PlayerAnim->Montage_Play(MontagePair->PlayerVictimMontage, 1.0f);
+		PlayerAnim->OnMontageEnded.AddDynamic(this, &ThisClass::OnPlayerVictimMontageEnded);
 		ActivePlayerVictimMontage = MontagePair->PlayerVictimMontage;
+
+		// 블렌드아웃 델리게이트는 재생 중인 인스턴스에 붙으므로 Montage_Play 뒤에 설정한다
+		FOnMontageBlendingOutStarted BlendingOutDelegate;
+		BlendingOutDelegate.BindUObject(this, &ThisClass::OnPlayerVictimMontageBlendingOut);
+		PlayerAnim->Montage_SetBlendingOutDelegate(BlendingOutDelegate, MontagePair->PlayerVictimMontage);
 	}
 
 	EnemyMontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
@@ -113,8 +125,10 @@ void UACEnemyAbility_CriticalAttack::EndAbility(
 		UnlockPlayer(CachedTargetPlayer.Get());
 	}
 
-	CachedTargetPlayer = nullptr;
-	ActivePlayerVictimMontage = nullptr;
+	// CachedTargetPlayer / ActivePlayerVictimMontage는 여기서 리셋하지 않는다 —
+	// Enemy 몽타주가 먼저 끝나도 플레이어의 피격·기상 몽타주는 남아 있을 수 있고,
+	// OnPlayerVictimMontageEnded가 이후에 발화해 이 값들로 대상을 식별한다.
+	// 둘 다 ActivateAbility 진입 시 다시 세팅된다.
 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
@@ -329,6 +343,46 @@ void UACEnemyAbility_CriticalAttack::UnlockPlayer(AACPlayerCharacter* Player) co
 		}
 	}
 
+	// 피격·기상 몽타주가 아직 남아 있으면 복구를 미룬다 — OnPlayerVictimMontageEnded가 처리한다.
+	// Enemy 몽타주가 먼저 끝났다고 플레이어 입력을 살려주면 기상 모션이 입력에 끊긴다.
+	if (UAnimInstance* PlayerAnim = Player->GetMesh() ? Player->GetMesh()->GetAnimInstance() : nullptr)
+	{
+		const bool bVictimPlaying = ActivePlayerVictimMontage && PlayerAnim->Montage_IsPlaying(ActivePlayerVictimMontage);
+		const bool bGetUpPlaying = PlayerGetUpMontage && PlayerAnim->Montage_IsPlaying(PlayerGetUpMontage);
+
+		if (bVictimPlaying || bGetUpPlaying)
+		{
+			return;
+		}
+	}
+
+	RestorePlayerAfterCriticalAttack(Player);
+}
+
+bool UACEnemyAbility_CriticalAttack::TryPlayPlayerGetUpMontage(AACPlayerCharacter* Player) const
+{
+	if (!PlayerGetUpMontage || !IsValid(Player))
+	{
+		return false;
+	}
+
+	UAnimInstance* PlayerAnim = Player->GetMesh() ? Player->GetMesh()->GetAnimInstance() : nullptr;
+	if (!PlayerAnim)
+	{
+		return false;
+	}
+
+	// OnMontageEnded 바인딩은 피격 몽타주 재생 때 이미 걸어뒀으므로 그대로 기상 종료도 받는다
+	return PlayerAnim->Montage_Play(PlayerGetUpMontage, 1.0f) > 0.f;
+}
+
+void UACEnemyAbility_CriticalAttack::RestorePlayerAfterCriticalAttack(AACPlayerCharacter* Player) const
+{
+	if (!IsValid(Player))
+	{
+		return;
+	}
+
 	if (UCharacterMovementComponent* Movement = Player->GetCharacterMovement())
 	{
 		Movement->SetMovementMode(MOVE_Walking);
@@ -337,6 +391,65 @@ void UACEnemyAbility_CriticalAttack::UnlockPlayer(AACPlayerCharacter* Player) co
 	if (APlayerController* PC = Cast<APlayerController>(Player->GetController()))
 	{
 		Player->EnableInput(PC);
+	}
+}
+
+void UACEnemyAbility_CriticalAttack::OnPlayerVictimMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	const bool bVictimMontageEnded = ActivePlayerVictimMontage && Montage == ActivePlayerVictimMontage;
+	const bool bGetUpMontageEnded = PlayerGetUpMontage && Montage == PlayerGetUpMontage;
+
+	if ((!bVictimMontageEnded && !bGetUpMontageEnded) || !CachedTargetPlayer.IsValid())
+	{
+		return;
+	}
+
+	// 기상은 피격 몽타주의 블렌드아웃 시점에 이미 얹혔다.
+	// 그 여파로 피격 몽타주가 중단 종료되는데, 여기서 복구하면 기상 도중에 입력이 살아난다.
+	if (bVictimMontageEnded && bPlayerGetUpStarted)
+	{
+		return;
+	}
+
+	AACPlayerCharacter* Player = CachedTargetPlayer.Get();
+
+	// 사망했다면 Death 어빌리티가 이동/입력을 관리한다
+	const UACAbilitySystemComponent* PlayerASC = Player->GetACAbilitySystemComponent();
+	if (PlayerASC && PlayerASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Dead))
+	{
+		return;
+	}
+
+	// 블렌드아웃 시간이 0이면 블렌드아웃 델리게이트를 못 받을 수 있으므로 여기서 한 번 더 시도한다
+	if (bVictimMontageEnded && !bInterrupted && TryPlayPlayerGetUpMontage(Player))
+	{
+		bPlayerGetUpStarted = true;
+		return;
+	}
+
+	bPlayerGetUpStarted = false;
+	RestorePlayerAfterCriticalAttack(Player);
+}
+
+void UACEnemyAbility_CriticalAttack::OnPlayerVictimMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted)
+{
+	// 중단된 경우(다른 몽타주가 슬롯을 가져간 경우)에는 기상을 얹지 않는다 — 서로 밀어내며 어긋난다
+	if (bInterrupted || !ActivePlayerVictimMontage || Montage != ActivePlayerVictimMontage || !CachedTargetPlayer.IsValid())
+	{
+		return;
+	}
+
+	AACPlayerCharacter* Player = CachedTargetPlayer.Get();
+
+	const UACAbilitySystemComponent* PlayerASC = Player->GetACAbilitySystemComponent();
+	if (PlayerASC && PlayerASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Dead))
+	{
+		return;
+	}
+
+	if (TryPlayPlayerGetUpMontage(Player))
+	{
+		bPlayerGetUpStarted = true;
 	}
 }
 

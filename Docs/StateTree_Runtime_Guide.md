@@ -276,9 +276,21 @@ AIController에 붙일 때는 항상 이쪽을 씁니다.
 BT는 Blackboard에 값을 걸어두고 만료 타이머로 지웠지만, StateTree는 이벤트만 보내고
 반응 지속 시간은 상태가 스스로 관리합니다. 타이머가 사라집니다.
 
-**주의 사항** (`ACStateTreeController.cpp:61-66`):
-`UStateTreeComponent`는 `UBrainComponent` 초기화를 건너뛰어 `AAIController::BrainComponent`에
-등록되지 않습니다. 따라서 **언포제스 시 자동 정지하지 않으므로 `StopLogic()`을 직접 호출해야 합니다.**
+**BrainComponent 등록 여부** — 흔히 오해하는 부분입니다.
+
+`UStateTreeComponent`는 `UBrainComponent`를 상속하고(`StateTreeComponent.h:39`),
+`AAIController::PostInitializeComponents`가 `BrainComponent == nullptr`일 때
+`FindComponentByClass<UBrainComponent>()`로 자동 할당합니다 (`AIController.cpp:74-77`).
+**따라서 `AIController->GetBrainComponent()`는 StateTree 보스에서도 정상적으로 동작합니다.**
+
+`PauseLogic` / `ResumeLogic` / `StopLogic` 모두 구현돼 있습니다
+(`StateTreeComponent.cpp:270`, `:278`, `:215`). `PauseLogic`은 `bIsPaused = true` 후
+`DisableTick()`을 호출하므로, 처형·페이즈 전환처럼 AI를 잠시 얼려야 하는 연출에서
+BT 보스와 동일한 코드가 그대로 통합니다.
+
+`UStateTreeComponent`가 건너뛰는 `UBrainComponent` 초기화는 **Blackboard 캐싱뿐**입니다
+(`BrainComponent.cpp:260-275`) — StateTree에 Blackboard가 없기 때문이며,
+`AIController::BrainComponent` 등록과는 무관합니다.
 
 ### 7.4 BT와의 브리지
 

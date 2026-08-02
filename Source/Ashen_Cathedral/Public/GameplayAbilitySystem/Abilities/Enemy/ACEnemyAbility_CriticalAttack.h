@@ -62,6 +62,16 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "CriticalAttack|Animation")
 	TArray<FACEnemyCriticalAttackMontagePair> CriticalAttackMontages;
 
+	/**
+	 * 크리티컬을 견디고 살아남은 플레이어가 피격 몽타주에 이어서 재생할 기상 몽타주.
+	 *
+	 * 비워두면 재생하지 않고 지금까지처럼 곧바로 이동·입력을 복구한다.
+	 * 조합에 상관없이 항상 같은 몽타주를 쓰므로, 시작 자세가 정확히 맞지 않는 것을 흡수하도록
+	 * 이 몽타주의 Blend Mode In을 Inertialization으로 두는 것을 권한다.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "CriticalAttack|Animation")
+	TObjectPtr<UAnimMontage> PlayerGetUpMontage;
+
 	/** 크리티컬 공격 가능 최대 거리 (cm) */
 	UPROPERTY(EditDefaultsOnly, Category = "CriticalAttack|Detection", meta = (ClampMin = "50.0"))
 	float CriticalAttackDistance = 200.f;
@@ -128,8 +138,19 @@ private:
 	 */
 	void SetupCriticalAttackMotionWarp(AACPlayerCharacter* Player) const;
 
-	/** 잠갔던 플레이어의 이동/입력을 복구하고 Executed 태그를 제거한다 */
+	/** 잠갔던 플레이어의 이동/입력을 복구하고 Executed 태그를 제거한다. 피격·기상 몽타주가 남아 있으면 복구를 콜백으로 넘긴다 */
 	void UnlockPlayer(AACPlayerCharacter* Player) const;
+
+	/**
+	 * @brief PlayerGetUpMontage를 플레이어에게 재생한다.
+	 *
+	 * @return 재생을 시작했으면 true. 이 경우 이동·입력 복구를 미루고 기상 몽타주 종료 콜백에 맡겨야 한다.
+	 * @note 몽타주가 지정되지 않았거나 재생에 실패하면 false를 반환하므로, 호출부는 기존처럼 즉시 복구하면 된다.
+	 */
+	bool TryPlayPlayerGetUpMontage(AACPlayerCharacter* Player) const;
+
+	/** 플레이어의 이동 모드와 입력을 복구한다 — 처형 연출이 완전히 끝난 시점에만 호출한다 */
+	void RestorePlayerAfterCriticalAttack(AACPlayerCharacter* Player) const;
 
 	/** 종료 공통 처리 — UnlockPlayer 후 EndAbility. 중복 호출은 무시된다 */
 	void FinishCriticalAttack(bool bWasCancelled);
@@ -146,6 +167,18 @@ private:
 	UFUNCTION()
 	void OnCriticalAttackDamageEventReceived(FGameplayEventData Payload);
 
+	/** 플레이어 피격·기상 몽타주 종료 시 호출 — 연출이 완전히 끝났으면 이동/입력을 복구한다 */
+	UFUNCTION()
+	void OnPlayerVictimMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	/**
+	 * @brief 플레이어 피격 몽타주의 블렌드아웃이 시작될 때 호출 — 여기서 기상 몽타주를 얹는다.
+	 *
+	 * @note OnMontageEnded는 블렌드아웃이 끝난 뒤에 오므로, 그때 기상을 재생하면 Idle로 돌아가
+	 *       잠깐 선 자세를 거친 뒤 다시 눕는 그림이 된다. 블렌드아웃 시작 시점에 얹어야 두 블렌드가 겹친다.
+	 */
+	void OnPlayerVictimMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted);
+
 	UPROPERTY()
 	TObjectPtr<UAbilityTask_PlayMontageAndWait> EnemyMontageTask;
 
@@ -159,4 +192,7 @@ private:
 	TObjectPtr<UAnimMontage> ActivePlayerVictimMontage;
 
 	bool bCriticalAttackFinished = false;
+
+	/** 기상 몽타주를 이미 얹었는지. 피격 몽타주 종료가 이동·입력을 앞당겨 복구하는 것을 막는다 */
+	bool bPlayerGetUpStarted = false;
 };
