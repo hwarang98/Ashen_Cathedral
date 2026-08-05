@@ -152,6 +152,7 @@ void AACStateTreeController::OnIncomingAttackEventReceived(const FGameplayEventD
 	if (ASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Dead)
 		|| ASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_PostureBroken)
 		|| ASC->HasMatchingGameplayTag(ACGameplayTags::Enemy_Status_Attacking)
+		|| ASC->HasMatchingGameplayTag(ACGameplayTags::Enemy_Status_PhaseTransition)
 		|| ASC->HasMatchingGameplayTag(ACGameplayTags::Enemy_Status_Phase2))
 	{
 		return;

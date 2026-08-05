@@ -11,6 +11,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Interfaces/PawnUIInterface.h"
+#include "Interfaces/ACZeroHealthHandlerInterface.h"
 
 #if AC_WEB_DEBUG
 	#include "Abilities/GameplayAbility.h" // 피격 기록에서 출처 어빌리티의 GetClass()를 부른다
@@ -508,6 +509,14 @@ void UACAttributeSet::HandleDamageAndTriggerHitReact(const FGameplayEffectModCal
 	// 사망 판정
 	if (GetHealth() <= 0.f)
 	{
+		// 사망 처리에 앞서, 체력 0을 대신 가져갈 핸들러(보스 페이즈 시스템 등)가 있는지 먼저 묻는다.
+		// 핸들러가 처리했다면 Dead 태그도 Death 이벤트도 남기지 않으므로 사망 어빌리티와 사망 델리게이트가 실행되지 않는다.
+		// 핸들러가 없는 일반 적과 마지막 페이즈 보스는 항상 false가 되어 아래 기존 로직을 그대로 탄다.
+		if (IACZeroHealthHandlerInterface::TryHandleZeroHealthOnActor(Data.Target.GetAvatarActor(), Data.EffectSpec.GetEffectContext().GetInstigator()))
+		{
+			return;
+		}
+
 		UACFunctionLibrary::AddGameplayTagToActorIfNone(Data.Target.GetAvatarActor(), ACGameplayTags::Shared_Status_Dead);
 
 #if AC_WEB_DEBUG
