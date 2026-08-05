@@ -63,6 +63,19 @@ struct FACBossPhaseTransition
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "BossPhase", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float RestoreHealthPercent = 0.f;
+
+	/**
+	 * 전환이 완료되면 부여할 영구 페이즈 상태 태그 (예: 첫 전환은 Enemy.State.Phase.2, 두 번째 전환은 Enemy.State.Phase.3).
+	 *
+	 * 한 번 부여하면 제거하지 않고 누적한다 — 3페이즈 보스는 Phase.2와 Phase.3을 함께 보유한다.
+	 * GameplayTag 매칭은 형제 간 대소 비교가 되지 않으므로(Phase.3은 Phase.2에 매칭되지 않는다),
+	 * 누적해야 "2페이즈 이상"을 HasTag(Phase.2) 하나로 물을 수 있다.
+	 * 이렇게 태그로 유지하면 StateTree 조건뿐 아니라 GAS의 ActivationBlockedTags·GE Tag Requirement도 같은 값을 그대로 본다.
+	 *
+	 * None이면 이 컴포넌트는 태그를 부여하지 않으며, 부여 책임은 TransitionAbility가 갖는다.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "BossPhase", meta = (Categories = "Enemy.State.Phase"))
+	FGameplayTag PhaseStateTag;
 };
 
 /** 페이즈 전환 시작/완료를 외부(UI, 사운드, 카메라 등)에 알리는 델리게이트 */
@@ -76,6 +89,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBossPhaseSignature, int32, Phase)
  * - 전환 중 무적·AI 정지 등 "전환 상태" 소유
  * - 컷신(LevelSequence) 재생과 TransitionAbility 호출 순서 보장
  * - RestoreHealthPercent에 따른 체력 회복
+ * - PhaseStateTag(Enemy.State.Phase.N) 누적 부여 — 페이즈 상태의 단일 진실 출처
  *
  * [책임 밖]
  * - 보스별 스탯 강화·외형·이펙트·몽타주는 TransitionAbility(예: GA_Phase2_Ordan)가 갖는다.
@@ -133,6 +147,13 @@ public:
 	 */
 	UFUNCTION(BlueprintPure, Category = "BossPhase")
 	bool WillRestoreHealthOnPendingTransition() const;
+
+	/**
+	 * @brief 진행 중인 전환이 이 컴포넌트에서 페이즈 상태 태그를 부여할 예정인지 여부.
+	 * TransitionAbility가 자신의 페이즈 태그 부여를 건너뛸지 판단하는 데 사용한다.
+	 */
+	UFUNCTION(BlueprintPure, Category = "BossPhase")
+	bool WillGrantPhaseStateTagOnPendingTransition() const;
 
 	/** 액터에 붙은 BossPhaseComponent를 찾는다. 일반 적처럼 없는 경우 nullptr */
 	static UACBossPhaseComponent* FindBossPhaseComponent(const AActor* InActor);

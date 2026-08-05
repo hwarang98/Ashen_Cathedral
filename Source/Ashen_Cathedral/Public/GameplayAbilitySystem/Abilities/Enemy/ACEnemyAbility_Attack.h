@@ -96,7 +96,7 @@ protected:
 	float ComboResetTime = 2.f;
 
 	/**
-	 * @brief Enemy_State_Phase2 태그 보유 시 동일 DamageEffect Spec에 화염 데미지와 화상 축적 값을 주입한다.
+	 * @brief Enemy.State.Phase.2 태그 보유 시 동일 DamageEffect Spec에 화염 데미지와 화상 축적 값을 주입한다.
 	 * DamageCalculation에서 Shared.SetByCaller.FireBonusDamage / BurnBuildUp 태그로 읽어 처리한다.
 	 *
 	 * @param SpecHandle  빌드 중인 DamageEffect Spec 핸들

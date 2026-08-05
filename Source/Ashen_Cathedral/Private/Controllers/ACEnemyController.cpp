@@ -93,7 +93,7 @@ void AACEnemyController::OnIncomingAttackEventReceived(const FGameplayEventData*
 	}
 
 	// 사망/체간 붕괴/공격 중/페이즈 전환 중이면 예고를 무시한다 (ACPressureDetectionComponent와 동일한 가드 스타일)
-	// 전환 판정에는 전환 연출 동안만 유지되는 Enemy.Status.PhaseTransition을 쓴다 — 영구 상태인 Enemy.State.Phase2로 막으면
+	// 전환 판정에는 전환 연출 동안만 유지되는 Enemy.Status.PhaseTransition을 쓴다 — 영구 상태인 Enemy.State.Phase.2로 막으면
 	// 전환이 끝난 뒤에도 2페이즈 내내 예고가 차단되어 방어/회피 대응이 발동하지 않는다.
 	if (ASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_Dead)
 		|| ASC->HasMatchingGameplayTag(ACGameplayTags::Shared_Status_PostureBroken)
