@@ -117,6 +117,13 @@ private:
 	/** 소유 캐릭터의 AIController를 반환한다. 플레이어 캐릭터나 컨트롤러 없을 경우 nullptr. */
 	AAIController* GetOwningAIController() const;
 
+	/**
+	 * 이번 활성화를 UACBossPhaseComponent가 주도하고 있는지 여부.
+	 * true면 무적 태그와 AI 정지/재개를 컴포넌트가 소유하므로 이 어빌리티는 손대지 않는다.
+	 * ActivateAbility에서 갱신되고 OnPhase2MontageEnded에서 대칭 해제 여부를 판단하는 데 쓰인다.
+	 */
+	bool bPhaseComponentOwnsTransitionState = false;
+
 	/** 캐릭터 메시의 슬롯을 FireMaterials 배열 인덱스 순서로 교체합니다. */
 	void ApplyFireMaterial(USkeletalMeshComponent* Mesh) const;
 

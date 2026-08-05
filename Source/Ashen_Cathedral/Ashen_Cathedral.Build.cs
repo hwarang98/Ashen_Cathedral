@@ -26,7 +26,9 @@ public class Ashen_Cathedral : ModuleRules
 			"MotionWarping",
 			"Chooser",
 			"StateTreeModule",
-			"GameplayStateTreeModule"
+			"GameplayStateTreeModule",
+			"LevelSequence", // 보스 페이즈 전환 컷신 재생 (ULevelSequencePlayer)
+			"MovieScene"     // FMovieSceneSequencePlaybackSettings / 시퀀스 플레이어 이벤트
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });

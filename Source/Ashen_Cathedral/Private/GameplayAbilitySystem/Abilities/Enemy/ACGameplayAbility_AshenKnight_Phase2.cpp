@@ -8,6 +8,7 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Character/ACCharacterBase.h"
+#include "Components/Combat/ACBossPhaseComponent.h"
 #include "Components/Combat/PawnCombatComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Items/Weapon/ACWeaponBase.h"
@@ -56,6 +57,16 @@ void UACGameplayAbility_AshenKnight_Phase2::ActivateAbility(
 	}
 #endif
 
+	// UACBossPhaseComponent가 전환을 주도하는 중이라면 무적 태그·AI 정지·체력 회복은 그쪽이 소유한다.
+	// 양쪽에서 같은 Loose 태그를 붙였다 떼면 태그 카운트가, BrainComponent를 각자 Pause/Resume하면 재개 시점이 어긋난다.
+	// 컴포넌트 없이 이 어빌리티만으로 전환하는 보스(Ashen Knight)는 아래 플래그가 false로 남아 기존 동작을 그대로 유지한다.
+	const UACBossPhaseComponent* PhaseComponent = UACBossPhaseComponent::FindBossPhaseComponent(OwnerCharacter);
+	bPhaseComponentOwnsTransitionState = PhaseComponent && PhaseComponent->IsPhaseTransitionInProgress();
+
+	// 회복은 컴포넌트가 RestoreHealthPercent를 실제로 쓸 때만 넘긴다.
+	// 값이 0이면 컴포넌트는 체력을 건드리지 않으므로, 회복 책임을 여기 GE에 그대로 남겨 0 체력으로 2페이즈에 들어가는 사고를 막는다.
+	const bool bPhaseComponentRestoresHealth = bPhaseComponentOwnsTransitionState && PhaseComponent->WillRestoreHealthOnPendingTransition();
+
 	// Phase2 영구 상태 태그를 Loose로 부여한다 — EndAbility 후에도 유지되어야 하므로 ActivationOwnedTags를 쓰지 않는다.
 	if (UAbilitySystemComponent* PhaseASC = GetAbilitySystemComponentFromActorInfo())
 	{
@@ -66,25 +77,31 @@ void UACGameplayAbility_AshenKnight_Phase2::ActivateAbility(
 	ApplyPhase2StatsEffect(Handle, ActorInfo, ActivationInfo);
 
 	// 1-1. 체력 완전 회복 (스탯 GE로 상승한 MaxHealth 기준으로 채움)
-	ApplyPhase2FullHealEffect(Handle, ActorInfo, ActivationInfo);
+	if (!bPhaseComponentRestoresHealth)
+	{
+		ApplyPhase2FullHealEffect(Handle, ActorInfo, ActivationInfo);
+	}
 
 	// 2. 몽타주가 설정된 경우: 재생 후 이벤트 수신 시 비주얼 적용
 	if (Phase2TransitionMontage)
 	{
-		// 몽타주 재생 중 무적 태그 부여 (Shared.Status.Invincible → AttributeSet에서 데미지 무효화)
-		UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
-		if (ASC)
+		if (!bPhaseComponentOwnsTransitionState)
 		{
-			ASC->AddLooseGameplayTag(ACGameplayTags::Shared_Status_Invincible);
-		}
-
-		// AI 이동 정지 — BT 일시 중단 + 현재 이동 경로 취소
-		if (AAIController* AIC = GetOwningAIController())
-		{
-			AIC->StopMovement();
-			if (AIC->BrainComponent)
+			// 몽타주 재생 중 무적 태그 부여 (Shared.Status.Invincible → AttributeSet에서 데미지 무효화)
+			UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+			if (ASC)
 			{
-				AIC->BrainComponent->PauseLogic(TEXT("Phase2Transition"));
+				ASC->AddLooseGameplayTag(ACGameplayTags::Shared_Status_Invincible);
+			}
+
+			// AI 이동 정지 — BT 일시 중단 + 현재 이동 경로 취소
+			if (AAIController* AIC = GetOwningAIController())
+			{
+				AIC->StopMovement();
+				if (AIC->BrainComponent)
+				{
+					AIC->BrainComponent->PauseLogic(TEXT("Phase2Transition"));
+				}
 			}
 		}
 
@@ -168,19 +185,24 @@ void UACGameplayAbility_AshenKnight_Phase2::OnVisualActivateEventReceived(FGamep
 
 void UACGameplayAbility_AshenKnight_Phase2::OnPhase2MontageEnded()
 {
-	// 무적 해제
-	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
-	if (ASC)
+	// 무적 해제와 AI 재개는 ActivateAbility에서 직접 걸었을 때만 되돌린다.
+	// UACBossPhaseComponent가 전환을 주도한 경우 둘 다 컴포넌트가 CompletePhaseTransition에서 대칭으로 해제한다
+	if (!bPhaseComponentOwnsTransitionState)
 	{
-		ASC->RemoveLooseGameplayTag(ACGameplayTags::Shared_Status_Invincible);
-	}
-
-	// AI BT 재개 (BT 보스 전용 — StateTree 보스는 BrainComponent가 없어 no-op)
-	if (AAIController* AIC = GetOwningAIController())
-	{
-		if (AIC->BrainComponent)
+		// 무적 해제
+		UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+		if (ASC)
 		{
-			AIC->BrainComponent->ResumeLogic(TEXT("Phase2Transition"));
+			ASC->RemoveLooseGameplayTag(ACGameplayTags::Shared_Status_Invincible);
+		}
+
+		// AI BT 재개 (BT 보스 전용 — StateTree 보스는 BrainComponent가 없어 no-op)
+		if (AAIController* AIC = GetOwningAIController())
+		{
+			if (AIC->BrainComponent)
+			{
+				AIC->BrainComponent->ResumeLogic(TEXT("Phase2Transition"));
+			}
 		}
 	}
 
