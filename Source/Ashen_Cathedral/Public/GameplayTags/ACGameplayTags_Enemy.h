@@ -6,6 +6,11 @@
 
 namespace ACGameplayTags
 {
+	// 보스 개체를 식별하는 태그. AACEnemyCharacter가 스폰 시점(BeginPlay)에 ASC에 Loose 태그로 부여하며,
+	// 부모 태그 Enemy.Boss는 자동으로 함께 카운트되므로 "보스인가?" 판정에도 그대로 사용할 수 있다.
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Boss_AshenKnight)
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Boss_Ordan)
+
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_AshenKnight_Weapon_Sword)
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ordan_Weapon_Lance)
 

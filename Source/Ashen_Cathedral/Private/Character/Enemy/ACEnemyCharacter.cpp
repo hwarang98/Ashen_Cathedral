@@ -10,6 +10,7 @@
 #include "DataAssets/Startup/ACDataAsset_EnemyStartupData.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameModes/ACGameMode.h"
+#include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 #include "Engine/AssetManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Widget/ACWidgetBase.h"
@@ -42,6 +43,12 @@ void AACEnemyCharacter::BeginPlay()
 
 	if (bIsBoss)
 	{
+		// 보스 식별 태그는 스폰 직후 부여해 어빌리티/StateTree/연출이 어느 보스인지 태그로 물을 수 있게 한다
+		if (ACAbilitySystemComponent && BossIdentityTag.IsValid())
+		{
+			ACAbilitySystemComponent->AddLooseGameplayTag(BossIdentityTag);
+		}
+
 		AACGameMode* ACGameMode = GetWorld()->GetAuthGameMode<AACGameMode>();
 		if (ACGameMode)
 		{

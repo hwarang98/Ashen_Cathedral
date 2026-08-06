@@ -5,6 +5,9 @@
 
 namespace ACGameplayTags
 {
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Boss_AshenKnight, "Enemy.Boss.AshenKnight")
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Boss_Ordan, "Enemy.Boss.Ordan")
+
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_AshenKnight_Weapon_Sword, "Enemy.AshenKnight.Weapon.Sword")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ordan_Weapon_Lance, "Enemy.Ordan.Weapon.Lance")
 
