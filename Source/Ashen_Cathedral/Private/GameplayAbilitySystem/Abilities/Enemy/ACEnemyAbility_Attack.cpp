@@ -229,7 +229,7 @@ void UACEnemyAbility_Attack::RefreshComboChanceDisplay()
 void UACEnemyAbility_Attack::ModifyDamageSpec(const FGameplayEffectSpecHandle& SpecHandle, const AActor* HitActor, float BaseDamage)
 {
 	const UACAbilitySystemComponent* OwnerASC = GetACAbilitySystemComponentFromActorInfo();
-	if (!OwnerASC || !OwnerASC->HasMatchingGameplayTag(ACGameplayTags::Enemy_State_Phase2))
+	if (!OwnerASC || !OwnerASC->HasMatchingGameplayTag(ACGameplayTags::Enemy_State_Phase_2))
 	{
 		return;
 	}

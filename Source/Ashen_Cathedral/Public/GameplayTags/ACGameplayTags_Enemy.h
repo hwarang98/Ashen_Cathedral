@@ -6,6 +6,11 @@
 
 namespace ACGameplayTags
 {
+	// 보스 개체를 식별하는 태그. AACEnemyCharacter가 스폰 시점(BeginPlay)에 ASC에 Loose 태그로 부여하며,
+	// 부모 태그 Enemy.Boss는 자동으로 함께 카운트되므로 "보스인가?" 판정에도 그대로 사용할 수 있다.
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Boss_AshenKnight)
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Boss_Ordan)
+
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_AshenKnight_Weapon_Sword)
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ordan_Weapon_Lance)
 
@@ -34,7 +39,9 @@ namespace ACGameplayTags
 
 
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Status_Phase2)               // Phase2 상태 태그. Phase2 어빌리티가 활성화된 동안 ASC에 부여됩니다.
-	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Phase2)                // 2페이즈에 진입한 뒤 계속 유지되는 영구 상태 태그. Phase2 어빌리티가 Loose 태그로 부여합니다.
+	// 2페이즈에 진입한 뒤 계속 유지되는 영구 상태 태그. 페이즈가 더 올라가도 제거하지 않고 Enemy.State.Phase.3을 함께 누적하므로,
+	// "2페이즈 이상"을 이 태그 하나로 물을 수 있고 GAS의 ActivationBlockedTags·GE Tag Requirement도 그대로 사용할 수 있습니다.
+	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Phase_2)
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Status_PhaseTransition)      // 페이즈 전환 연출이 진행 중인 동안만 유지되는 일시 상태 태그. UACBossPhaseComponent가 소유합니다.
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Status_Dying)                // 남은 페이즈가 없어 최종 사망 처리로 넘어간 시점에 부여됩니다. 이후 사망 연출 시스템의 진입점으로 사용합니다.
 	ASHEN_CATHEDRAL_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Event_Phase2_VisualActivate) // Phase2 전환 몽타주의 AnimNotify에서 발송하는 이벤트. 수신 시 머티리얼/Niagara를 적용합니다.

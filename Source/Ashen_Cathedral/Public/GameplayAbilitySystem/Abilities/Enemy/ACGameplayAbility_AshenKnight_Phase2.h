@@ -18,8 +18,8 @@ class AAIController;
 /**
  * Ashen Knight / Ordan 공용 Phase2 진입 어빌리티. 보스별 차이(전환 몽타주 등)는 BP 인스턴스로 지정한다.
  *
- * - Enemy.State.Phase2: ActivateAbility에서 Loose 태그로 부여 → 영구 상태이므로 EndAbility 후에도 유지된다.
- * - ActivationBlockedTags: Enemy.State.Phase2 → 태그가 이미 있으면 재실행 차단
+ * - Enemy.State.Phase.2: ActivateAbility에서 Loose 태그로 부여 → 영구 상태이므로 EndAbility 후에도 유지된다.
+ * - ActivationBlockedTags: Enemy.State.Phase.2 → 태그가 이미 있으면 재실행 차단
  * - 전환 연출(몽타주)이 끝나면 EndAbility를 호출한다. StateTree 보스는 이 종료로 전환 완료를 인식한다.
  *   스탯 GE는 Infinite로 영구 적용되며, Material / Niagara도 복구하지 않는다.
  */
@@ -33,7 +33,7 @@ public:
 
 	/**
 	 * @brief Phase2 상태를 활성화한다.
-	 * Enemy.State.Phase2 Loose 태그 부여 → 스탯 GE 즉시 적용 → 몽타주 재생(무적·AI 정지) → 이벤트 수신 후 비주얼 적용.
+	 * Enemy.State.Phase.2 Loose 태그 부여 → 스탯 GE 즉시 적용 → 몽타주 재생(무적·AI 정지) → 이벤트 수신 후 비주얼 적용.
 	 * 전환 연출이 끝나면 EndAbility를 호출한다(태그는 Loose라 유지).
 	 *
 	 * @param Handle           어빌리티 스펙 핸들

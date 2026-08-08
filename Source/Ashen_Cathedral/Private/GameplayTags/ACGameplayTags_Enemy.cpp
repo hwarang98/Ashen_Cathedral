@@ -5,6 +5,9 @@
 
 namespace ACGameplayTags
 {
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Boss_AshenKnight, "Enemy.Boss.AshenKnight")
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Boss_Ordan, "Enemy.Boss.Ordan")
+
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_AshenKnight_Weapon_Sword, "Enemy.AshenKnight.Weapon.Sword")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ordan_Weapon_Lance, "Enemy.Ordan.Weapon.Lance")
 
@@ -31,7 +34,7 @@ namespace ACGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Event_Dodge, "Enemy.Event.Dodge")
 
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Status_Phase2, "Enemy.Status.Phase2")
-	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Phase2, "Enemy.State.Phase2")
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Phase_2, "Enemy.State.Phase.2")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Status_PhaseTransition, "Enemy.Status.PhaseTransition")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Status_Dying, "Enemy.Status.Dying")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Event_Phase2_VisualActivate, "Enemy.Event.Phase2.VisualActivate")

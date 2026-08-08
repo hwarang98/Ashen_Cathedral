@@ -105,6 +105,11 @@ bool UACBossPhaseComponent::WillRestoreHealthOnPendingTransition() const
 	return PhaseTransitions.IsValidIndex(PendingTransitionIndex) && PhaseTransitions[PendingTransitionIndex].RestoreHealthPercent > 0.f;
 }
 
+bool UACBossPhaseComponent::WillGrantPhaseStateTagOnPendingTransition() const
+{
+	return PhaseTransitions.IsValidIndex(PendingTransitionIndex) && PhaseTransitions[PendingTransitionIndex].PhaseStateTag.IsValid();
+}
+
 bool UACBossPhaseComponent::TryHandleZeroHealth(AActor* DamageInstigator)
 {
 	if (!HasAuthority())
@@ -366,10 +371,21 @@ void UACBossPhaseComponent::CompletePhaseTransition()
 		RestoreHealth(PhaseTransitions[PendingTransitionIndex].RestoreHealthPercent);
 	}
 
-	// 임시 상태 태그 제거 — BeginPhaseTransition에서 부여한 것과 정확히 대칭이다.
-	// AI를 재개하기 전에 지워야, 다시 돌기 시작한 BT/StateTree가 "아직 전환 중"인 태그를 보고 판단하지 않는다
 	if (UAbilitySystemComponent* ASC = CachedASC.Get())
 	{
+		// 새 페이즈의 영구 상태 태그를 부여한다. 누적이므로 이전 페이즈 태그는 지우지 않는다 —
+		// 그래야 "N페이즈 이상"을 태그 하나로 물을 수 있고, GAS의 태그 기반 게이트도 같은 값을 본다
+		if (PhaseTransitions.IsValidIndex(PendingTransitionIndex))
+		{
+			const FGameplayTag& PhaseStateTag = PhaseTransitions[PendingTransitionIndex].PhaseStateTag;
+			if (PhaseStateTag.IsValid() && !ASC->HasMatchingGameplayTag(PhaseStateTag))
+			{
+				ASC->AddLooseGameplayTag(PhaseStateTag);
+			}
+		}
+
+		// 임시 상태 태그 제거 — BeginPhaseTransition에서 부여한 것과 정확히 대칭이다.
+		// AI를 재개하기 전에 지워야, 다시 돌기 시작한 BT/StateTree가 "아직 전환 중"인 태그를 보고 판단하지 않는다
 		ASC->RemoveLooseGameplayTag(ACGameplayTags::Enemy_Status_PhaseTransition);
 		ASC->RemoveLooseGameplayTag(ACGameplayTags::Shared_Status_Invincible);
 	}
