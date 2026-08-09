@@ -6,6 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "Abilities/GameplayAbility.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "GameFramework/Character.h"
 
@@ -52,8 +53,12 @@ void UACEnemyAbility_Block::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	WaitBlockEventTask->EventReceived.AddDynamic(this, &ThisClass::OnSuccessfulBlockEventReceived);
 	WaitBlockEventTask->ReadyForActivation();
 
-	// Block 자세 몽타주 재생 — 이 몽타주의 자연 종료가 곧 "Block 유지 시간 종료"다.
+	// Block 자세 몽타주는 연출만 담당하고, 실제 방어 유지 시간은 아래 Delay Task가 관리한다.
 	PlayHoldMontage();
+
+	BlockDurationTask = UAbilityTask_WaitDelay::WaitDelay(this, BlockDuration);
+	BlockDurationTask->OnFinish.AddDynamic(this, &ThisClass::OnBlockDurationFinished);
+	BlockDurationTask->ReadyForActivation();
 
 	// 저스트 가드(패링) 성공 대기 — 패링 판정 창(Shared.Status.Parry)은 BlockMontage의 ANS_AddGameplayTag가 관리하며,
 	// 창 안에 피격되면 ACCalculation_DamageTaken이 Enemy.Event.ParrySuccess를 발송한다. 이 이벤트를 받아 카운터를 실행한다.
@@ -65,6 +70,18 @@ void UACEnemyAbility_Block::ActivateAbility(const FGameplayAbilitySpecHandle Han
 
 void UACEnemyAbility_Block::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
+	if (BlockDurationTask && BlockDurationTask->IsActive())
+	{
+		BlockDurationTask->EndTask();
+	}
+	BlockDurationTask = nullptr;
+
+	if (WaitBlockEventTask && WaitBlockEventTask->IsActive())
+	{
+		WaitBlockEventTask->EndTask();
+	}
+	WaitBlockEventTask = nullptr;
+
 	// 저스트 가드(패링) 관련 정리. Shared.Status.Parry 태그는 BlockMontage의 ANS_AddGameplayTag가 소유·해제하므로
 	// 이 어빌리티에서는 건드리지 않는다. 기존 보스 Block은 태스크/핸들이 비어 있어 아래는 전부 no-op이다.
 	if (ParrySuccessTask && ParrySuccessTask->IsActive())
@@ -83,14 +100,29 @@ void UACEnemyAbility_Block::EndAbility(const FGameplayAbilitySpecHandle Handle, 
 	}
 	ParryCounterAttackSpecHandle = FGameplayAbilitySpecHandle();
 
-	if (MontageTask && MontageTask->IsActive())
-	{
-		MontageTask->EndTask();
-	}
-	MontageTask = nullptr;
-
 	// 부모 EndAbility에서 MoveSpeedEffectHandle GE 제거
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+
+	// bStopWhenAbilityEnds가 활성화된 MontageTask는 Super::EndAbility에서 현재 방어 몽타주만 정지한다.
+	MontageTask = nullptr;
+}
+
+void UACEnemyAbility_Block::OnBlockDurationFinished()
+{
+	BlockDurationTask = nullptr;
+
+	if (!IsActive())
+	{
+		return;
+	}
+
+	// 패링 카운터가 진행 중이면 기존 흐름대로 카운터 Ability가 끝날 때까지 기다린다.
+	if (ParryCounterAttackSpecHandle.IsValid())
+	{
+		return;
+	}
+
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 void UACEnemyAbility_Block::PlayHoldMontage()
@@ -102,10 +134,9 @@ void UACEnemyAbility_Block::PlayHoldMontage()
 		MontageTask->EndTask();
 	}
 
-	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, BlockMontage, 1.0f, NAME_None, false);
+	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, BlockMontage, 1.0f, NAME_None, true);
 
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::OnMontageCompleted);
-	MontageTask->OnBlendOut.AddDynamic(this, &ThisClass::OnMontageCompleted);
 	MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::OnMontageCancelled);
 	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::OnMontageCancelled);
 
@@ -142,10 +173,9 @@ void UACEnemyAbility_Block::OnSuccessfulBlockEventReceived(FGameplayEventData Pa
 		MontageTask->EndTask();
 	}
 
-	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, BlockHitMontage, 1.0f, NAME_None, false);
+	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, BlockHitMontage, 1.0f, NAME_None, true);
 
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::OnBlockHitMontageFinished);
-	MontageTask->OnBlendOut.AddDynamic(this, &ThisClass::OnBlockHitMontageFinished);
 	// 외부 강제 중단(그로기/사망 몽타주 오버라이드)만 여기로 온다 — 진짜 종료 조건.
 	MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::OnMontageCancelled);
 	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::OnMontageCancelled);
@@ -155,18 +185,34 @@ void UACEnemyAbility_Block::OnSuccessfulBlockEventReceived(FGameplayEventData Pa
 
 void UACEnemyAbility_Block::OnBlockHitMontageFinished()
 {
+	MontageTask = nullptr;
+
 	// 움찔 반응이 끝나면 다시 Block 자세로 복귀한다 — 어빌리티와 Blocking 태그는 이 사이에도 계속 유지 중이다.
-	PlayHoldMontage();
+	if (IsActive() && !ParryCounterAttackSpecHandle.IsValid())
+	{
+		PlayHoldMontage();
+	}
 }
 
 void UACEnemyAbility_Block::OnMontageCompleted()
 {
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+	MontageTask = nullptr;
+
+	// 짧은 자세 몽타주도 BlockDuration 동안 반복해 방어 포즈가 풀리지 않게 한다.
+	if (IsActive() && !ParryCounterAttackSpecHandle.IsValid())
+	{
+		PlayHoldMontage();
+	}
 }
 
 void UACEnemyAbility_Block::OnMontageCancelled()
 {
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+	MontageTask = nullptr;
+
+	if (IsActive())
+	{
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+	}
 }
 
 void UACEnemyAbility_Block::OnParrySuccessEventReceived(FGameplayEventData Payload)
@@ -247,6 +293,13 @@ bool UACEnemyAbility_Block::TryActivateParryCounterAttack()
 		UE_LOG(LogTemp, Warning, TEXT("UACEnemyAbility_Block: 패링 카운터 공격 Ability 활성화 실패 (Tag: %s)"), *ParryCounterAttackAbilityTag.ToString());
 		return false;
 	}
+
+	// 카운터 도중 BlockDuration이 끝나 StateTree가 먼저 빠져나가는 것을 막는다.
+	if (BlockDurationTask && BlockDurationTask->IsActive())
+	{
+		BlockDurationTask->EndTask();
+	}
+	BlockDurationTask = nullptr;
 
 	return true;
 }
