@@ -5,6 +5,8 @@
 
 namespace ACGameplayTags
 {
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Boss_Dummy, "Enemy.Boss.Dummy")
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Boss_Aldren, "Enemy.Boss.Aldren")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Boss_AshenKnight, "Enemy.Boss.AshenKnight")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Boss_Ordan, "Enemy.Boss.Ordan")
 

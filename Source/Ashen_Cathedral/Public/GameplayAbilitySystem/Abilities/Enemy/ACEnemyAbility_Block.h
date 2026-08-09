@@ -6,6 +6,7 @@
 #include "GameplayAbilitySystem/Abilities/Common/ACGameplayAbility_Block.h"
 #include "ACEnemyAbility_Block.generated.h"
 
+class UAbilityTask_WaitDelay;
 class UAbilityTask_WaitGameplayEvent;
 
 UCLASS()
@@ -30,6 +31,10 @@ public:
 		bool bWasCancelled) override;
 
 protected:
+	/** Block Ability가 정상적으로 유지되는 시간. 몽타주 길이와 무관하게 이 시간이 끝나면 방어를 종료한다. */
+	UPROPERTY(EditDefaultsOnly, Category = "Block|Timing", meta = (ClampMin = "0.1", Units = "s"))
+	float BlockDuration = 2.5f;
+
 	/** Enemy가 Block 성공 시 Block 상태(어빌리티/Blocking 태그)를 유지한 채 재생할 짧은 반응 몽타주. None이면 자세 몽타주를 그대로 유지한다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Block|Reaction")
 	TObjectPtr<UAnimMontage> BlockHitMontage;
@@ -54,7 +59,11 @@ protected:
 	FGameplayTag SuccessfulParryCueTag;
 
 private:
-	/** Block 자세(유지) 몽타주가 정상 종료(완료/블렌드아웃)됐을 때 호출 — Block 유지 시간이 끝난 것이므로 어빌리티를 종료한다 */
+	/** BlockDuration이 끝나면 방어 Ability를 정상 종료한다. */
+	UFUNCTION()
+	void OnBlockDurationFinished();
+
+	/** Block 자세 몽타주가 정상 종료됐을 때 호출 — 남은 BlockDuration 동안 자세 몽타주를 다시 재생한다. */
 	UFUNCTION()
 	void OnMontageCompleted();
 
@@ -104,6 +113,9 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UAbilityTask_WaitGameplayEvent> ParrySuccessTask;
+
+	UPROPERTY()
+	TObjectPtr<UAbilityTask_WaitDelay> BlockDurationTask;
 
 	// 종료 대기 중인 카운터 공격 Ability의 SpecHandle. InstancedPerActor라 재활성화 간 값이 남지 않도록 EndAbility에서 초기화한다.
 	FGameplayAbilitySpecHandle ParryCounterAttackSpecHandle;

@@ -141,6 +141,17 @@ public:
 	UFUNCTION(BlueprintPure, Category = "BossPhase")
 	bool IsFinalPhase() const { return CurrentPhase >= GetMaxPhase(); }
 
+	/** 에디터 검증 도구에서 페이즈 설정을 읽기 위한 읽기 전용 접근자. */
+	const TArray<FACBossPhaseTransition>& GetPhaseTransitions() const { return PhaseTransitions; }
+
+	/** 에디터 검증 도구에서 안전 제한 시간을 표시하기 위한 읽기 전용 접근자. */
+	float GetMaxTransitionDuration() const { return MaxTransitionDuration; }
+
+#if !UE_BUILD_SHIPPING
+	/** 개발 도구 전용: TriggerType과 관계없이 다음 페이즈 전환을 시작한다. */
+	bool DebugForceNextPhase();
+#endif
+
 	/**
 	 * @brief 진행 중인 전환이 이 컴포넌트에서 체력을 회복시킬 예정인지 여부.
 	 * TransitionAbility가 자신의 회복 GameplayEffect를 건너뛸지 판단하는 데 사용한다.

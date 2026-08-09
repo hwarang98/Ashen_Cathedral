@@ -10,6 +10,10 @@ public class Ashen_CathedralEditorTarget : TargetRules
 		Type = TargetType.Editor;
 		DefaultBuildSettings = BuildSettingsVersion.V6;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_7;
-		ExtraModuleNames.Add("Ashen_Cathedral");
+		ExtraModuleNames.AddRange(new string[]
+		{
+			"Ashen_Cathedral",
+			"Ashen_CathedralEditor"
+		});
 	}
 }

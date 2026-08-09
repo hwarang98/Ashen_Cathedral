@@ -16,6 +16,11 @@
 				"AIModule",
 				"UMG"
 			]
+		},
+		{
+			"Name": "Ashen_CathedralEditor",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
 		}
 	],
 	"Plugins": [

@@ -163,6 +163,25 @@ bool UACBossPhaseComponent::RequestPhaseTransition()
 	return true;
 }
 
+#if !UE_BUILD_SHIPPING
+bool UACBossPhaseComponent::DebugForceNextPhase()
+{
+	if (!HasAuthority() || bFinalDeathStarted || bPhaseTransitionInProgress)
+	{
+		return false;
+	}
+
+	const int32 NextIndex = GetNextTransitionIndex();
+	if (NextIndex == INDEX_NONE)
+	{
+		return false;
+	}
+
+	BeginPhaseTransition(NextIndex);
+	return true;
+}
+#endif
+
 void UACBossPhaseComponent::OnHealthAttributeChanged(const FOnAttributeChangeData& ChangeData)
 {
 	if (!HasAuthority() || bFinalDeathStarted || bPhaseTransitionInProgress)
