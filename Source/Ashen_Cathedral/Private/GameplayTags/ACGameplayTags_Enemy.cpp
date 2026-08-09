@@ -22,6 +22,7 @@ namespace ACGameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Melee, "Enemy.Ability.Melee")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Dodge, "Enemy.Ability.Dodge")
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_React_Dodge, "Enemy.Ability.React.Dodge")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Phase2, "Enemy.Ability.Phase2")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_AttackType_Run, "Enemy.Ability.AttackType.Run")
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_AttackType_BackDash, "Enemy.Ability.AttackType.BackDash")
