@@ -52,20 +52,41 @@ void AACStageExitPoint::Interact(APawn* InstigatorPawn)
 		PlayerCharacter->ClearCurrentInteractable(this);
 	}
 
-	if (AACGameMode* ACGameMode = GetWorld()->GetAuthGameMode<AACGameMode>())
+	AACGameMode* ACGameMode = GetWorld()->GetAuthGameMode<AACGameMode>();
+	if (!ACGameMode)
 	{
-		ACGameMode->RequestProgressAfterBossClear();
+		return;
 	}
+
+	if (Destination == EACStageExitDestination::ReturnToLobby)
+	{
+		ACGameMode->RequestReturnToLobby();
+		return;
+	}
+
+	ACGameMode->RequestProgressAfterBossClear();
 }
 
 FText AACStageExitPoint::GetInteractionText() const
 {
-	return bIsFinalBoss ? FinalStageInteractionText : InteractionText;
+	if (Destination == EACStageExitDestination::ReturnToLobby)
+	{
+		// 최종 보스를 잡은 뒤에는 어차피 로비로만 나갈 수 있으므로 마무리 문구를 쓴다
+		return bIsFinalBoss ? FinalStageInteractionText : ReturnToLobbyInteractionText;
+	}
+
+	return InteractionText;
 }
 
 void AACStageExitPoint::HandleBossBattleCompleted(bool bInIsFinalBoss)
 {
 	bIsFinalBoss = bInIsFinalBoss;
+
+	// 최종 보스 뒤에는 이어질 스테이지가 없으므로 진행용 출구는 열지 않는다 — 로비 출구만 남는다
+	if (bInIsFinalBoss && Destination == EACStageExitDestination::NextStage)
+	{
+		return;
+	}
 
 	SetActivated(true);
 

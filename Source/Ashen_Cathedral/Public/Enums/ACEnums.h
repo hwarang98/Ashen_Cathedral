@@ -100,6 +100,14 @@ enum class EACCardRarity : uint8
 	Legendary UMETA(DisplayName = "전설"),
 };
 
+// 보스 클리어 후 스테이지 출구가 플레이어를 보낼 목적지
+UENUM(BlueprintType)
+enum class EACStageExitDestination : uint8
+{
+	NextStage      UMETA(DisplayName = "다음 스테이지 (카드·적립분 유지)"),
+	ReturnToLobby  UMETA(DisplayName = "로비 복귀 (적립분 정산, 카드 소실)"),
+};
+
 // GameState가 추적하는 보스 전투 상태. Phase 판정 등 세부 전투 로직은 포함하지 않음
 UENUM(BlueprintType)
 enum class EACBattleState : uint8

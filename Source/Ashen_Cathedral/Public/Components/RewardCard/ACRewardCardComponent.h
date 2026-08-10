@@ -12,6 +12,7 @@
 class UDataTable;
 class UACRewardCardSelectionWidget;
 class UACAbilitySystemComponent;
+class UACRunStateSubsystem;
 class AACCharacterBase;
 
 // 카드 선택 UI가 닫혔을 때 1회 전달되는 콜백 — 외부 시스템이 선택 완료를 기다릴 때 바인딩
@@ -24,7 +25,9 @@ DECLARE_DELEGATE(FOnSelectionClosed);
  * 보스 사망 델리게이트에 바인딩하거나 RegisterBossCharacter()로 보스를 등록하면
  * 보스 클리어 시 자동으로 카드 3장 추첨 -> UI 표시 -> 효과 적용 흐름이 실행된다.
  *
- * Run 종료 시 CleanupRunEffects()를 호출해 적용된 GE와 Ability를 제거한다.
+ * 획득 카드 목록 자체는 이 컴포넌트가 아니라 UACRunStateSubsystem이 보유한다.
+ * 이 컴포넌트는 플레이어 캐릭터와 함께 레벨 전환 때 파괴되므로, 새 레벨의 BeginPlay에서
+ * 서브시스템에 남아있는 중첩 수만큼 GE·Ability를 다시 적용해 카드 효과를 이어붙인다.
  */
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class ASHEN_CATHEDRAL_API UACRewardCardComponent : public UActorComponent
@@ -57,7 +60,9 @@ public:
 	void InitializeForNewRun();
 
 	/**
-	 * @brief Run 종료 / 사망 / 로비 복귀 시 호출 — 적용된 GE·Ability를 모두 제거하고 스택 초기화
+	 * @brief 이 캐릭터에 적용돼 있는 카드 GE·Ability를 모두 제거한다.
+	 * 획득 카드 목록은 UACRunStateSubsystem이 관리하므로 여기서 지우지 않는다 —
+	 * Run 자체의 종료는 AACGameMode가 서브시스템에 알린다.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "RewardCard")
 	void CleanupRunEffects();
@@ -148,8 +153,15 @@ private:
 	// 오너(AACPlayerCharacter)의 ASC를 반환 — 없으면 nullptr
 	UACAbilitySystemComponent* GetPlayerASC() const;
 
-	// Run 중 획득한 카드 ID → 현재 중첩 수
-	TMap<FName, int32> AcquiredStacks;
+	// 이 Run의 카드 상태를 보유한 Subsystem을 반환 — 없으면 nullptr
+	UACRunStateSubsystem* GetRunState() const;
+
+	/**
+	 * @brief 런 상태에 남아있는 카드 중첩만큼 GE·Ability를 다시 적용한다.
+	 * 레벨을 넘어오면 ASC가 새로 생성되어 이전 핸들이 전부 무효가 되므로, BeginPlay에서 한 번 복원해야 한다.
+	 * @note 같은 레벨에서 다음 보스를 스폰하는 경로는 컴포넌트가 살아있어 BeginPlay가 다시 불리지 않으므로 이중 적용되지 않는다.
+	 */
+	void RestoreCardsFromRunState();
 
 #if AC_WEB_DEBUG
 	// 이번에 제시된 카드 ID 목록 — 런 로그의 픽률(offeredWith) 집계에 쓴다
@@ -161,9 +173,6 @@ private:
 
 	// 부여된 Ability 핸들 목록 (Run 종료 시 일괄 제거)
 	TArray<FGameplayAbilitySpecHandle> ActiveAbilityHandles;
-
-	// 이번 Run에서 전설 카드를 이미 획득했는지 여부
-	bool bLegendaryUsedThisRun = false;
 
 	// 카드 선택 UI가 현재 표시 중인지 여부 (중복 표시 방지)
 	bool bSelectionActive = false;

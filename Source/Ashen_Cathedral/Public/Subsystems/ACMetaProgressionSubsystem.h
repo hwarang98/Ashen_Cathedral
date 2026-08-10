@@ -60,6 +60,24 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "MetaProgression")
 	void GrantBossReward(const UACDataAsset_BossReward* RewardData, AActor* SourceBossActor);
 
+	/**
+	 * @brief 보스 처치 시 지급될 재화량만 계산해 반환한다. 지급도, 클리어 기록도 하지 않는다.
+	 * UACRunStateSubsystem이 런 지갑에 적립할 금액을 잡은 시점에 확정하기 위해 사용한다.
+	 * @param RewardData 보스가 보유한 보상 정의 DataAsset
+	 * @param bFirstClear 첫 클리어로 취급할지 여부 — 정산 대기 중인 클리어까지 감안해 호출자가 판단한다
+	 * @return 지급 예정 재화량. RewardData가 유효하지 않으면 0
+	 */
+	UFUNCTION(BlueprintPure, Category = "MetaProgression")
+	int32 EvaluateBossRewardAmount(const UACDataAsset_BossReward* RewardData, bool bFirstClear) const;
+
+	/**
+	 * @brief BossID를 첫 클리어 완료로 기록하고 저장한다.
+	 * 런 정산(UACRunStateSubsystem::SettleAndEndRun) 시점에 보류돼 있던 클리어를 확정할 때 호출한다.
+	 * @param BossID 기록할 보스 태그
+	 */
+	UFUNCTION(BlueprintCallable, Category = "MetaProgression")
+	void MarkBossCleared(FGameplayTag BossID);
+
 	UFUNCTION(BlueprintPure, Category = "MetaProgression")
 	int32 GetCurrencyAmount(FGameplayTag CurrencyTag) const;
 

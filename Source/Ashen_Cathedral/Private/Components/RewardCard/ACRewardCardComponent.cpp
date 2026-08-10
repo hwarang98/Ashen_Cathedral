@@ -4,6 +4,7 @@
 #include "Components/RewardCard/ACRewardCardComponent.h"
 #include "Widget/ACRewardCardSelectionWidget.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
+#include "Subsystems/ACRunStateSubsystem.h"
 #include "Character/ACCharacterBase.h"
 #include "Blueprint/UserWidget.h"
 #include "Engine/DataTable.h"
@@ -58,6 +59,8 @@ UACRewardCardComponent::UACRewardCardComponent()
 void UACRewardCardComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	RestoreCardsFromRunState();
 }
 
 void UACRewardCardComponent::RegisterBossCharacter(AActor* BossActor)
@@ -110,11 +113,46 @@ void UACRewardCardComponent::CleanupRunEffects()
 
 	ActiveEffectHandles.Empty();
 	ActiveAbilityHandles.Empty();
-	AcquiredStacks.Empty();
-	bLegendaryUsedThisRun = false;
 	bSelectionActive = false;
 
 	CloseSelectionUI();
+}
+
+void UACRewardCardComponent::RestoreCardsFromRunState()
+{
+	const UACRunStateSubsystem* RunState = GetRunState();
+	if (!RunState || !CardDataTable)
+	{
+		return;
+	}
+
+	const TMap<FName, int32>& AcquiredStacks = RunState->GetAcquiredCardStacks();
+	if (AcquiredStacks.IsEmpty())
+	{
+		return;
+	}
+
+	UACAbilitySystemComponent* ASC = GetPlayerASC();
+	if (!ASC)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[ACRewardCardComponent] ASC가 없어 이전 레벨의 카드 효과를 복원하지 못했습니다."));
+		return;
+	}
+
+	// 중첩은 획득할 때마다 GE를 한 번씩 더 적용하는 방식이므로, 복원도 중첩 수만큼 반복 적용해야 원래 상태와 같아진다
+	for (const TPair<FName, int32>& Pair : AcquiredStacks)
+	{
+		const FACRewardCardData* FoundCard = CardDataTable->FindRow<FACRewardCardData>(Pair.Key, TEXT("RestoreCardsFromRunState"));
+		if (!FoundCard)
+		{
+			continue;
+		}
+
+		for (int32 StackIndex = 0; StackIndex < Pair.Value; ++StackIndex)
+		{
+			ApplyCardEffects(*FoundCard, ASC);
+		}
+	}
 }
 
 void UACRewardCardComponent::OnCardSelected(FName CardID)
@@ -132,13 +170,10 @@ void UACRewardCardComponent::OnCardSelected(FName CardID)
 		return;
 	}
 
-	// 중첩 수 증가
-	int32& Stack = AcquiredStacks.FindOrAdd(CardID);
-	Stack++;
-
-	if (FoundCard->Rarity == EACCardRarity::Legendary)
+	// 중첩 수 증가 — 레벨을 넘어가도 유지되어야 하므로 런 상태 Subsystem이 보관한다
+	if (UACRunStateSubsystem* RunState = GetRunState())
 	{
-		bLegendaryUsedThisRun = true;
+		RunState->AddCardStack(CardID, FoundCard->Rarity == EACCardRarity::Legendary);
 	}
 
 #if AC_WEB_DEBUG
@@ -157,7 +192,7 @@ void UACRewardCardComponent::OnCardSelected(FName CardID)
 			CardID.ToString(),
 			CardRarityToString(FoundCard->Rarity),
 			CardCategoryToString(FoundCard->Category),
-			Stack,
+			GetCurrentStack(CardID),
 			OfferedWith,
 			FGameplayTag::EmptyTag);
 	}
@@ -172,8 +207,8 @@ void UACRewardCardComponent::OnCardSelected(FName CardID)
 
 int32 UACRewardCardComponent::GetCurrentStack(FName CardID) const
 {
-	const int32* Stack = AcquiredStacks.Find(CardID);
-	return Stack ? *Stack : 0;
+	const UACRunStateSubsystem* RunState = GetRunState();
+	return RunState ? RunState->GetCardStack(CardID) : 0;
 }
 
 void UACRewardCardComponent::OnBossDeathReceived(AACCharacterBase* DeadCharacter)
@@ -227,9 +262,11 @@ TArray<FACRewardCardData> UACRewardCardComponent::GenerateCandidateCards() const
 		return {};
 	}
 
+	const UACRunStateSubsystem* RunState = GetRunState();
+
 	TArray<FACRewardCardData> Result;
 	TArray<FACRewardCardData> RemainingPool = EligiblePool;
-	const bool bLegendaryAvailable = !bLegendaryUsedThisRun;
+	const bool bLegendaryAvailable = !RunState || !RunState->IsLegendaryUsed();
 	const int32 NumToPick = FMath::Min(3, RemainingPool.Num());
 
 	for (int32 i = 0; i < NumToPick && RemainingPool.Num() > 0; ++i)
@@ -308,15 +345,16 @@ bool UACRewardCardComponent::CanCardBeOffered(const FACRewardCardData& Card) con
 		return false;
 	}
 
+	const UACRunStateSubsystem* RunState = GetRunState();
+
 	// MaxStack 도달 여부 확인
-	const int32* CurrentStack = AcquiredStacks.Find(Card.CardID);
-	if (CurrentStack && *CurrentStack >= Card.MaxStack)
+	if (RunState && RunState->GetCardStack(Card.CardID) >= Card.MaxStack)
 	{
 		return false;
 	}
 
 	// Run당 전설 카드 1회 제한
-	if (Card.Rarity == EACCardRarity::Legendary && bLegendaryUsedThisRun)
+	if (Card.Rarity == EACCardRarity::Legendary && RunState && RunState->IsLegendaryUsed())
 	{
 		return false;
 	}
@@ -402,8 +440,7 @@ void UACRewardCardComponent::ShowSelectionUI(const TArray<FACRewardCardData>& Ca
 	{
 		FACRewardCardDisplayInfo Info;
 		Info.CardData = Card;
-		const int32* Stack = AcquiredStacks.Find(Card.CardID);
-		Info.CurrentStack = Stack ? *Stack : 0;
+		Info.CurrentStack = GetCurrentStack(Card.CardID);
 		DisplayInfos.Add(Info);
 	}
 
@@ -454,6 +491,11 @@ void UACRewardCardComponent::CloseSelectionUI()
 		OnSelectionClosedDelegate.Execute();
 		OnSelectionClosedDelegate.Unbind();
 	}
+}
+
+UACRunStateSubsystem* UACRewardCardComponent::GetRunState() const
+{
+	return UACRunStateSubsystem::Get(GetOwner());
 }
 
 UACAbilitySystemComponent* UACRewardCardComponent::GetPlayerASC() const

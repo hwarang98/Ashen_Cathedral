@@ -7,7 +7,7 @@
 #include "Character/ACCharacterBase.h"
 #include "Character/Enemy/ACEnemyCharacter.h"
 #include "Character/Player/ACPlayerCharacter.h"
-#include "Subsystems/ACMetaProgressionSubsystem.h"
+#include "Subsystems/ACRunStateSubsystem.h"
 #include "Subsystems/ACWeaponSelectionSubsystem.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -38,7 +38,26 @@ void AACGameMode::StartPlay()
 {
 	Super::StartPlay();
 
+	EnsureRunStarted();
 	SpawnInitialBossIfNeeded();
+}
+
+void AACGameMode::EnsureRunStarted()
+{
+	UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this);
+	if (!RunState || RunState->IsRunActive())
+	{
+		return;
+	}
+
+	// 로비는 Run 밖이다. 아레나에서 바로 시작한 경우에만 Run을 연다.
+	const FName CurrentLevelName(*UGameplayStatics::GetCurrentLevelName(this, true));
+	if (CurrentLevelName == LobbyLevelName)
+	{
+		return;
+	}
+
+	RunState->BeginRun();
 }
 
 void AACGameMode::InitializeWeaponSelectionForLevel()
@@ -131,7 +150,9 @@ void AACGameMode::RegisterBossCharacter(AACCharacterBase* InBossCharacter)
 
 bool AACGameMode::IsFinalBossPending() const
 {
-	return NextBossSequenceIndex >= NextBossSequence.Num();
+	const UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this);
+	const int32 NextIndex = RunState ? RunState->GetNextBossIndex() : 0;
+	return NextIndex >= NextBossSequence.Num();
 }
 
 void AACGameMode::RequestProgressAfterBossClear()
@@ -157,11 +178,18 @@ void AACGameMode::RequestProgressAfterBossClear()
 
 	if (IsFinalBossPending())
 	{
-		UGameplayStatics::OpenLevel(this, LobbyLevelName);
+		// 시퀀스를 끝까지 돌았으므로 Run이 클리어로 끝난다 — 적립분을 확정 지급한다
+		SettleRunAndOpenLobby();
 		return;
 	}
 
-	TSubclassOf<AACEnemyCharacter> NextBossClass = NextBossSequence[NextBossSequenceIndex++];
+	UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this);
+	if (!RunState)
+	{
+		return;
+	}
+
+	TSubclassOf<AACEnemyCharacter> NextBossClass = NextBossSequence[RunState->ConsumeNextBossIndex()];
 	if (!NextBossClass)
 	{
 		return;
@@ -214,6 +242,54 @@ void AACGameMode::TeleportPlayerToPlayerStart()
 	PlayerController->SetControlRotation(StartRotation);
 }
 
+void AACGameMode::RequestReturnToLobby()
+{
+	if (bProgressRequested)
+	{
+		return;
+	}
+	bProgressRequested = true;
+
+	if (AACGameState* ACGameState = GetGameState<AACGameState>())
+	{
+		ACGameState->SetBossCharacter(nullptr);
+	}
+
+#if AC_WEB_DEBUG
+	// 최종 보스를 잡지 않고 스스로 빠져나온 런 — 사망도 클리어도 아니므로 별도 결과로 남긴다
+	if (UACRunLogSubsystem* RunLog = UACRunLogSubsystem::Get(this))
+	{
+		RunLog->EndRun(TEXT("extracted"));
+	}
+#endif
+
+	SettleRunAndOpenLobby();
+}
+
+void AACGameMode::SettleRunAndOpenLobby()
+{
+	if (UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this))
+	{
+		RunState->SettleAndEndRun();
+	}
+
+	UGameplayStatics::OpenLevel(this, LobbyLevelName);
+}
+
+float AACGameMode::GetCurrentStageRewardMultiplier() const
+{
+	if (StageRewardMultipliers.IsEmpty())
+	{
+		return 1.f;
+	}
+
+	// 아직 이번 보스가 집계되기 전이므로, 클리어 수가 곧 이번 보스의 0-based 순번이다
+	const UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this);
+	const int32 StageIndex = RunState ? RunState->GetClearedBossCount() : 0;
+
+	return StageRewardMultipliers[FMath::Clamp(StageIndex, 0, StageRewardMultipliers.Num() - 1)];
+}
+
 void AACGameMode::RequestStartRun()
 {
 	if (bRunStartRequested)
@@ -238,6 +314,12 @@ void AACGameMode::RequestStartRun()
 	}
 
 	bRunStartRequested = true;
+
+	// 이전 Run의 카드·적립분이 남아있지 않도록, 아레나로 넘어가기 전에 Run을 새로 연다
+	if (UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this))
+	{
+		RunState->BeginRun();
+	}
 
 #if AC_WEB_DEBUG
 	// 로비에서 아레나로 넘어가는 순간이 런의 시작이다
@@ -289,6 +371,12 @@ void AACGameMode::HandlePlayerDeathCompleted(AACCharacterBase* DeadCharacter)
 	}
 #endif
 
+	// 정산 없이 Run을 버린다 — 이번 Run의 적립분과 보상 카드가 모두 소멸한다
+	if (UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this))
+	{
+		RunState->AbandonRun();
+	}
+
 	UGameplayStatics::OpenLevel(this, LobbyLevelName);
 }
 
@@ -327,9 +415,10 @@ void AACGameMode::HandleBossBattleCompleted(AACCharacterBase* DeadCharacter)
 
 	if (AACEnemyCharacter* DeadBoss = Cast<AACEnemyCharacter>(DeadCharacter))
 	{
-		if (UACMetaProgressionSubsystem* MetaProgressionSubsystem = GetGameInstance()->GetSubsystem<UACMetaProgressionSubsystem>())
+		// 즉시 지급하지 않고 런 지갑에 적립한다 — 로비로 살아 돌아가야 확정된다
+		if (UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this))
 		{
-			MetaProgressionSubsystem->GrantBossReward(DeadBoss->GetBossRewardData(), DeadBoss);
+			RunState->DepositBossReward(DeadBoss->GetBossRewardData(), DeadBoss, GetCurrentStageRewardMultiplier());
 		}
 	}
 
@@ -345,7 +434,14 @@ void AACGameMode::SpawnInitialBossIfNeeded()
 		return;
 	}
 
-	if (NextBossSequence.IsEmpty())
+	UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this);
+	if (!RunState)
+	{
+		return;
+	}
+
+	// Run이 이어지는 중이면 인덱스도 이어진다 — 아레나를 넘어와도 이미 잡은 보스가 다시 나오지 않는다
+	if (!NextBossSequence.IsValidIndex(RunState->GetNextBossIndex()))
 	{
 		return;
 	}
@@ -357,7 +453,7 @@ void AACGameMode::SpawnInitialBossIfNeeded()
 		return;
 	}
 
-	TSubclassOf<AACEnemyCharacter> FirstBossClass = NextBossSequence[NextBossSequenceIndex++];
+	TSubclassOf<AACEnemyCharacter> FirstBossClass = NextBossSequence[RunState->ConsumeNextBossIndex()];
 	if (!FirstBossClass)
 	{
 		return;
@@ -368,6 +464,12 @@ void AACGameMode::SpawnInitialBossIfNeeded()
 
 void AACGameMode::DebugRestartCurrentStage()
 {
+	// 런 상태는 레벨을 넘어 살아남으므로, 버리지 않으면 재시작해도 보스 순번과 카드가 그대로 이어진다
+	if (UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this))
+	{
+		RunState->AbandonRun();
+	}
+
 	const FName CurrentLevelName(*UGameplayStatics::GetCurrentLevelName(this, true));
 	UGameplayStatics::OpenLevel(this, CurrentLevelName);
 }
