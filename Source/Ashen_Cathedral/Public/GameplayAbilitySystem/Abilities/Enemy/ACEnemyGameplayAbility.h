@@ -6,7 +6,6 @@
 #include "GameplayAbilitySystem/Abilities/ACGameplayAbility.h"
 #include "ACEnemyGameplayAbility.generated.h"
 
-class AACEnemyController;
 class UEnemyCombatComponent;
 /**
  * 
@@ -34,16 +33,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "AshenKnight|Helpers")
 	UEnemyCombatComponent* GetEnemyCombatComponentFromActorInfo() const;
 
-	/**
-	 * 플레이어의 ActorInfo에서 AACPlayerController를 반환한다.
-	 * ActorInfo에 유효한 PlayerController가 없거나 AACPlayerController로 캐스팅할 수 없다면 nullptr을 반환한다.
-	 *
-	 * @return 유효한 AACPlayerController 객체 또는 nullptr을 반환한다.
-	 */
-	UFUNCTION(BlueprintPure, Category = "PlayerAbility|Helpers")
-	AACEnemyController* GetEnemyControllerFromActorInfo();
-
 private:
 	mutable TWeakObjectPtr<AACEnemyCharacter> CachedEnemyCharacter;
-	mutable TWeakObjectPtr<AACEnemyController> CachedEnemyController;
 };

@@ -4,7 +4,6 @@
 #include "GameplayAbilitySystem/Abilities/Enemy/ACEnemyGameplayAbility.h"
 
 #include "Character/Enemy/ACEnemyCharacter.h"
-#include "Controllers/ACEnemyController.h"
 
 AACEnemyCharacter* UACEnemyGameplayAbility::GetEnemyCharacterFromActorInfo() const
 {
@@ -24,17 +23,4 @@ UEnemyCombatComponent* UACEnemyGameplayAbility::GetEnemyCombatComponentFromActor
 	}
 
 	return nullptr;
-}
-
-AACEnemyController* UACEnemyGameplayAbility::GetEnemyControllerFromActorInfo()
-{
-	if (!CachedEnemyController.IsValid())
-	{
-		if (const AACEnemyCharacter* EnemyCharacter = GetEnemyCharacterFromActorInfo())
-		{
-			CachedEnemyController = Cast<AACEnemyController>(EnemyCharacter->GetController());
-		}
-	}
-
-	return CachedEnemyController.IsValid() ? CachedEnemyController.Get() : nullptr;
 }

@@ -6,7 +6,6 @@
 #include "Components/RewardCard/ACRewardCardComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Components/UI/EnemyUIComponent.h"
-#include "Controllers/ACEnemyController.h"
 #include "DataAssets/Startup/ACDataAsset_EnemyStartupData.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameModes/ACGameMode.h"
@@ -24,8 +23,6 @@ AACEnemyCharacter::AACEnemyCharacter()
 	EnemyHealthWidgetComponent->SetupAttachment(GetMesh());
 
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
-	AIControllerClass = AACEnemyController::StaticClass();
-
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
