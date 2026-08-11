@@ -4,6 +4,7 @@
 #include "GameModes/ACStageExitPoint.h"
 #include "Character/Player/ACPlayerCharacter.h"
 #include "Components/SphereComponent.h"
+#include "EngineUtils.h"
 #include "GameModes/ACGameMode.h"
 
 AACStageExitPoint::AACStageExitPoint()
@@ -42,30 +43,49 @@ void AACStageExitPoint::Interact(APawn* InstigatorPawn)
 		return;
 	}
 
-	// GameMode를 호출하기 전에 먼저 닫는다 — 다음 보스가 같은 맵에 스폰되므로,
-	// 여기서 정리하지 않으면 다음 전투 중에도 출구가 남아 보스를 건너뛸 수 있다.
-	SetActivated(false);
-
-	// 콜리전을 끄면 EndOverlap이 오지만 순서를 보장할 수 없어, 플레이어 쪽 참조와 프롬프트를 명시적으로 정리한다.
-	if (AACPlayerCharacter* PlayerCharacter = Cast<AACPlayerCharacter>(InstigatorPawn))
+	// GameMode를 호출하기 전에 아레나의 모든 출구를 닫는다 — 다음 보스가 같은 맵에 스폰되므로,
+	// 자신만 닫으면 같은 브로드캐스트로 함께 열린 형제 출구(예: 로비 복귀)가 남아
+	// 다음 전투 중에 보스를 건너뛰고 나갈 수 있다.
+	for (TActorIterator<AACStageExitPoint> It(GetWorld()); It; ++It)
 	{
-		PlayerCharacter->ClearCurrentInteractable(this);
+		It->Deactivate(InstigatorPawn);
 	}
 
-	if (AACGameMode* ACGameMode = GetWorld()->GetAuthGameMode<AACGameMode>())
+	AACGameMode* ACGameMode = GetWorld()->GetAuthGameMode<AACGameMode>();
+	if (!ACGameMode)
 	{
-		ACGameMode->RequestProgressAfterBossClear();
+		return;
 	}
+
+	if (Destination == EACStageExitDestination::ReturnToLobby)
+	{
+		ACGameMode->RequestReturnToLobby();
+		return;
+	}
+
+	ACGameMode->RequestProgressAfterBossClear();
 }
 
 FText AACStageExitPoint::GetInteractionText() const
 {
-	return bIsFinalBoss ? FinalStageInteractionText : InteractionText;
+	if (Destination == EACStageExitDestination::ReturnToLobby)
+	{
+		// 최종 보스를 잡은 뒤에는 어차피 로비로만 나갈 수 있으므로 마무리 문구를 쓴다
+		return bIsFinalBoss ? FinalStageInteractionText : ReturnToLobbyInteractionText;
+	}
+
+	return InteractionText;
 }
 
 void AACStageExitPoint::HandleBossBattleCompleted(bool bInIsFinalBoss)
 {
 	bIsFinalBoss = bInIsFinalBoss;
+
+	// 최종 보스 뒤에는 이어질 스테이지가 없으므로 진행용 출구는 열지 않는다 — 로비 출구만 남는다
+	if (bInIsFinalBoss && Destination == EACStageExitDestination::NextStage)
+	{
+		return;
+	}
 
 	SetActivated(true);
 
@@ -73,6 +93,17 @@ void AACStageExitPoint::HandleBossBattleCompleted(bool bInIsFinalBoss)
 	InteractionSphere->UpdateOverlaps();
 
 	BP_OnActivated();
+}
+
+void AACStageExitPoint::Deactivate(APawn* InstigatorPawn)
+{
+	SetActivated(false);
+
+	// 콜리전을 끄면 EndOverlap이 오지만 순서를 보장할 수 없어, 플레이어 쪽 참조와 프롬프트를 명시적으로 정리한다.
+	if (AACPlayerCharacter* PlayerCharacter = Cast<AACPlayerCharacter>(InstigatorPawn))
+	{
+		PlayerCharacter->ClearCurrentInteractable(this);
+	}
 }
 
 void AACStageExitPoint::SetActivated(bool bInActivated)

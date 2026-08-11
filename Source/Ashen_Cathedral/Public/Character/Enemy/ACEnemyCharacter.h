@@ -41,7 +41,7 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss", meta = (AllowPrivateAccess = "true", Categories = "Enemy.Boss", EditCondition = "bIsBoss", EditConditionHides))
 	FGameplayTag BossIdentityTag;
 
-	// 이 보스를 처치했을 때 지급할 성흔 조각 보상 정의. 사망 연출 완료 시 AACGameMode가 조회해 MetaProgressionSubsystem에 전달한다
+	// 이 보스를 처치했을 때 지급할 성흔 조각 보상 정의. 사망 연출 완료 시 AACGameMode가 조회해 RunStateSubsystem의 런 지갑에 적립한다
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "MetaProgression", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UACDataAsset_BossReward> BossRewardData;
 

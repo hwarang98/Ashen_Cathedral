@@ -111,6 +111,27 @@ void UACMetaProgressionSubsystem::GrantBossReward(const UACDataAsset_BossReward*
 	AddCurrency(RewardData->RewardCurrency, RewardAmount);
 }
 
+int32 UACMetaProgressionSubsystem::EvaluateBossRewardAmount(const UACDataAsset_BossReward* RewardData, bool bFirstClear) const
+{
+	if (!RewardData)
+	{
+		return 0;
+	}
+
+	return bFirstClear ? RewardData->FirstClearRewardAmount : RewardData->RepeatClearRewardAmount;
+}
+
+void UACMetaProgressionSubsystem::MarkBossCleared(FGameplayTag BossID)
+{
+	if (!SaveGameInstance || !BossID.IsValid() || SaveGameInstance->ClearedBossTags.HasTagExact(BossID))
+	{
+		return;
+	}
+
+	SaveGameInstance->ClearedBossTags.AddTag(BossID);
+	SaveProgress();
+}
+
 int32 UACMetaProgressionSubsystem::GetCurrencyAmount(FGameplayTag CurrencyTag) const
 {
 	if (!SaveGameInstance)
