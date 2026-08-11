@@ -20,7 +20,7 @@ class USphereComponent;
  * 두 종류를 아레나에 함께 배치하면 보스 클리어 후 "더 갈지 챙겨 나갈지"의 선택이 만들어진다.
  *
  * 다음 보스가 같은 맵에 스폰되는 구성에서는 이 액터가 스테이지마다 재사용되므로,
- * 상호작용 직후 즉시 비활성화해 다음 전투 중에 다시 상호작용되는 것을 막는다.
+ * 상호작용 직후 아레나의 출구를 모두 비활성화해 다음 전투 중에 다시 상호작용되는 것을 막는다.
  */
 UCLASS()
 class ASHEN_CATHEDRAL_API AACStageExitPoint : public AActor, public IInteractableInterface
@@ -34,7 +34,7 @@ public:
 
 	/**
 	 * @brief 상호작용 시 다음 스테이지 진행을 요청한다.
-	 * 활성화 상태가 아니면 무시하며, GameMode를 호출하기 전에 자신을 먼저 비활성화해
+	 * 활성화 상태가 아니면 무시하며, GameMode를 호출하기 전에 아레나의 모든 출구를 비활성화해
 	 * 다음 보스 전투 중에 다시 상호작용되지 않도록 한다.
 	 * @param InstigatorPawn 상호작용을 시작한 Pawn
 	 */
@@ -84,6 +84,9 @@ private:
 
 	UFUNCTION()
 	void OnInteractionSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	// 출구를 닫고, 상호작용을 시작한 플레이어의 프롬프트 참조까지 정리한다
+	void Deactivate(APawn* InstigatorPawn);
 
 	// 출구의 표시 여부와 콜리전을 함께 토글한다
 	void SetActivated(bool bInActivated);
