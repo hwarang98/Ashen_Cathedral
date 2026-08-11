@@ -35,8 +35,6 @@ UACEnemyAbility_PressureCounter::UACEnemyAbility_PressureCounter()
 	PressureCounterDefenseTags.AddTag(ACGameplayTags::Shared_Attack_Parryable);
 	PressureCounterDefenseTags.AddTag(ACGameplayTags::Shared_Attack_Unblockable);
 
-	// BT가 Enemy.State.PressureReady 태그를 보고 ACBTTask_ActivateAbilityByTag(Enemy.Ability.Pressure.Counter)로 직접 활성화한다
-
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 }
 

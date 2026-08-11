@@ -20,7 +20,6 @@ UACEnemyAbility_Parry::UACEnemyAbility_Parry()
 	ActivationBlockedTags.AddTag(ACGameplayTags::Shared_Status_PostureBroken);
 	ActivationBlockedTags.AddTag(ACGameplayTags::Enemy_Status_Attacking);
 
-	// Parry 시도 확률(BTDecorator_ComputeChance)과 쿨다운(ACBTDecorator_RandomCooldown)은 BT가 전담한다.
 	// 이 어빌리티는 활성화되면 항상 정상적으로 Startup -> ParryWindow를 진행한다.
 
 	// Player Parry와 동일한 성공 큐를 재사용한다 — 에디터에서 Enemy 전용 큐로 교체 가능

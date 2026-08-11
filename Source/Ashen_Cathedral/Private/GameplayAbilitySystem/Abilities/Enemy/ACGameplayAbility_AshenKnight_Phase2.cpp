@@ -3,7 +3,6 @@
 #include "GameplayAbilitySystem/Abilities/Enemy/ACGameplayAbility_AshenKnight_Phase2.h"
 #include "ACGameplayTags.h"
 #include "AIController.h"
-#include "BrainComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
@@ -59,8 +58,8 @@ void UACGameplayAbility_AshenKnight_Phase2::ActivateAbility(
 	}
 #endif
 
-	// UACBossPhaseComponent가 전환을 주도하는 중이라면 무적 태그·AI 정지·체력 회복은 그쪽이 소유한다.
-	// 양쪽에서 같은 Loose 태그를 붙였다 떼면 태그 카운트가, BrainComponent를 각자 Pause/Resume하면 재개 시점이 어긋난다.
+	// UACBossPhaseComponent가 전환을 주도하는 중이라면 무적 태그·AI 이동 정지·체력 회복은 그쪽이 소유한다.
+	// 양쪽에서 같은 상태를 중복으로 관리해 태그 카운트와 해제 시점이 어긋나는 일을 막는다.
 	// 컴포넌트 없이 이 어빌리티만으로 전환하는 보스(Ashen Knight)는 아래 플래그가 false로 남아 기존 동작을 그대로 유지한다.
 	const UACBossPhaseComponent* PhaseComponent = UACBossPhaseComponent::FindBossPhaseComponent(OwnerCharacter);
 	bPhaseComponentOwnsTransitionState = PhaseComponent && PhaseComponent->IsPhaseTransitionInProgress();
@@ -103,14 +102,10 @@ void UACGameplayAbility_AshenKnight_Phase2::ActivateAbility(
 				ASC->AddLooseGameplayTag(ACGameplayTags::Shared_Status_Invincible);
 			}
 
-			// AI 이동 정지 — BT 일시 중단 + 현재 이동 경로 취소
+			// AI 이동 정지 — 현재 이동 경로 취소
 			if (AAIController* AIC = GetOwningAIController())
 			{
 				AIC->StopMovement();
-				if (AIC->BrainComponent)
-				{
-					AIC->BrainComponent->PauseLogic(TEXT("Phase2Transition"));
-				}
 			}
 		}
 
@@ -194,8 +189,8 @@ void UACGameplayAbility_AshenKnight_Phase2::OnVisualActivateEventReceived(FGamep
 
 void UACGameplayAbility_AshenKnight_Phase2::OnPhase2MontageEnded()
 {
-	// 무적 해제와 AI 재개는 ActivateAbility에서 직접 걸었을 때만 되돌린다.
-	// UACBossPhaseComponent가 전환을 주도한 경우 둘 다 컴포넌트가 CompletePhaseTransition에서 대칭으로 해제한다
+	// 무적 태그는 ActivateAbility에서 직접 걸었을 때만 되돌린다.
+	// UACBossPhaseComponent가 전환을 주도한 경우 컴포넌트가 CompletePhaseTransition에서 해제한다.
 	if (!bPhaseComponentOwnsTransitionState)
 	{
 		// 무적 해제
@@ -203,15 +198,6 @@ void UACGameplayAbility_AshenKnight_Phase2::OnPhase2MontageEnded()
 		if (ASC)
 		{
 			ASC->RemoveLooseGameplayTag(ACGameplayTags::Shared_Status_Invincible);
-		}
-
-		// AI BT 재개 (BT 보스 전용 — StateTree 보스는 BrainComponent가 없어 no-op)
-		if (AAIController* AIC = GetOwningAIController())
-		{
-			if (AIC->BrainComponent)
-			{
-				AIC->BrainComponent->ResumeLogic(TEXT("Phase2Transition"));
-			}
 		}
 	}
 
