@@ -8,11 +8,13 @@
 #include "ACBattleStartPoint.generated.h"
 
 class USphereComponent;
+class UACDataAsset_RunDefinition;
 
 /**
  * 로비 맵에 배치하는 전투 시작 상호작용 지점.
  * 플레이어가 SphereComponent 범위에 들어오면 자신을 CurrentInteractable로 등록시키고,
- * 상호작용 입력이 들어오면(Interact) GameMode의 RequestStartRun()을 호출해 보스 아레나로 이동한다.
+ * 상호작용 입력이 들어오면(Interact) 자신이 들고 있는 RunDefinition을 GameMode의 RequestStartRun()에
+ * 넘겨 첫 스테이지의 아레나 레벨로 이동한다.
  */
 UCLASS()
 class ASHEN_CATHEDRAL_API AACBattleStartPoint : public AActor, public IInteractableInterface
@@ -33,6 +35,10 @@ protected:
 	// 상호작용 프롬프트에 표시할 문구
 	UPROPERTY(EditAnywhere, Category = "Interaction")
 	FText InteractionText = FText::FromString(TEXT("보스 아레나로 향한다"));
+
+	// 이 지점에서 시작할 Run의 스테이지 구성. 비어 있으면 전투 시작이 거부된다
+	UPROPERTY(EditInstanceOnly, Category = "Run")
+	TObjectPtr<UACDataAsset_RunDefinition> RunDefinition;
 
 private:
 	UFUNCTION()

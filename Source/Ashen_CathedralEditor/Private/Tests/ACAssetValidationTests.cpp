@@ -8,6 +8,7 @@
 #include "Validation/ACBossAssetValidator.h"
 #include "Validation/ACDecayPairValidator.h"
 #include "Validation/ACMontageAudit.h"
+#include "Validation/ACRunAssetValidator.h"
 #include "Validation/ACStateTreeValidator.h"
 
 #if WITH_AUTOMATION_TESTS
@@ -185,6 +186,26 @@ bool FACAttackMontageTest::RunTest(const FString& Parameters)
 	if (Reports.IsEmpty())
 	{
 		AddWarning(TEXT("/Game/Enemy 아래에서 공격 몽타주를 찾지 못했습니다."));
+		return true;
+	}
+
+	ACAssetValidationTests::ReportIssues(*this, Reports);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FACRunDefinitionWiringTest,
+	"AshenCathedral.Assets.RunDefinitionWiring",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
+
+bool FACRunDefinitionWiringTest::RunTest(const FString& Parameters)
+{
+	ACAssetValidationTests::WaitForAssetRegistry();
+
+	const TArray<FACAssetReport> Reports = ACRunAssetValidator::ValidateAll();
+	if (Reports.IsEmpty())
+	{
+		AddWarning(TEXT("/Game 아래에서 RunDefinition 에셋을 찾지 못했습니다."));
 		return true;
 	}
 

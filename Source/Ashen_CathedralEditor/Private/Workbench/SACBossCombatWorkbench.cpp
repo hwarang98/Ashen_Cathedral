@@ -32,7 +32,6 @@
 #include "GameFramework/PlayerStart.h"
 #include "GameFramework/WorldSettings.h"
 #include "GameModes/ACBattleStartPoint.h"
-#include "GameModes/ACBossSpawnPoint.h"
 #include "GameModes/ACGameMode.h"
 #include "GameModes/ACStageExitPoint.h"
 #include "GameplayAbilitySpec.h"
@@ -1167,7 +1166,17 @@ void SACBossCombatWorkbench::RefreshArenaValidation()
 	AddLine(ArenaValidationBox, FString::Printf(TEXT("현재 레벨: %s"), *World->GetMapName()), InfoColor);
 
 	const TArray<APlayerStart*> PlayerStarts = FindActors<APlayerStart>(World);
-	const TArray<AACBossSpawnPoint*> BossSpawns = FindActors<AACBossSpawnPoint>(World);
+
+	// 보스는 스테이지의 아레나 레벨에 직접 배치한다 — 런타임 스폰 경로가 없으므로 배치 여부 자체를 검사한다
+	TArray<AACEnemyCharacter*> PlacedBosses;
+	for (AACEnemyCharacter* Enemy : FindActors<AACEnemyCharacter>(World))
+	{
+		if (Enemy && Enemy->GetBossIdentityTag().IsValid())
+		{
+			PlacedBosses.Add(Enemy);
+		}
+	}
+
 	const TArray<AACBattleStartPoint*> BattleStarts = FindActors<AACBattleStartPoint>(World);
 	const TArray<AACStageExitPoint*> StageExits = FindActors<AACStageExitPoint>(World);
 	const TArray<ANavMeshBoundsVolume*> NavBounds = FindActors<ANavMeshBoundsVolume>(World);
@@ -1183,8 +1192,9 @@ void SACBossCombatWorkbench::RefreshArenaValidation()
 	};
 
 	AddCount(TEXT("PlayerStart"), PlayerStarts.Num(), true);
-	AddCount(TEXT("ACBossSpawnPoint"), BossSpawns.Num(), true);
-	AddCount(TEXT("ACBattleStartPoint"), BattleStarts.Num(), true);
+	AddCount(TEXT("배치된 보스"), PlacedBosses.Num(), true);
+	// 전투 시작 지점은 로비에 두는 액터이므로 아레나에는 없는 것이 정상이다
+	AddCount(TEXT("ACBattleStartPoint"), BattleStarts.Num(), false);
 	AddCount(TEXT("ACStageExitPoint"), StageExits.Num(), true);
 	AddCount(TEXT("NavMeshBoundsVolume"), NavBounds.Num(), true);
 	AddCount(TEXT("LevelSequenceActor"), Sequences.Num(), false);
@@ -1196,9 +1206,9 @@ void SACBossCombatWorkbench::RefreshArenaValidation()
 		FString::Printf(TEXT("%s GameMode Override: %s"), bCorrectGameMode ? TEXT("✓") : TEXT("✕"), DefaultGameMode ? *DefaultGameMode->GetName() : TEXT("None")),
 		bCorrectGameMode ? GoodColor : ErrorColor);
 
-	if (!PlayerStarts.IsEmpty() && !BossSpawns.IsEmpty())
+	if (!PlayerStarts.IsEmpty() && !PlacedBosses.IsEmpty())
 	{
-		const float StartDistance = FVector::Dist(PlayerStarts[0]->GetActorLocation(), BossSpawns[0]->GetActorLocation());
+		const float StartDistance = FVector::Dist(PlayerStarts[0]->GetActorLocation(), PlacedBosses[0]->GetActorLocation());
 		const bool bDistanceReasonable = StartDistance >= 500.f && StartDistance <= 2500.f;
 		AddLine(
 			ArenaValidationBox,
@@ -1213,10 +1223,10 @@ void SACBossCombatWorkbench::RefreshArenaValidation()
 			{
 				const FBox Bounds = NavVolume->GetComponentsBoundingBox(true);
 				bPlayerCovered |= Bounds.IsInsideOrOn(PlayerStarts[0]->GetActorLocation());
-				bBossCovered |= Bounds.IsInsideOrOn(BossSpawns[0]->GetActorLocation());
+				bBossCovered |= Bounds.IsInsideOrOn(PlacedBosses[0]->GetActorLocation());
 			}
 			AddLine(ArenaValidationBox, bPlayerCovered ? TEXT("✓ PlayerStart가 NavMeshBounds 내부에 있습니다.") : TEXT("주의: PlayerStart가 NavMeshBounds 밖에 있습니다."), bPlayerCovered ? GoodColor : WarningColor);
-			AddLine(ArenaValidationBox, bBossCovered ? TEXT("✓ BossSpawnPoint가 NavMeshBounds 내부에 있습니다.") : TEXT("주의: BossSpawnPoint가 NavMeshBounds 밖에 있습니다."), bBossCovered ? GoodColor : WarningColor);
+			AddLine(ArenaValidationBox, bBossCovered ? TEXT("✓ 배치된 보스가 NavMeshBounds 내부에 있습니다.") : TEXT("주의: 배치된 보스가 NavMeshBounds 밖에 있습니다."), bBossCovered ? GoodColor : WarningColor);
 		}
 	}
 }
@@ -1258,8 +1268,6 @@ FReply SACBossCombatWorkbench::HandlePlaceArenaTemplate()
 	};
 
 	AddIfMissing(APlayerStart::StaticClass(), FVector(-800.f, 0.f, 0.f), TEXT("Arena_PlayerStart"));
-	AddIfMissing(AACBattleStartPoint::StaticClass(), FVector(-500.f, 0.f, 0.f), TEXT("Arena_BattleStart"));
-	AddIfMissing(AACBossSpawnPoint::StaticClass(), FVector(800.f, 0.f, 0.f), TEXT("Arena_BossSpawn"));
 	AddIfMissing(AACStageExitPoint::StaticClass(), FVector(-1100.f, 0.f, 0.f), TEXT("Arena_StageExit"));
 	if (AActor* NavActor = AddIfMissing(ANavMeshBoundsVolume::StaticClass(), FVector::ZeroVector, TEXT("Arena_NavMeshBounds")))
 	{

@@ -108,6 +108,15 @@ enum class EACStageExitDestination : uint8
 	ReturnToLobby  UMETA(DisplayName = "로비 복귀 (적립분 정산, 카드 소실)"),
 };
 
+// 스테이지 클리어 후 플레이어에게 허용할 진행 선택지의 범위. StageDefinition이 소유하며 출구 액터의 활성화를 제한한다
+UENUM(BlueprintType)
+enum class EACStageExitPolicy : uint8
+{
+	NormalChoice       UMETA(DisplayName = "선택 가능 (다음 스테이지 / 로비 복귀)"),
+	ForceReturnToLobby UMETA(DisplayName = "로비 복귀만 (튜토리얼 등)"),
+	AutoNextStage      UMETA(DisplayName = "선택 없이 다음 스테이지로"),
+};
+
 // GameState가 추적하는 보스 전투 상태. Phase 판정 등 세부 전투 로직은 포함하지 않음
 UENUM(BlueprintType)
 enum class EACBattleState : uint8

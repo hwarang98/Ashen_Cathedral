@@ -491,6 +491,9 @@ void UACRewardCardComponent::CloseSelectionUI()
 		OnSelectionClosedDelegate.Execute();
 		OnSelectionClosedDelegate.Unbind();
 	}
+
+	// 위 단일 캐스트는 Boss Clear UI가 점유하므로, 그 밖의 구독자에게는 이쪽으로 통지한다
+	OnCardSelectionFinishedDelegate.Broadcast();
 }
 
 UACRunStateSubsystem* UACRewardCardComponent::GetRunState() const

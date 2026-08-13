@@ -9,6 +9,7 @@
 #include "DataAssets/Startup/ACDataAsset_EnemyStartupData.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameModes/ACGameMode.h"
+#include "Subsystems/ACRunStateSubsystem.h"
 #include "GameplayAbilitySystem/ACAbilitySystemComponent.h"
 #include "Engine/AssetManager.h"
 #include "Kismet/GameplayStatics.h"
@@ -52,8 +53,11 @@ void AACEnemyCharacter::BeginPlay()
 			ACGameMode->RegisterBossCharacter(this);
 		}
 
-		// 최종 보스는 능력(보상 카드) 선택을 생략하므로 등록하지 않는다
-		if (ACGameMode && !ACGameMode->IsFinalBossPending())
+		// 최종 스테이지의 보스는 능력(보상 카드) 선택을 생략하므로 등록하지 않는다.
+		// 이 시점에는 플레이어 폰만 존재하고 그 BeginPlay는 아직 돌지 않았으므로,
+		// RegisterBossCharacter가 델리게이트 바인딩 이상의 일을 하게 만들면 안 된다
+		const UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this);
+		if (RunState && !RunState->IsCurrentStageFinal())
 		{
 			if (const AACPlayerCharacter* PlayerCharacter = Cast<AACPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
 			{

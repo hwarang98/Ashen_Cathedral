@@ -72,6 +72,28 @@ private:
 	UFUNCTION()
 	void HandleBossBattleCompleted(bool bInIsFinalBoss);
 
+	/**
+	 * @brief 활성화 여부와 무관하게 이 출구의 목적지로 진행을 요청한다.
+	 *
+	 * @param InstigatorPawn 상호작용을 시작한 Pawn (자동 진행 경로에서는 nullptr)
+	 * @note Interact()와 자동 진행이 공유하는 본체다. 아레나의 모든 출구를 먼저 닫아, 다음 전투 중에
+	 *       다시 상호작용되지 않도록 한다.
+	 */
+	void ExecuteExit(APawn* InstigatorPawn);
+
+	// AutoNextStage 스테이지에서 보상 카드 선택이 끝난 뒤 자동 진행 타이머를 건다
+	void StartAutoAdvanceTimer();
+
+	// 보상 카드 선택 UI가 닫히면 호출되어 자동 진행 타이머를 시작한다
+	UFUNCTION()
+	void HandleCardSelectionFinished();
+
+	// 자동 진행 타이머가 만료되면 조건을 재확인한 뒤 다음 스테이지로 넘어간다
+	void HandleAutoAdvance();
+
+	// 자동 진행 예약을 취소하고 카드 선택 구독을 해제한다
+	void CancelAutoAdvance();
+
 	UFUNCTION()
 	void OnInteractionSphereBeginOverlap(
 		UPrimitiveComponent* OverlappedComponent,
@@ -96,4 +118,10 @@ private:
 
 	// 이번에 클리어한 보스가 최종 보스였는지 여부 — 프롬프트 문구를 결정한다
 	bool bIsFinalBoss = false;
+
+	// 자동 진행을 이미 예약했는지 여부 — 정확히 한 번만 실행되도록 보호한다
+	bool bAutoAdvanceScheduled = false;
+
+	// 자동 진행 대기 타이머
+	FTimerHandle AutoAdvanceTimerHandle;
 };

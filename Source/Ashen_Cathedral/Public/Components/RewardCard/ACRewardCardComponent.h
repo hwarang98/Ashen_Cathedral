@@ -18,6 +18,9 @@ class AACCharacterBase;
 // 카드 선택 UI가 닫혔을 때 1회 전달되는 콜백 — 외부 시스템이 선택 완료를 기다릴 때 바인딩
 DECLARE_DELEGATE(FOnSelectionClosed);
 
+// 카드 선택 UI가 닫힐 때마다 브로드캐스트되는 알림 — 단일 캐스트인 FOnSelectionClosed는 Boss Clear UI가 점유하므로 별도로 둔다
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCardSelectionFinished);
+
 /**
  * @brief 로그라이크 카드 보상 컴포넌트.
  *
@@ -83,6 +86,10 @@ public:
 
 	// 카드 선택 UI가 닫혔을 때 1회 호출됨 — CloseSelectionUI() 호출 시점에 바인딩된 콜백을 실행하고 즉시 Unbind
 	FOnSelectionClosed OnSelectionClosedDelegate;
+
+	// 카드 선택 UI가 닫힐 때(선택·취소 모두) 브로드캐스트된다. 자동 스테이지 진행처럼 선택 종료를 기다려야 하는 시스템이 구독한다
+	UPROPERTY(BlueprintAssignable, Category = "RewardCard")
+	FOnCardSelectionFinished OnCardSelectionFinishedDelegate;
 
 protected:
 	/**

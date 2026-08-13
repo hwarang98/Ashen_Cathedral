@@ -2,15 +2,15 @@
 
 
 #include "GameModes/ACGameMode.h"
-#include "GameModes/ACBossSpawnPoint.h"
 #include "GameModes/ACGameState.h"
 #include "Character/ACCharacterBase.h"
 #include "Character/Enemy/ACEnemyCharacter.h"
 #include "Character/Player/ACPlayerCharacter.h"
+#include "DataAssets/Run/ACDataAsset_RunDefinition.h"
+#include "DataAssets/Run/ACDataAsset_StageDefinition.h"
 #include "Subsystems/ACRunStateSubsystem.h"
 #include "Subsystems/ACWeaponSelectionSubsystem.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/PlayerController.h"
+#include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 
 #if AC_WEB_DEBUG
@@ -19,6 +19,19 @@
 	#include "Debug/ACRunLogSubsystem.h"
 	#include "Debug/ACWebDebugSubsystem.h"
 	#include "GameplayAbilitySystem/ACAttributeSet.h"
+#endif
+
+#if AC_WEB_DEBUG
+namespace ACGameModeInternal
+{
+	// 런 로그에 남길 현재 선택 무기 태그. 무기 선택이 없으면 빈 태그
+	static FGameplayTag GetSelectedWeaponTag(const UGameInstance* GameInstance)
+	{
+		const UACWeaponSelectionSubsystem* WeaponSelection = GameInstance ? GameInstance->GetSubsystem<UACWeaponSelectionSubsystem>() : nullptr;
+		const UACDataAsset_WeaponData* WeaponData = WeaponSelection ? WeaponSelection->GetSelectedWeaponData() : nullptr;
+		return WeaponData ? WeaponData->WeaponTypeTag : FGameplayTag();
+	}
+}
 #endif
 
 AACGameMode::AACGameMode()
@@ -32,32 +45,52 @@ void AACGameMode::InitGame(const FString& MapName, const FString& Options, FStri
 
 	// PossessedBy(플레이어 스폰)보다 먼저 실행되므로 선택 무기가 여기서 확정되어야 한다
 	InitializeWeaponSelectionForLevel();
+
+	// 배치 보스의 BeginPlay가 현재 스테이지를 조회하므로 런 상태는 그보다 먼저 열려 있어야 한다
+	BootstrapDebugRunIfNeeded();
 }
 
-void AACGameMode::StartPlay()
-{
-	Super::StartPlay();
-
-	EnsureRunStarted();
-	SpawnInitialBossIfNeeded();
-}
-
-void AACGameMode::EnsureRunStarted()
+void AACGameMode::BootstrapDebugRunIfNeeded()
 {
 	UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this);
-	if (!RunState || RunState->IsRunActive())
+	if (!RunState || RunState->IsRunActive() || !DebugRunDefinition)
 	{
 		return;
 	}
 
-	// 로비는 Run 밖이다. 아레나에서 바로 시작한 경우에만 Run을 연다.
-	const FName CurrentLevelName(*UGameplayStatics::GetCurrentLevelName(this, true));
-	if (CurrentLevelName == LobbyLevelName)
+	// 로비를 거치지 않고 아레나에서 바로 PIE를 시작한 경우다. InitGame의 MapName 인자는 직접 PIE 경로에서
+	// UEDPIE_ 프리픽스가 섞여 들어오므로 쓰지 않고, 이미 스폰된 월드로 레벨을 판정한다.
+	if (!RunState->BeginDebugRunAtLevel(DebugRunDefinition, GetWorld()))
 	{
 		return;
 	}
 
-	RunState->BeginRun();
+#if AC_WEB_DEBUG
+	// RequestStartRun을 거치지 않는 경로이므로 런 로그도 여기서 열어 준다 — 열리지 않은 런을 닫으려 하면 기록이 어긋난다
+	if (UACRunLogSubsystem* RunLog = UACRunLogSubsystem::Get(this))
+	{
+		RunLog->BeginRun(/*InSeed*/ 0, ACGameModeInternal::GetSelectedWeaponTag(GetGameInstance()));
+	}
+#endif
+}
+
+void AACGameMode::HandleMatchHasStarted()
+{
+	// Super가 NotifyBeginPlay를 호출하므로, 이 아래는 배치 보스의 BeginPlay가 끝난 상태다
+	Super::HandleMatchHasStarted();
+
+	const UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this);
+	const UACDataAsset_StageDefinition* Stage = RunState ? RunState->GetCurrentStage() : nullptr;
+	if (!Stage)
+	{
+		return;
+	}
+
+	const AACGameState* ACGameState = GetGameState<AACGameState>();
+	if (!ACGameState || !ACGameState->GetBossCharacter())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[AACGameMode] 스테이지 '%s'에 등록된 보스가 없습니다. 레벨에 보스가 배치되어 있는지, 등록이 거부되지 않았는지 확인하세요."), *Stage->StageID.ToString());
+	}
 }
 
 void AACGameMode::InitializeWeaponSelectionForLevel()
@@ -90,10 +123,31 @@ void AACGameMode::RegisterBossCharacter(AACCharacterBase* InBossCharacter)
 		return;
 	}
 
-	// 이미 보스가 등록된 경우 중복 초기화 방지
+	// 한 아레나에는 보스가 하나여야 한다. 조용히 무시하면 두 번째 보스가 사망 델리게이트 없이 살아 있게 된다
 	if (ACGameState->GetBossCharacter())
 	{
+		UE_LOG(LogTemp, Error, TEXT("[AACGameMode] 이미 보스가 등록되어 있는데 '%s'가 추가로 등록을 시도했습니다. 레벨에 보스가 2체 이상 배치되어 있는지 확인하세요."), *InBossCharacter->GetName());
 		return;
+	}
+
+	// 스테이지 구성이 있으면 배선이 맞는지 확인하고, 어긋나면 등록 자체를 거부해 전투·보상·진행을 모두 막는다
+	const UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this);
+	if (const UACDataAsset_StageDefinition* Stage = RunState ? RunState->GetCurrentStage() : nullptr)
+	{
+		if (!UACRunStateSubsystem::IsSameLevel(GetWorld(), Stage->LevelAsset))
+		{
+			UE_LOG(LogTemp, Error, TEXT("[AACGameMode] 현재 맵이 스테이지 '%s'의 LevelAsset과 다릅니다. 보스 등록을 거부했습니다."), *Stage->StageID.ToString());
+			return;
+		}
+
+		const AACEnemyCharacter* EnemyCharacter = Cast<AACEnemyCharacter>(InBossCharacter);
+		const FGameplayTag BossIdentityTag = EnemyCharacter ? EnemyCharacter->GetBossIdentityTag() : FGameplayTag();
+		if (!RunState->IsBossValidForCurrentStage(BossIdentityTag))
+		{
+			UE_LOG(LogTemp, Error, TEXT("[AACGameMode] 스테이지 '%s'는 '%s'를 기대하지만 배치된 보스는 '%s'입니다. 보스 등록을 거부했습니다."),
+				*Stage->StageID.ToString(), *Stage->ExpectedBossID.ToString(), *BossIdentityTag.ToString());
+			return;
+		}
 	}
 
 	ACGameState->SetBossCharacter(InBossCharacter);
@@ -111,14 +165,7 @@ void AACGameMode::RegisterBossCharacter(AACCharacterBase* InBossCharacter)
 			}
 		}
 
-		FGameplayTag WeaponTag;
-		if (const UACWeaponSelectionSubsystem* WeaponSelection = GetGameInstance() ? GetGameInstance()->GetSubsystem<UACWeaponSelectionSubsystem>() : nullptr)
-		{
-			if (const UACDataAsset_WeaponData* WeaponData = WeaponSelection->GetSelectedWeaponData())
-			{
-				WeaponTag = WeaponData->WeaponTypeTag;
-			}
-		}
+		const FGameplayTag WeaponTag = ACGameModeInternal::GetSelectedWeaponTag(GetGameInstance());
 
 		int32 Attempt = 0;
 		int32 RunSeed = 0;
@@ -134,9 +181,6 @@ void AACGameMode::RegisterBossCharacter(AACCharacterBase* InBossCharacter)
 	}
 #endif
 
-	// 다음 보스를 스폰할 위치로 재사용 (Scale은 다음 보스 자신의 BP 기본값을 따르도록 제외)
-	CachedBossSpawnTransform = FTransform(InBossCharacter->GetActorRotation(), InBossCharacter->GetActorLocation());
-
 	if (!InBossCharacter->OnDeathDelegate.IsAlreadyBound(this, &ThisClass::HandleBossDeath))
 	{
 		InBossCharacter->OnDeathDelegate.AddDynamic(this, &ThisClass::HandleBossDeath);
@@ -148,38 +192,55 @@ void AACGameMode::RegisterBossCharacter(AACCharacterBase* InBossCharacter)
 	}
 }
 
-bool AACGameMode::IsFinalBossPending() const
+TSoftObjectPtr<UWorld> AACGameMode::ResolveLobbyLevel() const
 {
 	const UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this);
-	const int32 NextIndex = RunState ? RunState->GetNextBossIndex() : 0;
-	return NextIndex >= NextBossSequence.Num();
+	if (const UACDataAsset_RunDefinition* RunDefinition = RunState ? RunState->GetActiveRunDefinition() : nullptr)
+	{
+		if (!RunDefinition->LobbyLevel.IsNull())
+		{
+			return RunDefinition->LobbyLevel;
+		}
+	}
+
+	return FallbackLobbyLevel;
+}
+
+bool AACGameMode::TravelToLevel(const TSoftObjectPtr<UWorld>& TargetLevel)
+{
+	// OpenLevelBySoftObjectPtr은 빈 포인터를 받아도 경고만 남기고 존재하지 않는 "None" 맵으로 여행한다
+	if (TargetLevel.IsNull())
+	{
+		UE_LOG(LogTemp, Error, TEXT("[AACGameMode] 이동할 레벨이 지정되지 않아 레벨 전환을 취소했습니다."));
+		return false;
+	}
+
+	// 브로드캐스트보다 먼저 잠가야 로딩 화면 대기 중에 다른 이동 요청(사망·출구 재상호작용)이 끼어들지 못한다
+	bTravelRequested = true;
+	PendingTravelLevel = TargetLevel;
+
+	// 로딩 화면이 페이드 인할 기회를 먼저 준다
+	OnStageTravelStartedDelegate.Broadcast(TargetLevel);
+
+	if (TravelScreenDelay <= 0.f)
+	{
+		ExecutePendingTravel();
+		return true;
+	}
+
+	GetWorldTimerManager().SetTimer(TravelTimerHandle, this, &AACGameMode::ExecutePendingTravel, TravelScreenDelay, false);
+	return true;
+}
+
+void AACGameMode::ExecutePendingTravel()
+{
+	UGameplayStatics::OpenLevelBySoftObjectPtr(this, PendingTravelLevel);
 }
 
 void AACGameMode::RequestProgressAfterBossClear()
 {
-	if (bProgressRequested)
+	if (bTravelRequested)
 	{
-		return;
-	}
-	bProgressRequested = true;
-
-	AACGameState* ACGameState = GetGameState<AACGameState>();
-	if (!ACGameState)
-	{
-		return;
-	}
-
-	// 이전 보스 참조 정리 — 다음 보스가 RegisterBossCharacter의 중복 등록 가드에 막히지 않도록 함
-	if (AACCharacterBase* DeadBoss = ACGameState->GetBossCharacter())
-	{
-		DeadBoss->Destroy();
-	}
-	ACGameState->SetBossCharacter(nullptr);
-
-	if (IsFinalBossPending())
-	{
-		// 시퀀스를 끝까지 돌았으므로 Run이 클리어로 끝난다 — 적립분을 확정 지급한다
-		SettleRunAndOpenLobby();
 		return;
 	}
 
@@ -189,66 +250,48 @@ void AACGameMode::RequestProgressAfterBossClear()
 		return;
 	}
 
-	TSubclassOf<AACEnemyCharacter> NextBossClass = NextBossSequence[RunState->ConsumeNextBossIndex()];
-	if (!NextBossClass)
+	if (!RunState->IsCurrentStageCleared())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[AACGameMode] 현재 스테이지가 클리어되지 않아 다음 스테이지 진행을 거부했습니다."));
+		return;
+	}
+
+	if (RunState->GetEffectiveExitPolicy() == EACStageExitPolicy::ForceReturnToLobby)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[AACGameMode] 현재 스테이지의 출구 정책이 로비 복귀 전용이라 다음 스테이지 진행을 거부했습니다."));
+		return;
+	}
+
+	// 인덱스를 전진시키기 전에 목적지가 실제로 열 수 있는 레벨인지 확인한다
+	const UACDataAsset_StageDefinition* NextStage = RunState->GetNextStage();
+	if (!NextStage)
+	{
+		// 시퀀스를 끝까지 돌았으므로 Run이 클리어로 끝난다 — 적립분을 확정 지급한다
+		SettleRunAndOpenLobby();
+		return;
+	}
+
+	if (NextStage->LevelAsset.IsNull())
+	{
+		UE_LOG(LogTemp, Error, TEXT("[AACGameMode] 다음 스테이지 '%s'에 LevelAsset이 없어 진행하지 않았습니다."), *NextStage->StageID.ToString());
+		return;
+	}
+
+	const TSoftObjectPtr<UWorld> TargetLevel = NextStage->LevelAsset;
+	if (!RunState->AdvanceToNextStage())
 	{
 		return;
 	}
 
-	bProgressRequested = false;
-
-	// 보스를 스폰하기 전에 플레이어를 먼저 옮겨, 새 보스가 등장할 때 아레나 초기 배치가 재현되도록 한다.
-	TeleportPlayerToPlayerStart();
-
-	GetWorld()->SpawnActor<AACEnemyCharacter>(NextBossClass, CachedBossSpawnTransform);
-}
-
-void AACGameMode::TeleportPlayerToPlayerStart()
-{
-	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
-	if (!PlayerController)
-	{
-		return;
-	}
-
-	APawn* PlayerPawn = PlayerController->GetPawn();
-	if (!PlayerPawn)
-	{
-		return;
-	}
-
-	AActor* PlayerStart = FindPlayerStart(PlayerController);
-	if (!PlayerStart)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[AACGameMode] PlayerStart가 없어 플레이어를 시작 위치로 되돌리지 못했습니다."));
-		return;
-	}
-
-	// 이동 직후 남은 속도로 미끄러지지 않도록 정지시킨다.
-	if (ACharacter* PlayerCharacter = Cast<ACharacter>(PlayerPawn))
-	{
-		if (UCharacterMovementComponent* MovementComponent = PlayerCharacter->GetCharacterMovement())
-		{
-			MovementComponent->StopMovementImmediately();
-		}
-	}
-
-	const FRotator StartRotation = PlayerStart->GetActorRotation();
-
-	// TeleportTo는 도착 지점이 막혀 있으면 인접한 빈 공간을 찾아준다.
-	PlayerPawn->TeleportTo(PlayerStart->GetActorLocation(), StartRotation);
-
-	// 카메라(컨트롤 회전)도 함께 맞춰야 플레이어가 보스 쪽을 바라보며 시작한다.
-	PlayerController->SetControlRotation(StartRotation);
+	TravelToLevel(TargetLevel);
 }
 
 void AACGameMode::RequestReturnToLobby()
 {
-	if (bProgressRequested)
+	if (bTravelRequested)
 	{
 		return;
 	}
-	bProgressRequested = true;
 
 	if (AACGameState* ACGameState = GetGameState<AACGameState>())
 	{
@@ -268,36 +311,30 @@ void AACGameMode::RequestReturnToLobby()
 
 void AACGameMode::SettleRunAndOpenLobby()
 {
+	// 정산이 ActiveRunDefinition을 지우므로 목적지를 먼저 확보한다
+	const TSoftObjectPtr<UWorld> LobbyLevel = ResolveLobbyLevel();
+	if (LobbyLevel.IsNull())
+	{
+		UE_LOG(LogTemp, Error, TEXT("[AACGameMode] 로비 레벨을 결정할 수 없어 정산과 이동을 모두 취소했습니다. RunDefinition의 LobbyLevel 또는 GameMode의 FallbackLobbyLevel을 설정하세요."));
+		return;
+	}
+
 	if (UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this))
 	{
 		RunState->SettleAndEndRun();
 	}
 
-	UGameplayStatics::OpenLevel(this, LobbyLevelName);
+	TravelToLevel(LobbyLevel);
 }
 
-float AACGameMode::GetCurrentStageRewardMultiplier() const
+void AACGameMode::RequestStartRun(UACDataAsset_RunDefinition* RunDefinition)
 {
-	if (StageRewardMultipliers.IsEmpty())
-	{
-		return 1.f;
-	}
-
-	// 아직 이번 보스가 집계되기 전이므로, 클리어 수가 곧 이번 보스의 0-based 순번이다
-	const UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this);
-	const int32 StageIndex = RunState ? RunState->GetClearedBossCount() : 0;
-
-	return StageRewardMultipliers[FMath::Clamp(StageIndex, 0, StageRewardMultipliers.Num() - 1)];
-}
-
-void AACGameMode::RequestStartRun()
-{
-	if (bRunStartRequested)
+	if (bTravelRequested)
 	{
 		return;
 	}
 
-	// 거부된 시도는 재시도 가능해야 하므로 요청 플래그는 모든 검증을 통과한 뒤에 소모한다
+	// 거부된 시도는 재시도 가능해야 하므로 트래블 래치는 실제 이동 시점에만 소모된다
 	if (UACWeaponSelectionSubsystem* WeaponSelectionSubsystem = GetGameInstance() ? GetGameInstance()->GetSubsystem<UACWeaponSelectionSubsystem>() : nullptr)
 	{
 		if (WeaponSelectionSubsystem->IsWeaponChangeInProgress())
@@ -313,31 +350,36 @@ void AACGameMode::RequestStartRun()
 		}
 	}
 
-	bRunStartRequested = true;
-
-	// 이전 Run의 카드·적립분이 남아있지 않도록, 아레나로 넘어가기 전에 Run을 새로 연다
-	if (UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this))
+	UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this);
+	if (!RunState)
 	{
-		RunState->BeginRun();
+		return;
+	}
+
+	// 이전 Run의 카드·적립분이 남아있지 않도록, 아레나로 넘어가기 전에 Run을 새로 연다.
+	// 검증에 실패하면 기존 런 상태를 건드리지 않고 false를 반환한다
+	if (!RunState->BeginRunWithDefinition(RunDefinition))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[AACGameMode] RunDefinition 검증에 실패해 전투 시작을 거부했습니다."));
+		return;
+	}
+
+	const UACDataAsset_StageDefinition* FirstStage = RunState->GetCurrentStage();
+	if (!FirstStage || FirstStage->LevelAsset.IsNull())
+	{
+		UE_LOG(LogTemp, Error, TEXT("[AACGameMode] 첫 스테이지의 레벨을 결정할 수 없어 전투 시작을 취소했습니다."));
+		return;
 	}
 
 #if AC_WEB_DEBUG
 	// 로비에서 아레나로 넘어가는 순간이 런의 시작이다
 	if (UACRunLogSubsystem* RunLog = UACRunLogSubsystem::Get(this))
 	{
-		FGameplayTag WeaponTag;
-		if (const UACWeaponSelectionSubsystem* WeaponSelection = GetGameInstance() ? GetGameInstance()->GetSubsystem<UACWeaponSelectionSubsystem>() : nullptr)
-		{
-			if (const UACDataAsset_WeaponData* WeaponData = WeaponSelection->GetSelectedWeaponData())
-			{
-				WeaponTag = WeaponData->WeaponTypeTag;
-			}
-		}
-		RunLog->BeginRun(/*InSeed*/ 0, WeaponTag);
+		RunLog->BeginRun(/*InSeed*/ 0, ACGameModeInternal::GetSelectedWeaponTag(GetGameInstance()));
 	}
 #endif
 
-	UGameplayStatics::OpenLevel(this, BossArenaLevelName);
+	TravelToLevel(FirstStage->LevelAsset);
 }
 
 void AACGameMode::RegisterPlayerCharacter(AACPlayerCharacter* InPlayerCharacter)
@@ -355,6 +397,11 @@ void AACGameMode::RegisterPlayerCharacter(AACPlayerCharacter* InPlayerCharacter)
 
 void AACGameMode::HandlePlayerDeathCompleted(AACCharacterBase* DeadCharacter)
 {
+	if (bTravelRequested)
+	{
+		return;
+	}
+
 #if AC_WEB_DEBUG
 	// 런 종료(사망) — 보스 잔여 체력을 남기고 Saved/RunLogs 에 기록한다
 	if (UACRunLogSubsystem* RunLog = UACRunLogSubsystem::Get(this))
@@ -371,13 +418,16 @@ void AACGameMode::HandlePlayerDeathCompleted(AACCharacterBase* DeadCharacter)
 	}
 #endif
 
+	// AbandonRun이 ActiveRunDefinition을 지우므로 목적지를 먼저 확보한다
+	const TSoftObjectPtr<UWorld> LobbyLevel = ResolveLobbyLevel();
+
 	// 정산 없이 Run을 버린다 — 이번 Run의 적립분과 보상 카드가 모두 소멸한다
 	if (UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this))
 	{
 		RunState->AbandonRun();
 	}
 
-	UGameplayStatics::OpenLevel(this, LobbyLevelName);
+	TravelToLevel(LobbyLevel);
 }
 
 void AACGameMode::HandleBossDeath(AACCharacterBase* DeadCharacter)
@@ -401,12 +451,20 @@ void AACGameMode::HandleBossBattleCompleted(AACCharacterBase* DeadCharacter)
 
 	ACGameState->SetBattleState(EACBattleState::Completed);
 
+	UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this);
+
+	// 사망 연출 완료가 중복으로 들어와도 보상 적립과 출구 개방이 한 번만 실행되도록 여기서 걸러낸다
+	if (!RunState || !RunState->MarkCurrentStageCleared())
+	{
+		return;
+	}
+
 #if AC_WEB_DEBUG
 	if (UACRunLogSubsystem* RunLog = UACRunLogSubsystem::Get(this))
 	{
 		RunLog->EndBossFight(/*bWon*/ true, 0.f);
-		// 마지막 보스였다면 런 자체가 클리어로 끝난다
-		if (IsFinalBossPending())
+		// 마지막 스테이지였다면 런 자체가 클리어로 끝난다
+		if (RunState->IsCurrentStageFinal())
 		{
 			RunLog->EndRun(TEXT("cleared"));
 		}
@@ -415,61 +473,50 @@ void AACGameMode::HandleBossBattleCompleted(AACCharacterBase* DeadCharacter)
 
 	if (AACEnemyCharacter* DeadBoss = Cast<AACEnemyCharacter>(DeadCharacter))
 	{
+		const UACDataAsset_StageDefinition* Stage = RunState->GetCurrentStage();
+		const float RewardMultiplier = Stage ? Stage->RewardMultiplier : 1.f;
+
 		// 즉시 지급하지 않고 런 지갑에 적립한다 — 로비로 살아 돌아가야 확정된다
-		if (UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this))
-		{
-			RunState->DepositBossReward(DeadBoss->GetBossRewardData(), DeadBoss, GetCurrentStageRewardMultiplier());
-		}
+		RunState->DepositBossReward(DeadBoss->GetBossRewardData(), DeadBoss, RewardMultiplier);
 	}
 
-	OnBossBattleCompletedDelegate.Broadcast(IsFinalBossPending());
-}
-
-void AACGameMode::SpawnInitialBossIfNeeded()
-{
-	AACGameState* ACGameState = GetGameState<AACGameState>();
-	if (!ACGameState || ACGameState->GetBossCharacter())
-	{
-		// 레벨에 보스가 이미 배치되어 BeginPlay에서 등록을 마쳤다면 추가로 스폰하지 않는다.
-		return;
-	}
-
-	UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this);
-	if (!RunState)
-	{
-		return;
-	}
-
-	// Run이 이어지는 중이면 인덱스도 이어진다 — 아레나를 넘어와도 이미 잡은 보스가 다시 나오지 않는다
-	if (!NextBossSequence.IsValidIndex(RunState->GetNextBossIndex()))
-	{
-		return;
-	}
-
-	AACBossSpawnPoint* SpawnPoint = Cast<AACBossSpawnPoint>(UGameplayStatics::GetActorOfClass(GetWorld(), AACBossSpawnPoint::StaticClass()));
-	if (!SpawnPoint)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[AACGameMode] AACBossSpawnPoint가 레벨에 없어 첫 보스를 스폰할 수 없습니다."));
-		return;
-	}
-
-	TSubclassOf<AACEnemyCharacter> FirstBossClass = NextBossSequence[RunState->ConsumeNextBossIndex()];
-	if (!FirstBossClass)
-	{
-		return;
-	}
-
-	GetWorld()->SpawnActor<AACEnemyCharacter>(FirstBossClass, SpawnPoint->GetActorTransform());
+	OnBossBattleCompletedDelegate.Broadcast(RunState->IsCurrentStageFinal());
 }
 
 void AACGameMode::DebugRestartCurrentStage()
 {
-	// 런 상태는 레벨을 넘어 살아남으므로, 버리지 않으면 재시작해도 보스 순번과 카드가 그대로 이어진다
-	if (UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this))
+	if (bTravelRequested)
 	{
-		RunState->AbandonRun();
+		return;
 	}
 
+	UACRunStateSubsystem* RunState = UACRunStateSubsystem::Get(this);
+
+	// 재시작 후에도 같은 스테이지로 돌아와야 하므로 목적지를 먼저 확보한다
+	const UACDataAsset_StageDefinition* Stage = RunState ? RunState->GetCurrentStage() : nullptr;
+	TSoftObjectPtr<UWorld> TargetLevel;
+	if (Stage)
+	{
+		TargetLevel = Stage->LevelAsset;
+	}
+
+	if (RunState)
+	{
+		// 스테이지 인덱스와 디버그 런 여부를 유지한 채 이번 런에서 쌓은 카드·적립분만 버린다
+		if (!RunState->RestartCurrentStage())
+		{
+			RunState->AbandonRun();
+		}
+	}
+
+	if (!TargetLevel.IsNull())
+	{
+		TravelToLevel(TargetLevel);
+		return;
+	}
+
+	// 런 구성이 없는 경우에만 현재 맵 이름으로 되돌아간다 (콘솔 전용 폴백 — 로딩 화면 없이 즉시 이동)
+	bTravelRequested = true;
 	const FName CurrentLevelName(*UGameplayStatics::GetCurrentLevelName(this, true));
 	UGameplayStatics::OpenLevel(this, CurrentLevelName);
 }
