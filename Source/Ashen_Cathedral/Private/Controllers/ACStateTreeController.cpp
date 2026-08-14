@@ -57,6 +57,23 @@ void AACStateTreeController::OnPossess(APawn* InPawn)
 	}
 }
 
+void AACStateTreeController::StartEncounter()
+{
+	if (!StateTreeAIComponent || StateTreeAIComponent->IsRunning())
+	{
+		return;
+	}
+
+	StateTreeAIComponent->StartLogic();
+
+	// 컷신 동안 OnPerceptionUpdated가 TargetActor는 채워 놨지만 그때 보낸 이벤트는 버려졌다.
+	// Combat 진입이 이벤트 필수이므로 여기서 다시 알려 준다.
+	if (TargetActor)
+	{
+		StateTreeAIComponent->SendStateTreeEvent(ACGameplayTags::Enemy_StateTree_Event_TargetAcquired);
+	}
+}
+
 void AACStateTreeController::OnUnPossess()
 {
 	if (UACAbilitySystemComponent* ASC = CachedEnemyCharacter ? CachedEnemyCharacter->GetACAbilitySystemComponent() : nullptr)

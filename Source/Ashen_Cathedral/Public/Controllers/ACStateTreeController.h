@@ -53,6 +53,19 @@ public:
 	UFUNCTION(BlueprintPure, Category = "AI")
 	AActor* GetTargetActor() const { return TargetActor; }
 
+	/**
+	 * @brief 조우 연출이 끝난 뒤 보스 AI를 시작한다.
+	 *
+	 * StateTreeAIComponent의 Start Logic Automatically를 꺼 둔 보스(조우 컷신이 있는 보스)에서
+	 * 컷신 종료 시점에 호출한다. 이미 실행 중이면 아무것도 하지 않는다.
+	 * @note 컷신 동안 Perception이 발송한 TargetAcquired 이벤트는 트리가 꺼져 있어 버려지므로
+	 *       (SendStateTreeEvent의 bIsRunning 가드), 잡아둔 타겟이 있으면 여기서 다시 발송한다.
+	 *       ST_Aldren의 Combat 진입은 이 이벤트가 필수 조건(Enter Event)이라 재발송이 없으면
+	 *       보스가 대기 상태에서 영영 빠져나오지 못한다.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "AI")
+	void StartEncounter();
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;
