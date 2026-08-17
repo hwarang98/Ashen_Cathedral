@@ -180,3 +180,60 @@ void UPlayerUIComponent::HideInteractionPrompt()
 
 	ActiveInteractionPromptWidget->SetVisibility(ESlateVisibility::Collapsed);
 }
+
+void UPlayerUIComponent::RegisterHUDWidget(UUserWidget* InWidget)
+{
+	if (!InWidget)
+	{
+		return;
+	}
+
+	RegisteredHUDWidgets.AddUnique(InWidget);
+
+	// 이미 HUD가 숨겨진 상태에서 새로 등록되면 그 위젯만 튀어나오므로 함께 숨긴다
+	if (bHUDHidden)
+	{
+		SavedHUDVisibilities.Add(InWidget, InWidget->GetVisibility());
+		InWidget->SetVisibility(ESlateVisibility::Collapsed);
+	}
+}
+
+void UPlayerUIComponent::SetHUDVisible(bool bVisible)
+{
+	if (bHUDHidden != bVisible)
+	{
+		return;
+	}
+
+	bHUDHidden = !bVisible;
+
+	// 파괴된 위젯이 남아 있을 수 있으므로 순회 전에 정리한다
+	RegisteredHUDWidgets.RemoveAll([](const TObjectPtr<UUserWidget>& Widget)
+	{
+		return Widget == nullptr;
+	});
+
+	for (const TObjectPtr<UUserWidget>& Widget : RegisteredHUDWidgets)
+	{
+		if (!bVisible)
+		{
+			SavedHUDVisibilities.Add(Widget, Widget->GetVisibility());
+			Widget->SetVisibility(ESlateVisibility::Collapsed);
+			continue;
+		}
+
+		// Visible로 일괄 복원하면 SelfHitTestInvisible 같은 원래 설정이 사라지므로 저장해 둔 값을 되돌린다
+		const ESlateVisibility* Saved = SavedHUDVisibilities.Find(Widget);
+		Widget->SetVisibility(Saved ? *Saved : ESlateVisibility::Visible);
+	}
+
+	if (bVisible)
+	{
+		SavedHUDVisibilities.Empty();
+	}
+	else if (ActiveInteractionPromptWidget)
+	{
+		// 상호작용 프롬프트는 별도로 소유하므로 함께 처리한다 — 컷신 중 "제단에 손을 얹는다" 같은 문구가 남으면 안 된다
+		ActiveInteractionPromptWidget->SetVisibility(ESlateVisibility::Collapsed);
+	}
+}

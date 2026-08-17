@@ -33,6 +33,26 @@ public:
 	// 상호작용 프롬프트를 숨긴다. 플레이어가 상호작용 대상에서 벗어날 때 호출된다.
 	void HideInteractionPrompt();
 
+	/**
+	 * @brief 컷신 동안 숨겨야 하는 게임플레이 HUD 위젯을 등록한다.
+	 *
+	 * @param InWidget 뷰포트에 올린 HUD 위젯
+	 * @note 플레이어 오버레이는 BP 어빌리티(GA_Player_DrawOverlayWidget)가 만들어 올리므로 C++이 참조를
+	 *       갖지 못한다. AddToViewport 직후 이 함수로 넘겨야 SetHUDVisible이 그 위젯까지 제어할 수 있다.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "HUD")
+	void RegisterHUDWidget(UUserWidget* InWidget);
+
+	/**
+	 * @brief 등록된 게임플레이 HUD를 한꺼번에 숨기거나 되돌린다.
+	 *
+	 * @param bVisible false면 숨기고, true면 숨기기 직전의 표시 상태로 복원한다
+	 * @note 조우 컷신·페이즈 전환 컷신처럼 연출 동안 HUD를 걷어내야 하는 곳에서 사용한다.
+	 *       레벨 시퀀스의 Hide HUD 옵션은 레거시 AHUD만 끄기 때문에 UMG 위젯에는 효과가 없다.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "HUD")
+	void SetHUDVisible(bool bVisible);
+
 	UPROPERTY(BlueprintAssignable, BlueprintAssignable)
 	FOnEquippedWeaponChangedDelegate OnEquippedWeaponChangedDelegate;
 
@@ -81,6 +101,17 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UACInteractionPromptWidget> ActiveInteractionPromptWidget;
+
+	// 컷신 동안 숨길 게임플레이 HUD 위젯들. BP가 RegisterHUDWidget으로 등록한다
+	UPROPERTY()
+	TArray<TObjectPtr<UUserWidget>> RegisteredHUDWidgets;
+
+	// 숨기기 직전의 표시 상태 — 복원할 때 원래 값으로 되돌리기 위해 보관한다
+	UPROPERTY()
+	TMap<TObjectPtr<UUserWidget>, ESlateVisibility> SavedHUDVisibilities;
+
+	// 현재 HUD가 숨겨진 상태인지 여부 (중복 호출 방지)
+	bool bHUDHidden = false;
 
 	// Boss Clear 연출이 이미 표시 중인지 여부 (중복 표시 방지)
 	bool bClearUIShown = false;
