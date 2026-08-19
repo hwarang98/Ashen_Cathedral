@@ -6,6 +6,7 @@
 #include "ACGameplayTags.h"
 #include "EnhancedInputSubsystems.h"
 #include "Character/Player/ACPlayerCharacter.h"
+#include "Components/UI/PlayerUIComponent.h"
 #include "Interfaces/ACAnimNotifyTagReceiverInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -229,7 +230,20 @@ void UACPlayerAbility_TargetLock::DrawTargetLockWidget()
 		DrawnTargetLockWidget = CreateWidget<UACWidgetBase>(GetPlayerControllerFromActorInfo(), TargetLockWidgetClass);
 
 		DrawnTargetLockWidget->AddToViewport();
+
+		// 컷신 동안 HUD를 걷어낼 때 락온 표식만 화면에 남지 않도록 등록해 둔다.
+		// 이 위젯은 어빌리티가 직접 뷰포트에 올리므로 등록하지 않으면 SetHUDVisible의 대상에서 빠진다
+		if (UPlayerUIComponent* PlayerUIComponent = GetPlayerUIComponentFromActorInfo())
+		{
+			PlayerUIComponent->RegisterHUDWidget(DrawnTargetLockWidget);
+		}
 	}
+}
+
+UPlayerUIComponent* UACPlayerAbility_TargetLock::GetPlayerUIComponentFromActorInfo() const
+{
+	const AACPlayerCharacter* PlayerCharacter = GetPlayerCharacterFromActorInfo();
+	return PlayerCharacter ? Cast<UPlayerUIComponent>(PlayerCharacter->GetPawnUIComponent()) : nullptr;
 }
 
 void UACPlayerAbility_TargetLock::SetTargetLockWidgetPosition()
@@ -315,6 +329,12 @@ void UACPlayerAbility_TargetLock::CleanUp()
 
 	if (DrawnTargetLockWidget)
 	{
+		// 등록을 먼저 해제한다 — 죽은 위젯이 HUD 목록에 남으면 GC를 막고 다음 컷신에서 헛돌게 된다
+		if (UPlayerUIComponent* PlayerUIComponent = GetPlayerUIComponentFromActorInfo())
+		{
+			PlayerUIComponent->UnregisterHUDWidget(DrawnTargetLockWidget);
+		}
+
 		DrawnTargetLockWidget->RemoveFromParent();
 	}
 

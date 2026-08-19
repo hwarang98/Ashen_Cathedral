@@ -66,6 +66,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "AI")
 	void StartEncounter();
 
+	/**
+	 * @brief 잡아 둔 타겟이 있으면 TargetAcquired 이벤트를 다시 발송한다.
+	 *
+	 * @note ST_Aldren의 Combat 진입은 이 이벤트가 필수 조건(Enter Event)이다. 조우 컷신이나 페이즈 전환처럼
+	 *       트리가 꺼졌거나 멈춰 있던 구간을 지나면 그 사이에 발송된 이벤트는 처리되지 못하고 사라져,
+	 *       재개만으로는 Combat으로 다시 들어가지 못하고 대기 상태에 눌러앉는다.
+	 *       타겟이 없거나 트리가 아직 돌고 있지 않으면 아무것도 하지 않는다.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "AI")
+	void ResendTargetAcquiredEvent();
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;

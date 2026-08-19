@@ -198,6 +198,17 @@ void UPlayerUIComponent::RegisterHUDWidget(UUserWidget* InWidget)
 	}
 }
 
+void UPlayerUIComponent::UnregisterHUDWidget(UUserWidget* InWidget)
+{
+	if (!InWidget)
+	{
+		return;
+	}
+
+	RegisteredHUDWidgets.Remove(InWidget);
+	SavedHUDVisibilities.Remove(InWidget);
+}
+
 void UPlayerUIComponent::SetHUDVisible(bool bVisible)
 {
 	if (bHUDHidden != bVisible)

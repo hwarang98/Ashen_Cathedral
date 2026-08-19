@@ -35,6 +35,10 @@ private:
 	AActor* GetNearestTargetFromAvailableActors(const TArray<AActor*>& InAvailableActors);
 	void GetAvailableActorsAroundTarget(TArray<AActor*>& OutActorsOnLeft, TArray<AActor*>& OutActorsOnRight);
 	void DrawTargetLockWidget();
+
+	// 락온 표식을 컷신 동안 함께 숨기기 위해 플레이어 UI 컴포넌트를 찾는다
+	class UPlayerUIComponent* GetPlayerUIComponentFromActorInfo() const;
+
 	void SetTargetLockWidgetPosition();
 	void InitTargetLockMovement();
 	void InitTargetLockMappingContext();

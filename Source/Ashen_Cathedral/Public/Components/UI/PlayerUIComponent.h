@@ -53,6 +53,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "HUD")
 	void SetHUDVisible(bool bVisible);
 
+	/**
+	 * @brief 등록된 HUD 위젯 목록에서 제거한다.
+	 *
+	 * @param InWidget 뷰포트에서 걷어낼 위젯
+	 * @note 락온 표식처럼 수명이 짧은 위젯은 뷰포트에서 내리기 전에 반드시 여기로 넘겨야 한다.
+	 *       등록만 하고 빼지 않으면 배열이 죽은 위젯을 계속 붙들어 GC를 막는다.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "HUD")
+	void UnregisterHUDWidget(UUserWidget* InWidget);
+
 	UPROPERTY(BlueprintAssignable, BlueprintAssignable)
 	FOnEquippedWeaponChangedDelegate OnEquippedWeaponChangedDelegate;
 

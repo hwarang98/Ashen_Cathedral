@@ -11,9 +11,16 @@
 #include "Net/UnrealNetwork.h"
 #include "TimerManager.h"
 #include "Abilities/GameplayAbility.h"
+#include "Components/UI/EnemyUIComponent.h"
 #include "Components/UI/PawnUIComponent.h"
+#include "Components/UI/PlayerUIComponent.h"
+#include "Components/WidgetComponent.h"
+#include "Controllers/ACStateTreeController.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameplayAbilitySystem/ACAttributeSet.h"
 #include "Interfaces/PawnUIInterface.h"
+#include "Kismet/GameplayStatics.h"
 
 UACBossPhaseComponent::UACBossPhaseComponent()
 {
@@ -231,7 +238,7 @@ void UACBossPhaseComponent::BeginPhaseTransition(int32 TransitionIndex)
 	const FACBossPhaseTransition& Transition = PhaseTransitions[TransitionIndex];
 
 	// 2. AI 행동 중지 — 어빌리티를 취소하기 전에 멈춰야 취소 통보를 받은 AI가 곧바로 다음 행동을 고르지 않는다
-	PauseAILogic();
+	StopAILogicForTransition();
 
 	// 3. 진행 중인 공격 어빌리티 중지
 	if (UAbilitySystemComponent* ASC = CachedASC.Get())
@@ -283,6 +290,9 @@ bool UACBossPhaseComponent::PlayTransitionSequence(const FACBossPhaseTransition&
 	SequencePlayer->OnFinished.AddDynamic(this, &ThisClass::OnTransitionSequenceEnded);
 	SequencePlayer->OnStop.AddDynamic(this, &ThisClass::OnTransitionSequenceEnded);
 
+	// 컷신이 첫 프레임부터 깨끗하게 보이도록 재생 직전에 HUD와 보스 체력바를 걷어낸다
+	SetTransitionUIVisible(false);
+
 	SequencePlayer->Play();
 
 	return true;
@@ -304,11 +314,28 @@ void UACBossPhaseComponent::OnTransitionSequenceEnded()
 	}
 
 	CleanupTransitionSequence();
+
+	// 어빌리티 단계는 다음 틱으로 미룬다. 이 함수는 시퀀스 플레이어의 종료 콜스택 안에서 불리며,
+	// 그 안에서 전환을 끝내고 AI를 재개하면 뒤이어 도는 시퀀서의 Restore State가 방금 시작된 행동과
+	// AnimInstance를 되돌려 버려 보스가 굳은 채 남는다. 시퀀스 액터 파괴를 다음 틱으로 미루는 것과 같은 이유다.
+	// 전환 어빌리티에 몽타주가 없으면 활성화와 동시에 완료 처리까지 이 콜스택에서 끝나므로 특히 문제가 된다
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().SetTimerForNextTick(this, &ThisClass::StartTransitionAbilityStep);
+		return;
+	}
+
 	StartTransitionAbilityStep();
 }
 
 void UACBossPhaseComponent::StartTransitionAbilityStep()
 {
+	// 다음 틱으로 미뤄진 사이에 안전망 타이머가 전환을 끝냈을 수 있다 — 뒤늦게 어빌리티를 켜지 않는다
+	if (!bPhaseTransitionInProgress)
+	{
+		return;
+	}
+
 	const FACBossPhaseTransition* Transition = PhaseTransitions.IsValidIndex(PendingTransitionIndex) ? &PhaseTransitions[PendingTransitionIndex] : nullptr;
 	UAbilitySystemComponent* ASC = CachedASC.Get();
 
@@ -347,11 +374,11 @@ void UACBossPhaseComponent::StartTransitionAbilityStep()
 		return;
 	}
 
-	// 활성화 도중 동기적으로 끝나버린 경우를 잡는다. 이미 완료됐다면 CompletePhaseTransition이 스스로 무시한다
+	// 활성화 도중 동기적으로 끝나버린 경우를 잡는다. 이미 예약됐다면 CompletePhaseTransition이 스스로 무시한다
 	const FGameplayAbilitySpec* ActivatedSpec = ASC->FindAbilitySpecFromHandle(TransitionAbilityHandle);
 	if (!ActivatedSpec || !ActivatedSpec->IsActive())
 	{
-		CompletePhaseTransition();
+		RequestCompletePhaseTransition();
 	}
 }
 
@@ -359,6 +386,26 @@ void UACBossPhaseComponent::OnTransitionAbilityEnded(const FAbilityEndedData& En
 {
 	if (EndedData.AbilitySpecHandle != TransitionAbilityHandle)
 	{
+		return;
+	}
+
+	RequestCompletePhaseTransition();
+}
+
+void UACBossPhaseComponent::RequestCompletePhaseTransition()
+{
+	if (!bPhaseTransitionInProgress)
+	{
+		return;
+	}
+
+	// 전환 어빌리티에 몽타주가 없으면 ActivateAbility가 EndAbility까지 동기로 끝내, OnAbilityEnded가
+	// TryActivateAbility 콜스택 '안에서' 터진다. 거기서 완료 처리를 하면 어빌리티가 아직 활성화 중인 상태로
+	// 종료 구독 해제·Spec 회수·태그 제거·AI 재개가 전부 돌아 ASC와 AI가 서로 어긋난 상태를 본다.
+	// 실제로 로그에서도 "전환 완료"가 "어빌리티 활성화 성공"보다 먼저 찍혀 순서가 뒤집혀 있었다
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().SetTimerForNextTick(this, &ThisClass::CompletePhaseTransition);
 		return;
 	}
 
@@ -410,7 +457,7 @@ void UACBossPhaseComponent::CompletePhaseTransition()
 	}
 
 	// AI와 전투 행동 재개
-	ResumeAILogic();
+	RestartAILogicAfterTransition();
 
 	PendingTransitionIndex = INDEX_NONE;
 	++CurrentPhase;
@@ -495,8 +542,53 @@ void UACBossPhaseComponent::CleanupTransitionSequence()
 		}
 	}
 
+	// 컷신이 끝났으니 UI를 되돌린다. 컷신 뒤 전환 몽타주가 남아 있어도 그때는 게임플레이 카메라이므로 HUD가 보여야 한다.
+	// 정상 종료·스킵·안전망·보스 파괴 어느 경로로 들어와도 이 함수를 지나므로 HUD가 숨은 채 남지 않는다
+	SetTransitionUIVisible(true);
+
 	ActiveSequencePlayer.Reset();
 	ActiveSequenceActor.Reset();
+}
+
+void UACBossPhaseComponent::SetTransitionUIVisible(bool bVisible)
+{
+	// 숨긴 적이 없는데 복원하지 않는다 — 다른 연출(조우 컷신 등)이 걸어 둔 숨김 상태를 멋대로 되돌리게 된다
+	if (bTransitionUIHidden == !bVisible)
+	{
+		return;
+	}
+
+	bTransitionUIHidden = !bVisible;
+
+	// 플레이어 오버레이는 BP가 뷰포트에 올리므로 RegisterHUDWidget으로 등록된 위젯을 통째로 토글한다
+	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
+	if (IPawnUIInterface* PlayerUIInterface = Cast<IPawnUIInterface>(PlayerPawn))
+	{
+		if (UPlayerUIComponent* PlayerUIComponent = Cast<UPlayerUIComponent>(PlayerUIInterface->GetPawnUIComponent()))
+		{
+			PlayerUIComponent->SetHUDVisible(bVisible);
+		}
+	}
+
+	AActor* OwnerActor = GetOwner();
+	if (!OwnerActor)
+	{
+		return;
+	}
+
+	// 보스 체력바는 보스에 붙은 WidgetComponent가 그리므로 컴포넌트 자체를 토글해야 한다
+	TArray<UWidgetComponent*> WidgetComponents;
+	OwnerActor->GetComponents<UWidgetComponent>(WidgetComponents);
+	for (UWidgetComponent* WidgetComponent : WidgetComponents)
+	{
+		WidgetComponent->SetVisibility(bVisible);
+	}
+
+	// BP가 별도로 등록해 둔 적 UI가 있으면 함께 처리한다
+	if (UEnemyUIComponent* EnemyUIComponent = OwnerActor->FindComponentByClass<UEnemyUIComponent>())
+	{
+		EnemyUIComponent->SetEnemyWidgetsVisible(bVisible);
+	}
 }
 
 void UACBossPhaseComponent::CleanupTransitionAbility()
@@ -526,24 +618,67 @@ void UACBossPhaseComponent::CleanupTransitionAbility()
 	bGrantedTransitionAbility = false;
 }
 
-void UACBossPhaseComponent::PauseAILogic()
+void UACBossPhaseComponent::StopAILogicForTransition()
 {
 	if (AAIController* AIController = GetOwningAIController())
 	{
 		AIController->StopMovement();
 	}
 
+	// PauseLogic은 틱만 끄고 트리는 살려 두기 때문에 컷신 도중에 상태가 진입하는 일이 있었다.
+	// 아예 멈춰 두고 전환이 끝나면 다시 시작하는 편이 컷신 구간의 행동을 확실히 막고,
+	// 재개 경로도 조우 컷신(StartEncounter)과 같은 모양이 되어 다루기 쉽다
 	if (UBrainComponent* BrainComponent = GetOwningBrainComponent())
 	{
-		BrainComponent->PauseLogic(TEXT("BossPhaseTransition"));
+		BrainComponent->StopLogic(TEXT("BossPhaseTransition"));
+	}
+
+	// 컷신 동안에는 CharacterMovement도 재운다.
+	// 시퀀서는 액터 틱보다 먼저 돌면서(LevelTick.cpp의 MovieSceneSequenceTick) Transform 트랙 값을
+	// 루트 컴포넌트(= 캡슐)에 직접 써 넣는데, 그 뒤 CharacterMovement가 AdjustFloorHeight로 캡슐을
+	// 바닥에서 일정 높이(MIN/MAX_FLOOR_DIST 사이)로 되밀어 올린다. 매 프레임 둘이 번갈아 밀어
+	// 보스가 밀리미터 단위로 떨린다. MOVE_None이면 PerformMovement가 즉시 반환해 쓰는 주체가 시퀀서 하나로 줄어든다
+	if (const ACharacter* OwningCharacter = Cast<ACharacter>(GetOwner()))
+	{
+		if (UCharacterMovementComponent* Movement = OwningCharacter->GetCharacterMovement())
+		{
+			PreTransitionMovementMode = Movement->MovementMode;
+			bDisabledMovementForTransition = true;
+
+			// 남은 속도를 끊지 않으면 이동을 되살리는 순간 그만큼 미끄러진다
+			Movement->StopMovementImmediately();
+			Movement->DisableMovement();
+		}
 	}
 }
 
-void UACBossPhaseComponent::ResumeAILogic()
+void UACBossPhaseComponent::RestartAILogicAfterTransition()
 {
+	// AI를 깨우기 전에 이동부터 되돌린다 — 이동이 꺼진 채로 트리가 시작하면 첫 이동 태스크가 헛돈다
+	if (bDisabledMovementForTransition)
+	{
+		bDisabledMovementForTransition = false;
+
+		if (const ACharacter* OwningCharacter = Cast<ACharacter>(GetOwner()))
+		{
+			if (UCharacterMovementComponent* Movement = OwningCharacter->GetCharacterMovement())
+			{
+				Movement->SetMovementMode(PreTransitionMovementMode);
+			}
+		}
+	}
+
 	if (UBrainComponent* BrainComponent = GetOwningBrainComponent())
 	{
-		BrainComponent->ResumeLogic(TEXT("BossPhaseTransition"));
+		BrainComponent->RestartLogic();
+	}
+
+	// 트리를 다시 시작하면 대기 상태에서 출발한다. Combat 진입은 TargetAcquired 이벤트가 필수 조건이므로
+	// 잡아둔 타겟을 다시 알려야 한다 — 플레이어가 계속 시야에 있으면 Perception은 새 이벤트를 보내지 않는다.
+	// 반드시 재시작 뒤에 보낸다: SendStateTreeEvent는 트리가 돌고 있지 않으면 이벤트를 버린다
+	if (AACStateTreeController* StateTreeController = Cast<AACStateTreeController>(GetOwningAIController()))
+	{
+		StateTreeController->ResendTargetAcquiredEvent();
 	}
 }
 

@@ -6,6 +6,7 @@
 #include "GameplayAbilitySpecHandle.h"
 #include "GameplayTagContainer.h"
 #include "Components/PawnExtensionComponentBase.h"
+#include "Engine/EngineTypes.h"
 #include "Interfaces/ACZeroHealthHandlerInterface.h"
 #include "ACBossPhaseComponent.generated.h"
 
@@ -217,6 +218,15 @@ private:
 	/** 전환 어빌리티가 끝난 시점을 감지한다 */
 	void OnTransitionAbilityEnded(const FAbilityEndedData& EndedData);
 
+	/**
+	 * @brief 완료 처리를 다음 틱으로 미뤄 예약한다.
+	 *
+	 * @note 어빌리티의 활성화·종료 콜스택 안에서 완료 처리를 하면 CleanupTransitionAbility의 ClearAbility가
+	 *       아직 실행 중인 어빌리티의 Spec을 그 자리에서 걷어내게 되어, 이후 어빌리티 활성화가 조용히 실패한다.
+	 *       전환 중이 아니면 아무것도 예약하지 않는다.
+	 */
+	void RequestCompletePhaseTransition();
+
 	/** 전환 완료 처리. 중복 호출되어도 실제 처리는 정확히 한 번만 일어난다 */
 	void CompletePhaseTransition();
 
@@ -232,14 +242,34 @@ private:
 	/** 재생 중인 컷신을 정지하고 임시로 생성한 LevelSequenceActor를 정리한다 */
 	void CleanupTransitionSequence();
 
+	/**
+	 * @brief 전환 컷신 동안 플레이어 HUD와 보스 UI를 숨기거나 되돌린다.
+	 *
+	 * @param bVisible false면 숨기고, true면 컷신 전 상태로 되돌린다
+	 * @note 레벨 시퀀스의 Hide HUD 옵션은 레거시 AHUD만 끄므로 UMG 위젯은 이렇게 직접 걷어내야 한다.
+	 *       실제로 숨긴 경우에만 복원하므로 여러 번 호출해도 안전하다.
+	 */
+	void SetTransitionUIVisible(bool bVisible);
+
 	/** 전환 어빌리티 종료 구독을 해제하고, 이 전환에서 임시로 부여한 어빌리티면 회수한다 */
 	void CleanupTransitionAbility();
 
-	/** AI 로직과 이동을 멈춘다. BT 보스와 StateTree 보스를 모두 지원한다 */
-	void PauseAILogic();
+	/**
+	 * @brief 전환 연출 동안 AI 로직과 이동을 완전히 멈춘다. BT 보스와 StateTree 보스를 모두 지원한다.
+	 *
+	 * @note PauseLogic이 아니라 StopLogic을 쓴다. PauseLogic은 틱만 끌 뿐 트리를 살려 두기 때문에
+	 *       컷신 도중에도 상태가 진입하는 일이 있었고, 재개 시점에는 멈춰 있던 구간의 이벤트가
+	 *       처리되지 못한 채 사라져 대기 상태에 눌러앉았다.
+	 */
+	void StopAILogicForTransition();
 
-	/** PauseAILogic으로 멈춘 AI 로직을 재개한다 */
-	void ResumeAILogic();
+	/**
+	 * @brief 멈춰 둔 AI 로직을 다시 시작하고 Combat 진입에 필요한 타겟 이벤트를 다시 알린다.
+	 *
+	 * @note 조우 컷신이 StartEncounter에서 StartLogic + TargetAcquired 재발송으로 전투를 여는 것과 같은 절차다.
+	 *       StateTree의 Combat 진입은 이 이벤트가 필수 조건(Enter Event)이라 재시작만으로는 대기 상태에 머무른다.
+	 */
+	void RestartAILogicAfterTransition();
 
 	/** 소유 Pawn의 AIController. 플레이어이거나 컨트롤러가 없으면 nullptr */
 	AAIController* GetOwningAIController() const;
@@ -274,6 +304,15 @@ private:
 
 	/** 컷신 종료 처리가 이미 한 번 일어났는지 여부. 스킵과 정상 종료가 동시에 들어와도 한 번만 진행시킨다 */
 	bool bTransitionSequenceEndHandled = false;
+
+	/** 이 전환에서 이동을 껐는지 여부. 실제로 껐을 때만 되돌려 다른 곳이 설정한 이동 모드를 건드리지 않는다 */
+	bool bDisabledMovementForTransition = false;
+
+	/** 이동을 끄기 직전의 이동 모드. 전환이 끝나면 이 값으로 되돌린다 */
+	TEnumAsByte<EMovementMode> PreTransitionMovementMode = MOVE_Walking;
+
+	/** 이 전환에서 UI를 숨겼는지 여부. 숨긴 경우에만 되돌려 다른 연출이 걸어 둔 숨김 상태를 건드리지 않는다 */
+	bool bTransitionUIHidden = false;
 
 	/** 이 전환에서 TransitionAbility를 임시로 부여했는지 여부. true면 전환 종료 시 회수한다 */
 	bool bGrantedTransitionAbility = false;
