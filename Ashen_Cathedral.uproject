@@ -109,6 +109,10 @@
 		{
 			"Name": "MovieRenderPipeline",
 			"Enabled": true
+		},
+		{
+			"Name": "NarshaMCP",
+			"Enabled": true
 		}
 	],
 	"TargetPlatforms": [

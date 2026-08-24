@@ -121,3 +121,12 @@ Saved/
 !Plugins/**
 /Ashen_Cathedral.sln.DotSettings.user
 /.claude/settings.local.json
+
+# ---------------------------------
+# NarshaMCP / AI 툴 로컬 설정
+# (절대경로 하드코딩 → 머신별로 다름)
+# ---------------------------------
+
+/.mcp.json
+/.cursor/
+.narshamcp-installed

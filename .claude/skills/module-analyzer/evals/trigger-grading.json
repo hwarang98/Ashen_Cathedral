@@ -1,0 +1,127 @@
+{
+  "skill": "module-analyzer",
+  "version": "1.0.0",
+  "description": "Trigger precision eval for module-analyzer skill — analyze UE module structure to generate OVERVIEW.md and CLASSES.md",
+  "cases": [
+    {
+      "id": "TP-01",
+      "query": "모듈 분석해줘",
+      "should_trigger": true,
+      "reason": "Module analysis request"
+    },
+    {
+      "id": "TP-02",
+      "query": "module analysis",
+      "should_trigger": true,
+      "reason": "English module analysis"
+    },
+    {
+      "id": "TP-03",
+      "query": "OVERVIEW.md 생성",
+      "should_trigger": true,
+      "reason": "Generate OVERVIEW.md"
+    },
+    {
+      "id": "TP-04",
+      "query": "CLASSES.md 생성",
+      "should_trigger": true,
+      "reason": "Generate CLASSES.md"
+    },
+    {
+      "id": "TP-05",
+      "query": "module-analyzer 실행",
+      "should_trigger": true,
+      "reason": "Direct skill invocation"
+    },
+    {
+      "id": "TP-06",
+      "query": "UE 모듈 구조 분석",
+      "should_trigger": true,
+      "reason": "UE module structure analysis"
+    },
+    {
+      "id": "TP-07",
+      "query": "모듈 분석 — Build.cs 구조 분석해줘",
+      "should_trigger": true,
+      "reason": "Build.cs analysis"
+    },
+    {
+      "id": "TP-08",
+      "query": "모듈 헤더 의존성 분석",
+      "should_trigger": true,
+      "reason": "Module header dependency analysis"
+    },
+    {
+      "id": "TP-09",
+      "query": "analyze module structure",
+      "should_trigger": true,
+      "reason": "Analyze module structure"
+    },
+    {
+      "id": "TP-10",
+      "query": "모듈 클래스 문서 생성",
+      "should_trigger": true,
+      "reason": "Generate module class docs"
+    },
+    {
+      "id": "TN-01",
+      "query": "링커 에러 해결",
+      "should_trigger": false,
+      "reason": "Linker error — belongs to module-mapper"
+    },
+    {
+      "id": "TN-02",
+      "query": "예제 추출",
+      "should_trigger": false,
+      "reason": "Example extraction — belongs to example-extractor"
+    },
+    {
+      "id": "TN-03",
+      "query": "트러블슈팅 문서",
+      "should_trigger": false,
+      "reason": "Troubleshoot — belongs to troubleshoot-generator"
+    },
+    {
+      "id": "TN-04",
+      "query": "코드베이스 자기 진단",
+      "should_trigger": false,
+      "reason": "Self-analysis — belongs to codebase-self-analyzer"
+    },
+    {
+      "id": "TN-05",
+      "query": "문서 검증",
+      "should_trigger": false,
+      "reason": "Doc verify — belongs to source-doc-verify"
+    },
+    {
+      "id": "TN-06",
+      "query": "네비게이션 생성",
+      "should_trigger": false,
+      "reason": "Navigation — belongs to navigation-generator"
+    },
+    {
+      "id": "TN-07",
+      "query": "엔진 문서 품질",
+      "should_trigger": false,
+      "reason": "Engine doc — belongs to ns-engine-doc-quality-cycle"
+    },
+    {
+      "id": "TN-08",
+      "query": "API 변경점",
+      "should_trigger": false,
+      "reason": "API diff — belongs to api-diff-analyzer"
+    },
+    {
+      "id": "TN-09",
+      "query": "프로젝트 분석",
+      "should_trigger": false,
+      "reason": "Project analysis — belongs to project-onboarding"
+    },
+    {
+      "id": "TN-10",
+      "query": "클래스 계층 추적",
+      "should_trigger": false,
+      "reason": "Class hierarchy — belongs to ue_analyze_symbols directly"
+    }
+  ]
+}

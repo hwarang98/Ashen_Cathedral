@@ -1,0 +1,16 @@
+[
+  {"id": "tp-01", "query": "architecture lint", "expected_skill": "ue-architecture-lint", "should_trigger": true, "reason": "English exact match"},
+  {"id": "tp-02", "query": "arch lint", "expected_skill": "ue-architecture-lint", "should_trigger": true, "reason": "English short form"},
+  {"id": "tp-03", "query": "structure check", "expected_skill": "ue-architecture-lint", "should_trigger": true, "reason": "English structure keyword"},
+  {"id": "tp-04", "query": "design check", "expected_skill": "ue-architecture-lint", "should_trigger": true, "reason": "English design keyword"},
+  {"id": "tp-05", "query": "architecture check", "expected_skill": "ue-architecture-lint", "should_trigger": true, "reason": "English architecture check"},
+  {"id": "tp-06", "query": "run architecture lint on staged files", "expected_skill": "ue-architecture-lint", "should_trigger": true, "reason": "With scope argument"},
+  {"id": "tn-01", "query": "APawn explain", "expected_skill": "ue-explain", "should_trigger": true, "reason": "Routes to ue-explain, not architecture-lint"},
+  {"id": "tn-02", "query": "perf lint", "expected_skill": "ue-perf-lint", "should_trigger": true, "reason": "Routes to ue-perf-lint, not architecture-lint"},
+  {"id": "tn-03", "query": "build error fix", "expected_skill": "unreal-error-doctor", "should_trigger": true, "reason": "Routes to unreal-error-doctor"},
+  {"id": "tn-04", "query": "commit check", "expected_skill": "ue-pre-commit", "should_trigger": true, "reason": "Routes to ue-pre-commit"},
+  {"id": "tn-05", "query": "create a new feature", "expected_skill": "ue-scaffold", "should_trigger": true, "reason": "Routes to ue-scaffold"},
+  {"id": "tn-06", "query": "profiling bottleneck", "expected_skill": "ue-insights-profiler", "should_trigger": true, "reason": "Routes to ue-insights-profiler"},
+  {"id": "tn-07", "query": "rename class safely", "expected_skill": "ue-cpp-refactor", "should_trigger": true, "reason": "Routes to ue-cpp-refactor"},
+  {"id": "tn-08", "query": "what is ACharacter", "expected_skill": "ue-explain", "should_trigger": true, "reason": "Routes to ue-explain"}
+]
