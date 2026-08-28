@@ -42,9 +42,11 @@ public:
 	virtual TArray<FActiveGameplayEffectHandle> RemoveGrantedGameplayEffects();
 
 	// 스폰 직후 호출해서 무기 숨김
+	UFUNCTION(BlueprintCallable, Category = "Weapons|Visibility")
 	void HideWeapon() const;
 
 	// 장착 이벤트 시 호출해서 무기 보임
+	UFUNCTION(BlueprintCallable, Category = "Weapons|Visibility")
 	void ShowWeapon() const;
 
 	bool GetHideUntilEquipped() const { return bHideUntilEquipped; }
