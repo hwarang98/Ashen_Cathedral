@@ -25,6 +25,10 @@
 	],
 	"Plugins": [
 		{
+			"Name": "PostProcessPresetImporter",
+			"Enabled": true
+		},
+		{
 			"Name": "ModelingToolsEditorMode",
 			"Enabled": true,
 			"TargetAllowList": [

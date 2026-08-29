@@ -119,6 +119,14 @@ Saved/
 !Content/**
 !Config/**
 !Plugins/**
+
+# !Plugins/** 가 위의 무시 규칙을 되돌리므로, 빌드 산출물을 여기서 다시 제외한다.
+# gitignore는 뒤에 오는 규칙이 이긴다.
+Plugins/**/Binaries/
+Plugins/**/Intermediate/
+Plugins/**/Saved/
+Plugins/**/DerivedDataCache/
+
 /Ashen_Cathedral.sln.DotSettings.user
 /.claude/settings.local.json
 
