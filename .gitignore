@@ -138,3 +138,20 @@ Plugins/**/DerivedDataCache/
 /.mcp.json
 /.cursor/
 .narshamcp-installed
+
+# ---------------------------------
+# 파생/캐시 파일 재제외
+#
+# 위의 !Content/** 같은 되돌리기 규칙이 앞쪽 무시 규칙을 무효화하므로,
+# 에디터가 재생성하는 파일은 반드시 이 블록에서 다시 제외한다.
+# gitignore는 뒤에 오는 규칙이 이긴다.
+# ---------------------------------
+
+# 라이팅 빌드 산출물 (맵 리빌드 시 재생성)
+*_BuiltData.uasset
+
+# Maya 썸네일 캐시
+.mayaSwatches/
+
+# NarshaMCP 에셋 참조 캐시
+/.uecodegen/
