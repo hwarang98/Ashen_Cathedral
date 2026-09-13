@@ -155,3 +155,6 @@ Plugins/**/DerivedDataCache/
 
 # NarshaMCP 에셋 참조 캐시
 /.uecodegen/
+
+# NarshaMCP 로컬 에디터 상태 (PID/타임스탬프 — 머신 고유)
+.narshamcp/

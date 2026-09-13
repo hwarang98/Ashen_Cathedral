@@ -10,3 +10,4 @@
 #include "GameplayTags/ACGameplayTags_GameplayCue.h"
 #include "GameplayTags/ACGameplayTags_RewardCard.h"
 #include "GameplayTags/ACGameplayTags_MetaProgression.h"
+#include "GameplayTags/ACGameplayTags_Item.h"
