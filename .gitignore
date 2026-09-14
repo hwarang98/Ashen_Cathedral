@@ -161,3 +161,7 @@ Plugins/**/DerivedDataCache/
 
 # UBT가 생성하는 새 솔루션 포맷
 *.slnx
+.claude/settings.local.json
+
+# NarshaMCP 플러그인이 생성하는 스킬 라우팅 SSOT
+.claude/skills/routing.json
