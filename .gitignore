@@ -158,3 +158,6 @@ Plugins/**/DerivedDataCache/
 
 # NarshaMCP 로컬 에디터 상태 (PID/타임스탬프 — 머신 고유)
 .narshamcp/
+
+# UBT가 생성하는 새 솔루션 포맷
+*.slnx

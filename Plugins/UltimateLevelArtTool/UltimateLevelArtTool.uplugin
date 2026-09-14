@@ -10,7 +10,7 @@
 	"DocsURL": "https://drive.google.com/file/d/1Hqwvq32vmGx-SFaC0t12otKMl7BWLURd/view",
 	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/ec0988f250ef49ebaf7852cdfe3e6516",
 	"SupportURL": "https://leartes.atlassian.net/servicedesk/customer/portal/1",
-	"EngineVersion": "5.7.0",
+	"EngineVersion": "5.8.0",
 	"CanContainContent": true,
 	"Installed": true,
 	"Modules": [
